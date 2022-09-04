@@ -24,10 +24,15 @@ export class Table {
         return row;
       }
       // todo remove any
-      return (columns as any).reduce((r, c) => ({
-        ...r,
-        [c.as || c.expr.column]: row[c.expr.column],
-      }), {});
+      return (columns as any).reduce((r, c) => {
+        if (c.expr.column === '*') {
+          return { ...r, ...row };
+        }
+        return {
+          ...r,
+          [c.as || c.expr.column]: row[c.expr.column],
+        };
+      }, {});
     });
   }
 }
