@@ -9,7 +9,6 @@
   "author": "Ivan Nosov",
   "license": "MIT",
   "dependencies": {
-    "@florajs/sql-parser": "^2.0.0",
     "node-sql-parser": "^4.4.0"
   },
   "devDependencies": {
