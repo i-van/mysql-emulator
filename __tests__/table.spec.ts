@@ -6,6 +6,10 @@ describe('table', () => {
     await query(`INSERT INTO users (id, name) VALUES (1, 'name1'), (2, 'name2'), (3, 'name3')`);
   });
 
+  afterAll(async () => {
+    await query(`DROP TABLE users`);
+  });
+
   it('should select *', async () => {
     const res = await query(`SELECT * from users`);
 
