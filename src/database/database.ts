@@ -23,4 +23,8 @@ export class Database {
 
     return table;
   }
+
+  getName(): string {
+    return this.name;
+  }
 }
