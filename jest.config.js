@@ -1,9 +1,7 @@
 module.exports = {
   testPathIgnorePatterns: ['/node_modules/'],
-  globals: {
-    'ts-jest': {
-      diagnostics: false,
-    },
+  transform: {
+    '.spec.ts$': ['ts-jest', {}],
   },
   collectCoverage: true,
   testRegex: ['.spec.ts$'],
