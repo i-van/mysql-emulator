@@ -6,7 +6,7 @@ describe('select', () => {
       const res = await query(`SELECT database()`);
 
       expect(res).toEqual([
-        { 'database()': 'emulator' },
+        { 'database()': 'primary' },
       ]);
     });
 
@@ -14,7 +14,7 @@ describe('select', () => {
       const res = await query(`SELECT database() as name`);
 
       expect(res).toEqual([
-        { 'name': 'emulator' },
+        { 'name': 'primary' },
       ]);
     });
   });

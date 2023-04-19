@@ -1,7 +1,4 @@
-import { Column } from 'node-sql-parser/types';
 import { DataType, TableColumn } from './table-column';
-
-type Columns = any[] | Column[] | '*';
 
 export class Table {
   protected columns: TableColumn[] = [];
@@ -18,21 +15,7 @@ export class Table {
     this.rows.push(data);
   }
 
-  selectRows(columns: Columns) {
-    return this.rows.map((row) => {
-      if (columns === '*') {
-        return row;
-      }
-      // todo remove any
-      return (columns as any).reduce((r, c) => {
-        if (c.expr.column === '*') {
-          return { ...r, ...row };
-        }
-        return {
-          ...r,
-          [c.as || c.expr.column]: row[c.expr.column],
-        };
-      }, {});
-    });
+  getRows() {
+    return this.rows;
   }
 }

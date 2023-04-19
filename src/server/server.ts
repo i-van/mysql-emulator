@@ -4,11 +4,21 @@ export class Server {
   protected databaseMap = new Map<string, Database>();
   protected usedDatabase: string | null = null;
 
-  createDatabase(name: string) {
+  constructor(databaseName = 'primary') {
+    const infoDb = this.createDatabase('INFORMATION_SCHEMA')
+    infoDb.createTable('TABLES');
+    infoDb.createTable('COLUMNS');
+    this.createDatabase(databaseName);
+    this.useDatabase(databaseName);
+  }
+
+  createDatabase(name: string): Database {
     if (this.databaseMap.has(name)) {
       throw new Error(`Database ${name} already exists`);
     }
-    this.databaseMap.set(name, new Database(name));
+    const db = new Database(name);
+    this.databaseMap.set(name, db);
+    return db;
   }
 
   useDatabase(name: string) {

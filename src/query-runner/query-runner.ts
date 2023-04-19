@@ -1,13 +1,8 @@
-import { Parser } from 'node-sql-parser';
 import { Server } from '../server';
-import { CreateTableCommand } from './commands/create-table.command';
-import { InsertCommand } from './commands/insert.command';
-import { SelectCommand } from './commands/select.command';
-
-const injectParams = (s: string, params: any[]): string => {
-  let i = 0;
-  return s.replace(/\?/g, () => params[i++]);
-};
+import { CreateTableProcessor } from './create-table.processor';
+import { SelectProcessor } from './select.processor';
+import { CreateTableQuery, InsertQuery, Parser, SelectQuery, TransactionQuery } from '../parser';
+import { InsertProcessor } from './insert.processor';
 
 export class QueryRunner {
   protected parser = new Parser();
@@ -15,25 +10,22 @@ export class QueryRunner {
   constructor(protected server: Server) {}
 
   async query(sql: string, params: any[]): Promise<any> {
-    let ast = this.parser.astify(injectParams(sql, params));
-    if (Array.isArray(ast)) {
-      if (ast.length === 1) {
-        ast = ast[0];
-      } else {
-        throw new Error('Multi query');
-      }
+    const query = this.parser.parse(sql, params);
+    if (query instanceof TransactionQuery) {
+      // todo: handle it
+      return;
     }
-    if (ast.type === 'create' && ast.keyword === 'table') {
-      const command = new CreateTableCommand(this.server);
-      return command.run(ast);
+    if (query instanceof SelectQuery) {
+      const p = new SelectProcessor(this.server);
+      return p.process(query);
     }
-    if (ast.type === 'insert') {
-      const command = new InsertCommand(this.server);
-      return command.run(ast);
+    if (query instanceof InsertQuery) {
+      const p = new InsertProcessor(this.server);
+      return p.process(query);
     }
-    if (ast.type === 'select') {
-      const command = new SelectCommand(this.server);
-      return command.run(ast);
+    if (query instanceof CreateTableQuery) {
+      const p = new CreateTableProcessor(this.server);
+      return p.process(query);
     }
 
     throw new Error(`Cannot handle query: ${sql}`);
