@@ -3,7 +3,7 @@ module.exports = {
   transform: {
     '.spec.ts$': ['ts-jest', {}],
   },
-  collectCoverage: true,
+  collectCoverage: false,
   testRegex: ['.spec.ts$'],
   testEnvironment: 'node',
   preset: 'ts-jest',
