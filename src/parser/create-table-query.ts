@@ -1,5 +1,5 @@
 import { Create } from 'node-sql-parser';
-import { DataType } from '../table/table-column';
+import { DataType } from '../server/table-column';
 
 type Column = {
   name: string;

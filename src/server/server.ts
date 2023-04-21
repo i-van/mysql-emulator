@@ -1,4 +1,4 @@
-import { Database } from '../database';
+import { Database } from './database';
 
 export class Server {
   protected databaseMap = new Map<string, Database>();
