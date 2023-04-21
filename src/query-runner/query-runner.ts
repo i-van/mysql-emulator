@@ -16,8 +16,8 @@ export class QueryRunner {
       return;
     }
     if (query instanceof SelectQuery) {
-      const p = new SelectProcessor(this.server);
-      return p.process(query);
+      const p = new SelectProcessor(this.server, query);
+      return p.process();
     }
     if (query instanceof InsertQuery) {
       const p = new InsertProcessor(this.server);

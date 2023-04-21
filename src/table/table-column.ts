@@ -5,4 +5,8 @@ export enum DataType {
 
 export class TableColumn {
   constructor(protected name: string, protected dataType: DataType) {}
+
+  getName() {
+    return this.name;
+  }
 }

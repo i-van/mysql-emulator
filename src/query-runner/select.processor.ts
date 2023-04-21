@@ -1,37 +1,61 @@
 import { Server } from '../server';
-import { Function, SelectQuery } from '../parser';
+import { SelectQuery } from '../parser';
+import { extractColumn, extractTable, mapKeys } from '../utils';
 
 export class SelectProcessor {
-  constructor(protected server: Server) {}
+  protected rows: any[] = [];
+  protected columns: string[] = [];
 
-  process(query: SelectQuery) {
-    if (!query.from) {
-      return [
-        (query.columns as Function[]).reduce((r, c) => ({
-          ...r,
-          [c.alias]: this.runFunction(c.name),
-        }), {}),
-      ];
+  constructor(protected server: Server, protected query: SelectQuery) {}
+
+  process() {
+    this.applyFrom();
+    this.applySelect();
+
+    return this.rows;
+  }
+
+  private applyFrom(): void {
+    if (!this.query.from) {
+      return;
     }
 
-    const db = this.server.getDatabase(query.from.databaseName);
-    const table = db.getTable(query.from.tableName);
-    const rows = table.getRows();
+    const { databaseName, tableName } = this.query.from;
+    const table = this.server.getDatabase(databaseName).getTable(tableName);
 
-    return rows.map((row) => {
-      return query.columns.reduce((r, c) => {
+    this.columns = table.getColumns().map(c => `${tableName}::${c.getName()}`);
+    this.rows = table.getRows().map(r => mapKeys(r, (key) => `${tableName}::${key}`));
+  }
+
+  private applySelect() {
+    const hasFunctionColumn = this.query.columns.find(c => c.type === 'function');
+    if (this.rows.length === 0 && hasFunctionColumn) {
+      this.rows = [{}];
+    }
+
+    this.rows = this.rows.map((row) => {
+      return this.query.columns.reduce((res, c) => {
         if (c.type === 'star') {
-          return { ...r, ...row };
+          const filter = (key) => c.table ? c.table === extractTable(key) : true;
+          return { ...res, ...mapKeys(row, extractColumn, filter) };
         } else if (c.type === 'column_ref') {
+          const key = c.table
+            ? `${c.table}::${c.column}`
+            : Object.keys(row).find(key => extractColumn(key) === c.column);
+          if (!key || !this.columns.includes(key)) {
+            throw new Error(`Unknown column '${c.column}' in 'field list'`);
+          }
           return {
-            ...r,
-            [c.alias || c.column]: row[c.column],
+            ...res,
+            [c.alias || c.column]: row[key] || null,
           };
         } else if (c.type === 'function') {
-          // todo: handle it
-          return r;
+          return {
+            ...res,
+            [c.alias]: this.runFunction(c.name),
+          }
         }
-        return r;
+        return res;
       }, {});
     });
   }

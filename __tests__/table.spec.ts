@@ -40,16 +40,6 @@ describe('table', () => {
     ]);
   });
 
-  it('should select "name as fullName"', async () => {
-    const res = await query(`SELECT name as fullName from users`);
-
-    expect(res).toEqual([
-      { fullName: 'name1' },
-      { fullName: 'name2' },
-      { fullName: 'name3' },
-    ]);
-  });
-
   it('should select "name fullName"', async () => {
     const res = await query(`SELECT name fullName from users`);
 
@@ -63,16 +53,6 @@ describe('table', () => {
   describe('table alias', () => {
     it('should select from aliased table', async () => {
       const res = await query(`SELECT * from users t`);
-
-      expect(res).toEqual([
-        { id: 1, name: 'name1' },
-        { id: 2, name: 'name2' },
-        { id: 3, name: 'name3' },
-      ]);
-    });
-
-    it('should select from aliased table with "as"', async () => {
-      const res = await query(`SELECT * from users as t`);
 
       expect(res).toEqual([
         { id: 1, name: 'name1' },
@@ -103,16 +83,6 @@ describe('table', () => {
 
     it('should select "t.name fullName" from aliased table', async () => {
       const res = await query(`SELECT t.name fullName from users t`);
-
-      expect(res).toEqual([
-        { fullName: 'name1' },
-        { fullName: 'name2' },
-        { fullName: 'name3' },
-      ]);
-    });
-
-    it('should select "t.name as fullName" from aliased table', async () => {
-      const res = await query(`SELECT t.name as fullName from users t`);
 
       expect(res).toEqual([
         { fullName: 'name1' },

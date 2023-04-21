@@ -15,6 +15,10 @@ export class Table {
     this.rows.push(data);
   }
 
+  getColumns() {
+    return this.columns;
+  }
+
   getRows() {
     return this.rows;
   }
