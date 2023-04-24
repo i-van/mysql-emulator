@@ -1,6 +1,7 @@
 import { Server } from '../server';
 import { SelectQuery } from '../parser';
-import { extractColumn, extractTable, mapKeys } from '../utils';
+import { mapKeys } from '../utils';
+import { Evaluator } from './evaluator';
 
 export class SelectProcessor {
   protected rows: any[] = [];
@@ -10,12 +11,13 @@ export class SelectProcessor {
 
   process() {
     this.applyFrom();
+    this.applyWhere();
     this.applySelect();
 
     return this.rows;
   }
 
-  private applyFrom(): void {
+  protected applyFrom(): void {
     if (!this.query.from) {
       return;
     }
@@ -27,44 +29,43 @@ export class SelectProcessor {
     this.rows = table.getRows().map(r => mapKeys(r, (key) => `${tableName}::${key}`));
   }
 
-  private applySelect() {
+  protected applyWhere(): void {
+    const { where } = this.query;
+    if (!where) {
+      return;
+    }
+
+    const evaluator = this.createEvaluator();
+    this.rows = this.rows.filter((row) => evaluator.evaluateExpression(where, row));
+  }
+
+  protected applySelect() {
     const hasFunctionColumn = this.query.columns.find(c => c.type === 'function');
     if (this.rows.length === 0 && hasFunctionColumn) {
       this.rows = [{}];
     }
 
+    const evaluator = this.createEvaluator();
     this.rows = this.rows.map((row) => {
       return this.query.columns.reduce((res, c) => {
         if (c.type === 'star') {
-          const filter = (key) => c.table ? c.table === extractTable(key) : true;
-          return { ...res, ...mapKeys(row, extractColumn, filter) };
-        } else if (c.type === 'column_ref') {
-          const key = c.table
-            ? `${c.table}::${c.column}`
-            : Object.keys(row).find(key => extractColumn(key) === c.column);
-          if (!key || !this.columns.includes(key)) {
-            throw new Error(`Unknown column '${c.column}' in 'field list'`);
-          }
           return {
             ...res,
-            [c.alias || c.column]: row[key] || null,
+            ...evaluator.evaluateStar(c, row),
           };
-        } else if (c.type === 'function') {
-          return {
-            ...res,
-            [c.alias]: this.runFunction(c.name),
-          }
         }
-        return res;
+        const key = c.type === 'function'
+          ? c.alias
+          : c.alias || c.column;
+        return {
+          ...res,
+          [key]: evaluator.evaluateExpression(c, row),
+        };
       }, {});
     });
   }
 
-  private runFunction(name: string) {
-    switch (name.toLowerCase()) {
-      case 'database': return this.server.getDatabase(null).getName();
-      case 'version': return '8.0.0';
-      default: throw new Error(`Function ${name} is not implemented`);
-    }
+  private createEvaluator(): Evaluator {
+    return new Evaluator(this.server, this.columns);
   }
 }

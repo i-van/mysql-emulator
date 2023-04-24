@@ -50,7 +50,7 @@ describe('table', () => {
     ]);
   });
 
-  describe('table alias', () => {
+  describe('from clause', () => {
     it('should select from aliased table', async () => {
       const res = await query(`SELECT * from users t`);
 
@@ -88,6 +88,54 @@ describe('table', () => {
         { fullName: 'name1' },
         { fullName: 'name2' },
         { fullName: 'name3' },
+      ]);
+    });
+  });
+
+  describe('where clause', () => {
+    it('should filter by "u.id = 1"', async () => {
+      const res = await query(`SELECT * from users u where u.id = 1`);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+      ]);
+    });
+    it(`should filter by "u.id = '1'"`, async () => {
+      const res = await query(`SELECT * from users u where u.id = '1'`);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+      ]);
+    });
+    it('should filter by "u.id in (1, 2)"', async () => {
+      const res = await query(`SELECT * from users u where u.id in (1, 2)`);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+        { id: 2, name: 'name2' },
+      ]);
+    });
+    it(`should filter by "u.id in ('1', '2')"`, async () => {
+      const res = await query(`SELECT * from users u where u.id in ('1', '2')`);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+        { id: 2, name: 'name2' },
+      ]);
+    });
+    it('should filter by "u.id = 2 or u.id = 3"', async () => {
+      const res = await query(`SELECT * from users u where u.id = 2 or u.id = 3`);
+
+      expect(res).toEqual([
+        { id: 2, name: 'name2' },
+        { id: 3, name: 'name3' },
+      ]);
+    });
+    it(`should filter by "u.id = 2 and u.name = 'name2'`, async () => {
+      const res = await query(`SELECT * from users u where u.id = 2 and u.name = 'name2'`);
+
+      expect(res).toEqual([
+        { id: 2, name: 'name2' },
       ]);
     });
   });

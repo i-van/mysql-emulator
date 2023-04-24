@@ -138,5 +138,44 @@ describe('Parser', () => {
         alias: 'u',
       });
     });
+    it('should parse equals expression', () => {
+      const p = new Parser();
+      const sql = 'SELECT * FROM users u where u.id = 1';
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).where).toEqual({
+        type: 'binary_expression',
+        operator: '=',
+        left: { type: 'column_ref', table: 'users', column: 'id' },
+        right: { type: 'number', value: 1 },
+      });
+    });
+    it('should parse IN expression', () => {
+      const p = new Parser();
+      const sql = 'SELECT * FROM users u where u.id IN (1, 2)';
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).where).toEqual({
+        type: 'binary_expression',
+        operator: 'IN',
+        left: { type: 'column_ref', table: 'users', column: 'id' },
+        right: { type: 'array', value: [1, 2] },
+      });
+    });
+    it('should parse string values', () => {
+      const p = new Parser();
+      const sql = `SELECT * FROM users u where u.id IN ('1', "2")`;
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).where).toEqual({
+        type: 'binary_expression',
+        operator: 'IN',
+        left: { type: 'column_ref', table: 'users', column: 'id' },
+        right: { type: 'array', value: ['1', '2'] },
+      });
+    });
   });
 });
