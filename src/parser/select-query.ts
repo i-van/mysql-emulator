@@ -8,7 +8,6 @@ export type From = {
 export type Star = {
   type: 'star';
   table: string | null;
-  value: '*';
 };
 export type ColumnRef = {
   type: 'column_ref';
@@ -48,7 +47,6 @@ export class SelectQuery {
         return {
           type: 'star',
           table: from && from.alias === c.expr.table ? from.tableName : c.expr.table,
-          value: '*',
         } as Star;
       } else if (c.expr?.type === 'column_ref') {
         return {
@@ -61,7 +59,6 @@ export class SelectQuery {
         return {
           type: 'star',
           table: null,
-          value: '*',
         } as Star;
       }
       throw new Error('Could not map columns');

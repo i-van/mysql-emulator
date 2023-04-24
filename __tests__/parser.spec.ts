@@ -72,7 +72,7 @@ describe('Parser', () => {
   });
 
   describe('select', () => {
-    it('should return SelectQuery', () => {
+    it('should parse function column', () => {
       const p = new Parser();
       const sql = 'SELECT database()';
       const res = p.parse(sql, []);
@@ -83,7 +83,7 @@ describe('Parser', () => {
         { type: 'function', name: 'database', alias: 'database()' }
       ]);
     });
-    it('should return SelectQuery', () => {
+    it('should parse aliased function column', () => {
       const p = new Parser();
       const sql = 'SELECT database() name';
       const res = p.parse(sql, []);
@@ -94,22 +94,27 @@ describe('Parser', () => {
         { type: 'function', name: 'database', alias: 'name' }
       ]);
     });
-    it('should return SelectQuery', () => {
+    it('should parse star column', () => {
+      const p = new Parser();
+      const sql = 'SELECT * FROM users';
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).columns).toEqual([
+        { type: 'star', table: null }
+      ]);
+    });
+    it('should parse star column for specific table', () => {
       const p = new Parser();
       const sql = 'SELECT u.* FROM users u';
       const res = p.parse(sql, []);
 
       expect(res).toBeInstanceOf(SelectQuery);
-      expect((res as SelectQuery).from).toEqual({
-        databaseName: null,
-        tableName: 'users',
-        alias: 'u',
-      });
       expect((res as SelectQuery).columns).toEqual([
-        { type: 'star', table: 'users', value: '*' }
+        { type: 'star', table: 'users' }
       ]);
     });
-    it('should return SelectQuery', () => {
+    it('should parse FROM', () => {
       const p = new Parser();
       const sql = 'SELECT * FROM users';
       const res = p.parse(sql, []);
@@ -120,9 +125,18 @@ describe('Parser', () => {
         tableName: 'users',
         alias: null,
       });
-      expect((res as SelectQuery).columns).toEqual([
-        { type: 'star', table: null, value: '*' }
-      ]);
+    });
+    it('should parse aliased FROM', () => {
+      const p = new Parser();
+      const sql = 'SELECT u.* FROM users u';
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).from).toEqual({
+        databaseName: null,
+        tableName: 'users',
+        alias: 'u',
+      });
     });
   });
 });
