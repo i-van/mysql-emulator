@@ -5,7 +5,7 @@ import { Evaluator } from './evaluator';
 
 export class SelectProcessor {
   protected rows: any[] = [];
-  protected columns: string[] = [];
+  protected fields: string[] = [];
 
   constructor(protected server: Server, protected query: SelectQuery) {}
 
@@ -25,7 +25,7 @@ export class SelectProcessor {
     const { databaseName, tableName } = this.query.from;
     const table = this.server.getDatabase(databaseName).getTable(tableName);
 
-    this.columns = table.getColumns().map(c => `${tableName}::${c.getName()}`);
+    this.fields = table.getColumns().map(c => `${tableName}::${c.getName()}`);
     this.rows = table.getRows().map(r => mapKeys(r, (key) => `${tableName}::${key}`));
   }
 
@@ -66,6 +66,6 @@ export class SelectProcessor {
   }
 
   private createEvaluator(): Evaluator {
-    return new Evaluator(this.server, this.columns);
+    return new Evaluator(this.server, this.fields);
   }
 }

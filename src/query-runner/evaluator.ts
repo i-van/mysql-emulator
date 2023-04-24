@@ -5,7 +5,7 @@ import { Server } from '../server';
 export class Evaluator {
   constructor(
     protected server: Server,
-    protected columns: string[],
+    protected fields: string[],
   ) {}
 
   evaluateExpression(e: Expression, row: object): any {
@@ -42,7 +42,7 @@ export class Evaluator {
     const key = c.table
       ? `${c.table}::${c.column}`
       : Object.keys(row).find(key => extractColumn(key) === c.column);
-    if (!key || !this.columns.includes(key)) {
+    if (!key || !this.fields.includes(key)) {
       throw new Error(`Unknown column '${c.column}' in 'field list'`);
     }
     return row[key] || null;
