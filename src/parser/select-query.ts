@@ -20,6 +20,7 @@ export type ColumnRef = {
 export type FunctionType = {
   type: 'function';
   name: string;
+  column: string;
   // todo: add args
 };
 export type NumberType = {
@@ -46,7 +47,15 @@ export type BinaryExpression = {
   left: Expression;
   right: Expression;
 }
-export type Expression = UnaryExpression | BinaryExpression | ColumnRef | FunctionType | NumberType | StringType | ArrayType;
+export type Expression =
+  UnaryExpression
+  | BinaryExpression
+  | ColumnRef
+  | FunctionType
+  | NumberType
+  | StringType
+  | ArrayType
+  | Star;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
 
 const buildExpression = (ast: any, tableAliases: Map<string, string>): Expression => {
@@ -63,6 +72,19 @@ const buildExpression = (ast: any, tableAliases: Map<string, string>): Expressio
       operator: ast.operator,
       left: buildExpression(ast.left, tableAliases),
       right: buildExpression(ast.right, tableAliases),
+    };
+  }
+  if (ast.type === 'column_ref' && ast.column === '*') {
+    return {
+      type: 'star',
+      table: tableAliases.get(ast.table) || ast.table,
+    };
+  }
+  if (ast.type === 'function') {
+    return {
+      type: 'function',
+      name: ast.name,
+      column: ast.name + '()',
     };
   }
   if (ast.type === 'column_ref') {
@@ -91,7 +113,7 @@ const buildExpression = (ast: any, tableAliases: Map<string, string>): Expressio
     };
   }
   throw new Error(`Unknown "${ast.type}" expression type`);
-}
+};
 
 export class SelectQuery {
   constructor(
@@ -115,28 +137,17 @@ export class SelectQuery {
     }
 
     const columns = [...ast.columns].map((c): Column => {
-      if ((c.expr as any)?.type === 'function') {
-        return {
-          type: 'function',
-          name: (c.expr as any).name,
-          alias: c.as || (c.expr as any).name + '()',
-        };
-      } else if (c.expr?.type === 'column_ref' && c.expr.column === '*') {
-        return {
-          type: 'star',
-          table: tableAliases.get(c.expr.table) || c.expr.table,
-        };
-      } else if (c.expr?.type === 'column_ref') {
-        return {
-          type: 'column_ref',
-          table: tableAliases.get(c.expr.table) || c.expr.table,
-          column: c.expr.column,
-          alias: c.as,
-        };
-      } else if (c === '*') {
+      if (c === '*') {
         return {
           type: 'star',
           table: null,
+        };
+      } else if (c.expr?.type === 'column_ref' && c.expr.column === '*') {
+        return buildExpression(c.expr, tableAliases) as Star;
+      } else if (c.expr?.type === 'column_ref' || (c.expr as any)?.type === 'function') {
+        return {
+          ...buildExpression(c.expr, tableAliases) as ColumnRef | FunctionType,
+          alias: c.as,
         };
       }
       throw new Error('Could not map columns');

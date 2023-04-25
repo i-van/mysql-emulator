@@ -80,7 +80,7 @@ describe('Parser', () => {
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).from).toBe(null);
       expect((res as SelectQuery).columns).toEqual([
-        { type: 'function', name: 'database', alias: 'database()' }
+        { type: 'function', name: 'database', column: 'database()', alias: null }
       ]);
     });
     it('should parse aliased function column', () => {
@@ -91,7 +91,7 @@ describe('Parser', () => {
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).from).toBe(null);
       expect((res as SelectQuery).columns).toEqual([
-        { type: 'function', name: 'database', alias: 'name' }
+        { type: 'function', name: 'database', column: 'database()', alias: 'name' }
       ]);
     });
     it('should parse star column', () => {

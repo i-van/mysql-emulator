@@ -68,12 +68,9 @@ export class SelectProcessor {
             ...evaluator.evaluateStar(c, row),
           };
         }
-        const key = c.type === 'function'
-          ? c.alias
-          : c.alias || c.column;
         return {
           ...res,
-          [key]: evaluator.evaluateExpression(c, row),
+          [c.alias || c.column]: evaluator.evaluateExpression(c, row),
         };
       }, {});
     });
