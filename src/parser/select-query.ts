@@ -47,27 +47,28 @@ export type BinaryExpression = {
   right: Expression;
 }
 export type Expression = UnaryExpression | BinaryExpression | ColumnRef | FunctionType | NumberType | StringType | ArrayType;
+export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
 
-const buildExpression = (ast: any, from: From | null): Expression => {
+const buildExpression = (ast: any, tableAliases: Map<string, string>): Expression => {
   if (ast.type === 'unary_expr') {
     return {
       type: 'unary_expression',
       operator: ast.operator,
-      expression: buildExpression(ast.expr, from),
+      expression: buildExpression(ast.expr, tableAliases),
     };
   }
   if (ast.type === 'binary_expr') {
     return {
       type: 'binary_expression',
       operator: ast.operator,
-      left: buildExpression(ast.left, from),
-      right: buildExpression(ast.right, from),
+      left: buildExpression(ast.left, tableAliases),
+      right: buildExpression(ast.right, tableAliases),
     };
   }
   if (ast.type === 'column_ref') {
     return {
       type: 'column_ref',
-      table: from && from.alias === ast.table ? from.tableName : ast.table,
+      table: tableAliases.get(ast.table) || ast.table,
       column: ast.column,
     };
   }
@@ -97,6 +98,7 @@ export class SelectQuery {
     public from: From | null,
     public columns: Column[],
     public where: Expression | null,
+    public orderBy: OrderBy[],
   ) {}
 
   static fromAst(ast: Select): SelectQuery {
@@ -107,6 +109,11 @@ export class SelectQuery {
         alias: ast.from[0].as,
       }
       : null;
+    const tableAliases = new Map<string, string>();
+    if (from?.alias) {
+      tableAliases.set(from.alias, from.tableName);
+    }
+
     const columns = [...ast.columns].map((c): Column => {
       if ((c.expr as any)?.type === 'function') {
         return {
@@ -117,12 +124,12 @@ export class SelectQuery {
       } else if (c.expr?.type === 'column_ref' && c.expr.column === '*') {
         return {
           type: 'star',
-          table: from && from.alias === c.expr.table ? from.tableName : c.expr.table,
+          table: tableAliases.get(c.expr.table) || c.expr.table,
         };
       } else if (c.expr?.type === 'column_ref') {
         return {
           type: 'column_ref',
-          table: from && from.alias === c.expr.table ? from.tableName : c.expr.table,
+          table: tableAliases.get(c.expr.table) || c.expr.table,
           column: c.expr.column,
           alias: c.as,
         };
@@ -134,11 +141,16 @@ export class SelectQuery {
       }
       throw new Error('Could not map columns');
     });
+    const orderBy: OrderBy[] = (ast.orderby || []).map(o => ({
+      ...buildExpression(o.expr, tableAliases),
+      order: o.type,
+    } as OrderBy));
 
     return new SelectQuery(
       from,
       columns,
-      ast.where ? buildExpression(ast.where, from) : null,
+      ast.where ? buildExpression(ast.where, tableAliases) : null,
+      orderBy,
     );
   }
 }

@@ -1,6 +1,6 @@
 import { Server } from '../server';
 import { SelectQuery } from '../parser';
-import { mapKeys } from '../utils';
+import { mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 
 export class SelectProcessor {
@@ -12,6 +12,7 @@ export class SelectProcessor {
   process() {
     this.applyFrom();
     this.applyWhere();
+    this.applyOrderBy();
     this.applySelect();
 
     return this.rows;
@@ -37,6 +38,19 @@ export class SelectProcessor {
 
     const evaluator = this.createEvaluator();
     this.rows = this.rows.filter((row) => evaluator.evaluateExpression(where, row));
+  }
+
+  protected applyOrderBy(): void {
+    if (this.query.orderBy.length === 0) {
+      return;
+    }
+
+    const evaluator = this.createEvaluator();
+    const sortKeys: SortByKey[] = this.query.orderBy.map(o => ({
+      mapper: (row) => evaluator.evaluateExpression(o, row),
+      order: o.order === 'ASC' ? 1 : -1,
+    }));
+    this.rows = this.rows.sort(sortBy(sortKeys));
   }
 
   protected applySelect() {

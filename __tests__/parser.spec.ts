@@ -177,5 +177,35 @@ describe('Parser', () => {
         right: { type: 'array', value: ['1', '2'] },
       });
     });
+    it('should parse default ORDER BY', () => {
+      const p = new Parser();
+      const sql = `SELECT * FROM users ORDER BY id`;
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).orderBy).toEqual([
+        { type: 'column_ref', table: null, column: 'id', order: 'ASC' }
+      ]);
+    });
+    it('should parse DESC ORDER BY', () => {
+      const p = new Parser();
+      const sql = `SELECT * FROM users ORDER BY id DESC`;
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).orderBy).toEqual([
+        { type: 'column_ref', table: null, column: 'id', order: 'DESC' }
+      ]);
+    });
+    it('should parse ORDER BY aliased column', () => {
+      const p = new Parser();
+      const sql = `SELECT * FROM users u ORDER BY u.id ASC`;
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).orderBy).toEqual([
+        { type: 'column_ref', table: 'users', column: 'id', order: 'ASC' }
+      ]);
+    });
   });
 });

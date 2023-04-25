@@ -11,12 +11,38 @@ export const mapKeys = (
   }, {});
 };
 
-export const extractColumn = (key) => {
+export const extractColumn = (key: string): string => {
   const [_table, column] = key.split('::');
   return column;
 };
 
-export const extractTable = (key) => {
+export const extractTable = (key: string): string => {
   const [table, _column] = key.split('::');
   return table;
+};
+
+export type SortByKey = {
+  mapper: (n: any) => any;
+  order: 1 | -1;
+}
+
+export const sortBy = (keys: SortByKey[]) => (a: any, b: any): 0 | 1 | -1 => {
+  const [{ mapper, order }] = keys;
+  const valueA = mapper(a);
+  const valueB = mapper(b);
+
+  if (valueA === valueB) {
+    return keys.length === 1
+      ? 0
+      : sortBy(keys.slice(1))(a, b);
+  }
+
+  if (typeof valueA === 'string') {
+    return order * valueA.localeCompare(valueB) as 1 | -1;
+  } else if (typeof valueA === 'number') {
+    return valueA > valueB ? order : -order as 1 | -1;
+  } else if (typeof valueA === 'boolean') {
+    return valueA ? order : -order as 1 | -1;
+  }
+  return 0;
 };
