@@ -23,8 +23,8 @@ export class SelectProcessor {
       return;
     }
 
-    const { databaseName, tableName } = this.query.from;
-    const table = this.server.getDatabase(databaseName).getTable(tableName);
+    const { database, table: tableName } = this.query.from;
+    const table = this.server.getDatabase(database).getTable(tableName);
 
     this.fields = table.getColumns().map(c => `${tableName}::${c.getName()}`);
     this.rows = table.getRows().map(r => mapKeys(r, (key) => `${tableName}::${key}`));

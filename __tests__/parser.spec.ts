@@ -45,8 +45,8 @@ describe('Parser', () => {
       const res = p.parse(sql, []);
 
       expect(res).toBeInstanceOf(CreateTableQuery);
-      expect((res as CreateTableQuery).databaseName).toBe(null);
-      expect((res as CreateTableQuery).tableName).toBe('companies');
+      expect((res as CreateTableQuery).database).toBe(null);
+      expect((res as CreateTableQuery).table).toBe('companies');
       expect((res as CreateTableQuery).columns).toEqual([
         { name: 'id', dataType: 'INT' },
         { name: 'name', dataType: 'VARCHAR' },
@@ -61,8 +61,8 @@ describe('Parser', () => {
       const res = p.parse(sql, []);
 
       expect(res).toBeInstanceOf(InsertQuery);
-      expect((res as InsertQuery).databaseName).toBe(null);
-      expect((res as InsertQuery).tableName).toBe('users');
+      expect((res as InsertQuery).database).toBe(null);
+      expect((res as InsertQuery).table).toBe('users');
       expect((res as InsertQuery).rows).toEqual([
         { id: 1, name: 'name1' },
         { id: 2, name: 'name2' },
@@ -121,8 +121,8 @@ describe('Parser', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).from).toEqual({
-        databaseName: null,
-        tableName: 'users',
+        database: null,
+        table: 'users',
         alias: null,
       });
     });
@@ -133,8 +133,8 @@ describe('Parser', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).from).toEqual({
-        databaseName: null,
-        tableName: 'users',
+        database: null,
+        table: 'users',
         alias: 'u',
       });
     });

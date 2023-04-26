@@ -4,8 +4,8 @@ type WithAlias<T> = T & { alias: string };
 type WithNullableAlias<T> = T & { alias: string | null };
 
 export type From = {
-  databaseName: string | null;
-  tableName: string;
+  database: string | null;
+  table: string;
   alias: string | null;
 };
 export type Star = {
@@ -126,14 +126,14 @@ export class SelectQuery {
   static fromAst(ast: Select): SelectQuery {
     const from = ast.from
       ? {
-        databaseName: ast.from[0].db,
-        tableName: ast.from[0].table,
-        alias: ast.from[0].as,
-      }
+          database: ast.from[0].db,
+          table: ast.from[0].table,
+          alias: ast.from[0].as,
+        }
       : null;
     const tableAliases = new Map<string, string>();
     if (from?.alias) {
-      tableAliases.set(from.alias, from.tableName);
+      tableAliases.set(from.alias, from.table);
     }
 
     const columns = [...ast.columns].map((c): Column => {
