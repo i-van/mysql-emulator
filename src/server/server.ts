@@ -1,7 +1,7 @@
 import { Database } from './database';
 
 export class Server {
-  protected databaseMap = new Map<string, Database>();
+  protected databases = new Map<string, Database>();
   protected usedDatabase: string | null = null;
 
   constructor(databaseName = 'primary') {
@@ -13,16 +13,16 @@ export class Server {
   }
 
   createDatabase(name: string): Database {
-    if (this.databaseMap.has(name)) {
+    if (this.databases.has(name)) {
       throw new Error(`Database ${name} already exists`);
     }
     const db = new Database(name);
-    this.databaseMap.set(name, db);
+    this.databases.set(name, db);
     return db;
   }
 
   useDatabase(name: string) {
-    if (!this.databaseMap.has(name)) {
+    if (!this.databases.has(name)) {
       throw new Error(`Unknown database ${name}`);
     }
     this.usedDatabase = name;
@@ -36,7 +36,7 @@ export class Server {
       throw new Error('Database name is empty');
     }
 
-    const db = this.databaseMap.get(name);
+    const db = this.databases.get(name);
     if (!db) {
       throw new Error(`Unknown database ${name}`);
     }
