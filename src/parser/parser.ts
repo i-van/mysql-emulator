@@ -4,8 +4,9 @@ import { SelectQuery } from './select-query';
 import { ParserException } from './parser-exception';
 import { InsertQuery } from './insert-query';
 import { CreateTableQuery } from './create-table-query';
+import { DropTableQuery } from './drop-table-query';
 
-type Query = TransactionQuery | SelectQuery | InsertQuery | CreateTableQuery;
+type Query = TransactionQuery | SelectQuery | InsertQuery | CreateTableQuery | DropTableQuery;
 
 const injectParams = (s: string, params: any[]): string => {
   let i = 0;
@@ -37,6 +38,7 @@ export class Parser {
         case 'select': return SelectQuery.fromAst(ast);
         case 'insert': return InsertQuery.fromAst(ast);
         case 'create': return CreateTableQuery.fromAst(ast);
+        case 'drop' as unknown: return DropTableQuery.fromAst(ast);
       }
     } catch (err: any) {
       throw new ParserException(`${err.message}: ${injectedSql}`);

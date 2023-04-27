@@ -1,8 +1,9 @@
 import { Server } from '../server';
 import { CreateTableProcessor } from './create-table.processor';
 import { SelectProcessor } from './select.processor';
-import { CreateTableQuery, InsertQuery, Parser, SelectQuery, TransactionQuery } from '../parser';
+import { CreateTableQuery, DropTableQuery, InsertQuery, Parser, SelectQuery, TransactionQuery } from '../parser';
 import { InsertProcessor } from './insert.processor';
+import { DropTableProcessor } from './drop-table.processor';
 
 export class QueryRunner {
   protected parser = new Parser();
@@ -25,6 +26,10 @@ export class QueryRunner {
     }
     if (query instanceof CreateTableQuery) {
       const p = new CreateTableProcessor(this.server);
+      return p.process(query);
+    }
+    if (query instanceof DropTableQuery) {
+      const p = new DropTableProcessor(this.server);
       return p.process(query);
     }
 

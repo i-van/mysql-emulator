@@ -1,5 +1,6 @@
 import {
   CreateTableQuery,
+  DropTableQuery,
   InsertQuery,
   Parser,
   SelectQuery,
@@ -51,6 +52,18 @@ describe('Parser', () => {
         { name: 'id', dataType: 'INT' },
         { name: 'name', dataType: 'VARCHAR' },
       ]);
+    });
+  });
+
+  describe('drop', () => {
+    it('should return DropTableQuery', () => {
+      const p = new Parser();
+      const sql = 'DROP TABLE users';
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(DropTableQuery);
+      expect((res as DropTableQuery).database).toBe(null);
+      expect((res as DropTableQuery).table).toBe('users');
     });
   });
 
