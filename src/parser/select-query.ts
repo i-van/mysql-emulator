@@ -21,7 +21,7 @@ export type FunctionType = {
   type: 'function';
   name: string;
   column: string;
-  // todo: add args
+  args: Expression[];
 };
 export type NumberType = {
   type: 'number';
@@ -74,17 +74,27 @@ const buildExpression = (ast: any, tableAliases: Map<string, string>): Expressio
       right: buildExpression(ast.right, tableAliases),
     };
   }
+  if (ast.type === 'star') {
+    return {
+      type: 'star',
+      table: null,
+    };
+  }
   if (ast.type === 'column_ref' && ast.column === '*') {
     return {
       type: 'star',
       table: tableAliases.get(ast.table) || ast.table,
     };
   }
-  if (ast.type === 'function') {
+  if (ast.type === 'function' || ast.type === 'aggr_func') {
+    const args = ast.args.type === 'expr_list'
+      ? ast.args.value.map(e => buildExpression(e, tableAliases))
+      : [buildExpression(ast.args.expr, tableAliases)];
     return {
       type: 'function',
       name: ast.name,
-      column: ast.name + '()',
+      column: `${ast.name}()`,
+      args,
     };
   }
   if (ast.type === 'column_ref') {
@@ -120,6 +130,7 @@ export class SelectQuery {
     public from: From | null,
     public columns: Column[],
     public where: Expression | null,
+    public groupBy: ColumnRef[],
     public orderBy: OrderBy[],
   ) {}
 
@@ -138,13 +149,10 @@ export class SelectQuery {
 
     const columns = [...ast.columns].map((c): Column => {
       if (c === '*') {
-        return {
-          type: 'star',
-          table: null,
-        };
+        return buildExpression({ type: 'star', value: c }, tableAliases) as Star;
       } else if (c.expr?.type === 'column_ref' && c.expr.column === '*') {
         return buildExpression(c.expr, tableAliases) as Star;
-      } else if (c.expr?.type === 'column_ref' || (c.expr as any)?.type === 'function') {
+      } else if (['column_ref', 'aggr_func', 'function'].includes(c.expr?.type)) {
         return {
           ...buildExpression(c.expr, tableAliases) as ColumnRef | FunctionType,
           alias: c.as,
@@ -152,6 +160,9 @@ export class SelectQuery {
       }
       throw new Error('Could not map columns');
     });
+    const groupBy: ColumnRef[] = (ast.groupby || []).map(g => (
+      buildExpression(g, tableAliases) as ColumnRef
+    ));
     const orderBy: OrderBy[] = (ast.orderby || []).map(o => ({
       ...buildExpression(o.expr, tableAliases),
       order: o.type,
@@ -161,6 +172,7 @@ export class SelectQuery {
       from,
       columns,
       ast.where ? buildExpression(ast.where, tableAliases) : null,
+      groupBy,
       orderBy,
     );
   }

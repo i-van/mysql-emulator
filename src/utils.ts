@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 export const mapKeys = (
   o: object,
   mapper: (key: string, value: any) => string,
@@ -46,3 +48,7 @@ export const sortBy = (keys: SortByKey[]) => (a: any, b: any): 0 | 1 | -1 => {
   }
   return 0;
 };
+
+export const md5 = (s: string): string => {
+  return createHash('md5').update(s).digest('hex');
+}

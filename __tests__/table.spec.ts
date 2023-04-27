@@ -4,10 +4,13 @@ describe('table', () => {
   beforeAll(async () => {
     await query(`CREATE TABLE users (id int, name varchar(255))`);
     await query(`INSERT INTO users (id, name) VALUES (1, 'name1'), (2, 'name2'), (3, 'name3')`);
+    await query(`CREATE TABLE profiles (id int, name varchar(255), post_count int)`);
+    await query(`INSERT INTO profiles (id, name, post_count) VALUES (1, 'John', 5), (2, 'John', 10), (3, 'Jane', 1)`);
   });
 
   afterAll(async () => {
     await query(`DROP TABLE users`);
+    await query(`DROP TABLE profiles`);
   });
 
   it('should select *', async () => {
@@ -141,15 +144,6 @@ describe('table', () => {
   });
 
   describe('order by clause', () => {
-    beforeAll(async () => {
-      await query(`CREATE TABLE profiles (id int, name varchar(255), post_count int)`);
-      await query(`INSERT INTO profiles (id, name, post_count) VALUES (1, 'John', 5), (2, 'John', 10), (3, 'Jane', 1)`);
-    });
-
-    afterAll(async () => {
-      await query(`DROP TABLE profiles`);
-    });
-
     it('should ORDER BY p.id', async () => {
       const res = await query(`SELECT * from profiles p ORDER BY p.id`);
 
@@ -175,6 +169,25 @@ describe('table', () => {
         { id: 2, name: 'John', post_count: 10 },
         { id: 1, name: 'John', post_count: 5 },
         { id: 3, name: 'Jane', post_count: 1 },
+      ]);
+    });
+  });
+
+  describe('group by clause', () => {
+    it('should COUNT values GROUPED BY p.name', async () => {
+      const res = await query(`SELECT p.name, COUNT(*) count from profiles p GROUP BY p.name`);
+
+      expect(res).toEqual([
+        { name: 'John', count: 2 },
+        { name: 'Jane', count: 1 },
+      ]);
+    });
+    it('should SUM values GROUPED BY p.name', async () => {
+      const res = await query(`SELECT p.name, SUM(p.post_count) count from profiles p GROUP BY p.name`);
+
+      expect(res).toEqual([
+        { name: 'John', count: 15 },
+        { name: 'Jane', count: 1 },
       ]);
     });
   });

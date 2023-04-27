@@ -80,7 +80,7 @@ describe('Parser', () => {
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).from).toBe(null);
       expect((res as SelectQuery).columns).toEqual([
-        { type: 'function', name: 'database', column: 'database()', alias: null }
+        { type: 'function', name: 'database', column: 'database()', args: [], alias: null },
       ]);
     });
     it('should parse aliased function column', () => {
@@ -91,7 +91,39 @@ describe('Parser', () => {
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).from).toBe(null);
       expect((res as SelectQuery).columns).toEqual([
-        { type: 'function', name: 'database', column: 'database()', alias: 'name' }
+        { type: 'function', name: 'database', column: 'database()', args: [], alias: 'name' },
+      ]);
+    });
+    it.skip('should parse COUNT(*) function', () => {
+      const p = new Parser();
+      const sql = 'SELECT COUNT(*) FROM users';
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).columns).toEqual([
+        {
+          type: 'function',
+          name: 'count',
+          column: 'COUNT(*)',
+          args: [{ type: 'star', table: null }],
+          alias: null,
+        },
+      ]);
+    });
+    it.skip('should parse COUNT(u.id) function', () => {
+      const p = new Parser();
+      const sql = 'SELECT count(u.id) FROM users u GROUP BY u.id';
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).columns).toEqual([
+        {
+          type: 'function',
+          name: 'count',
+          column: 'count(u.id)',
+          args: [{ type: 'column_ref', table: 'users', column: 'id' }],
+          alias: null,
+        },
       ]);
     });
     it('should parse star column', () => {
@@ -101,7 +133,7 @@ describe('Parser', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).columns).toEqual([
-        { type: 'star', table: null }
+        { type: 'star', table: null },
       ]);
     });
     it('should parse star column for specific table', () => {
@@ -111,7 +143,7 @@ describe('Parser', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).columns).toEqual([
-        { type: 'star', table: 'users' }
+        { type: 'star', table: 'users' },
       ]);
     });
     it('should parse FROM', () => {
@@ -177,6 +209,26 @@ describe('Parser', () => {
         right: { type: 'array', value: ['1', '2'] },
       });
     });
+    it('should parse GROUP BY', () => {
+      const p = new Parser();
+      const sql = `SELECT * FROM users GROUP BY id`;
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).groupBy).toEqual([
+        { type: 'column_ref', table: null, column: 'id' },
+      ]);
+    });
+    it('should parse aliased GROUP BY', () => {
+      const p = new Parser();
+      const sql = `SELECT * FROM users u GROUP BY u.id`;
+      const res = p.parse(sql, []);
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect((res as SelectQuery).groupBy).toEqual([
+        { type: 'column_ref', table: 'users', column: 'id' },
+      ]);
+    });
     it('should parse default ORDER BY', () => {
       const p = new Parser();
       const sql = `SELECT * FROM users ORDER BY id`;
@@ -184,7 +236,7 @@ describe('Parser', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).orderBy).toEqual([
-        { type: 'column_ref', table: null, column: 'id', order: 'ASC' }
+        { type: 'column_ref', table: null, column: 'id', order: 'ASC' },
       ]);
     });
     it('should parse DESC ORDER BY', () => {
@@ -194,7 +246,7 @@ describe('Parser', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).orderBy).toEqual([
-        { type: 'column_ref', table: null, column: 'id', order: 'DESC' }
+        { type: 'column_ref', table: null, column: 'id', order: 'DESC' },
       ]);
     });
     it('should parse ORDER BY aliased column', () => {
@@ -204,7 +256,7 @@ describe('Parser', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect((res as SelectQuery).orderBy).toEqual([
-        { type: 'column_ref', table: 'users', column: 'id', order: 'ASC' }
+        { type: 'column_ref', table: 'users', column: 'id', order: 'ASC' },
       ]);
     });
   });

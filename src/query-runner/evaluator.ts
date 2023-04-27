@@ -8,17 +8,17 @@ export class Evaluator {
     protected fields: string[],
   ) {}
 
-  evaluateExpression(e: Expression, row: object): any {
+  evaluateExpression(e: Expression, row: object, group: object[] = []): any {
     switch (e.type) {
       case 'unary_expression': return true;
       case 'binary_expression': return this.evaluateBinaryExpression(e, row);
-      case 'function': return this.evaluateFunction(e, row);
+      case 'function': return this.evaluateFunction(e, row, group);
       case 'column_ref': return this.evaluateColumnReference(e, row);
       case 'number': return e.value;
       case 'string': return e.value;
       case 'array': return e.value;
     }
-    throw new Error(`Unknown "${(e as any).type}" expression type`);
+    throw new Error(`Unknown "${e.type}" expression type`);
   };
 
   evaluateStar(s: Star, row: object): object {
@@ -48,10 +48,14 @@ export class Evaluator {
     return row[key] || null;
   }
 
-  protected evaluateFunction(f: FunctionType, _row: object): any {
+  protected evaluateFunction(f: FunctionType, _row: object, group: object[]): any {
     switch (f.name.toLowerCase()) {
       case 'database': return this.server.getDatabase(null).getName();
       case 'version': return '8.0.0';
+      case 'count': return group.length;
+      case 'sum': return group.reduce((res, row) => {
+        return res + this.evaluateExpression(f.args[0], row);
+      }, 0);
       default: throw new Error(`Function ${f.name} is not implemented`);
     }
   };

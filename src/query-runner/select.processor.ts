@@ -1,10 +1,11 @@
 import { Server } from '../server';
 import { SelectQuery } from '../parser';
-import { mapKeys, sortBy, SortByKey } from '../utils';
+import { mapKeys, md5, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 
 export class SelectProcessor {
-  protected rows: any[] = [];
+  protected rows: object[] = [];
+  protected groupedRows = new Map<string, object[]>();
   protected fields: string[] = [];
 
   constructor(protected server: Server, protected query: SelectQuery) {}
@@ -12,6 +13,7 @@ export class SelectProcessor {
   process() {
     this.applyFrom();
     this.applyWhere();
+    this.applyGroupBy();
     this.applyOrderBy();
     this.applySelect();
 
@@ -40,6 +42,20 @@ export class SelectProcessor {
     this.rows = this.rows.filter((row) => evaluator.evaluateExpression(where, row));
   }
 
+  protected applyGroupBy(): void {
+    if (this.query.groupBy.length === 0) {
+      return;
+    }
+
+    const evaluator = this.createEvaluator();
+    this.rows.forEach(row => {
+      const hash = md5(this.query.groupBy.map(c => {
+        return evaluator.evaluateExpression(c, row);
+      }).join('::'));
+      this.groupedRows.set(hash, [...this.groupedRows.get(hash) || [], row]);
+    });
+  }
+
   protected applyOrderBy(): void {
     if (this.query.orderBy.length === 0) {
       return;
@@ -60,19 +76,40 @@ export class SelectProcessor {
     }
 
     const evaluator = this.createEvaluator();
-    this.rows = this.rows.map((row) => {
-      return this.query.columns.reduce((res, c) => {
+    if (this.query.groupBy.length === 0) {
+      this.rows = this.rows.map((row) => {
+        return this.query.columns.reduce((res, c) => {
+          if (c.type === 'star') {
+            return {
+              ...res,
+              ...evaluator.evaluateStar(c, row),
+            };
+          }
+          return {
+            ...res,
+            [c.alias || c.column]: evaluator.evaluateExpression(c, row),
+          };
+        }, {});
+      });
+      return;
+    }
+
+    this.rows = [];
+    this.groupedRows.forEach((rows) => {
+      const [firstRow] = rows;
+      const result = this.query.columns.reduce((res, c) => {
         if (c.type === 'star') {
           return {
             ...res,
-            ...evaluator.evaluateStar(c, row),
+            ...evaluator.evaluateStar(c, firstRow),
           };
         }
         return {
           ...res,
-          [c.alias || c.column]: evaluator.evaluateExpression(c, row),
+          [c.alias || c.column]: evaluator.evaluateExpression(c, firstRow, rows),
         };
       }, {});
+      this.rows.push(result);
     });
   }
 
