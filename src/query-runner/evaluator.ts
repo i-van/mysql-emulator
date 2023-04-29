@@ -71,7 +71,7 @@ export class Evaluator {
           throw new Error(`Could not evaluate "${f.name}" function`);
         }
         return res + this.evaluateExpression(arg, row);
-      }, 0);
+      }, 0).toString();
       default: throw new Error(`Function ${f.name} is not implemented`);
     }
   };

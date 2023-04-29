@@ -195,8 +195,8 @@ describe('table', () => {
       const res = await query(`SELECT p.name, SUM(p.post_count) count from profiles p GROUP BY p.name`);
 
       expect(res).toEqual([
-        { name: 'John', count: 15 },
-        { name: 'Jane', count: 1 },
+        { name: 'John', count: '15' },
+        { name: 'Jane', count: '1' },
       ]);
     });
   });
