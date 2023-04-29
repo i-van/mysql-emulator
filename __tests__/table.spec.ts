@@ -4,12 +4,21 @@ describe('table', () => {
   beforeAll(async () => {
     await query(`CREATE TABLE users (id int, name varchar(255))`);
     await query(`INSERT INTO users (id, name) VALUES (1, 'name1'), (2, 'name2'), (3, 'name3')`);
+
+    await query(`CREATE TABLE posts (id int, text varchar(255), user_id int)`);
+    await query(`INSERT INTO posts (id, text, user_id) VALUES (1, 'text', 1)`);
+    await query(`INSERT INTO posts (id, text, user_id) VALUES (2, 'another text', 1)`);
+    await query(`INSERT INTO posts (id, text, user_id) VALUES (3, 'another yet text', 2)`);
+
     await query(`CREATE TABLE profiles (id int, name varchar(255), post_count int)`);
-    await query(`INSERT INTO profiles (id, name, post_count) VALUES (1, 'John', 5), (2, 'John', 10), (3, 'Jane', 1)`);
+    await query(`INSERT INTO profiles (id, name, post_count) VALUES (1, 'John', 5)`);
+    await query(`INSERT INTO profiles (id, name, post_count) VALUES (2, 'John', 10)`);
+    await query(`INSERT INTO profiles (id, name, post_count) VALUES (3, 'Jane', 1)`);
   });
 
   afterAll(async () => {
     await query(`DROP TABLE users`);
+    await query(`DROP TABLE posts`);
     await query(`DROP TABLE profiles`);
   });
 
@@ -188,6 +197,42 @@ describe('table', () => {
       expect(res).toEqual([
         { name: 'John', count: 15 },
         { name: 'Jane', count: 1 },
+      ]);
+    });
+  });
+
+  describe('join', () => {
+    it('should JOIN posts', async () => {
+      const res = await query(`SELECT u.name, p.text FROM users u JOIN posts p ON p.user_id = u.id`);
+
+      expect(res).toEqual([
+        { name: 'name1', text: 'text' },
+        { name: 'name1', text: 'another text' },
+        { name: 'name2', text: 'another yet text' },
+      ]);
+    });
+    it('should LEFT JOIN posts', async () => {
+      const res = await query(`SELECT u.name, p.text FROM users u LEFT JOIN posts p ON p.user_id = u.id`);
+
+      expect(res).toEqual([
+        { name: 'name1', text: 'text' },
+        { name: 'name1', text: 'another text' },
+        { name: 'name2', text: 'another yet text' },
+        { name: 'name3', text: null },
+      ]);
+    });
+    it('should COUNT(u.name) over LEFT JOINED posts', async () => {
+      const res = await query(`
+        SELECT u.name, COUNT(p.id) count
+        FROM users u
+        LEFT JOIN posts p ON p.user_id = u.id
+        GROUP BY u.name
+      `);
+
+      expect(res).toEqual([
+        { name: 'name1', count: 2 },
+        { name: 'name2', count: 1 },
+        { name: 'name3', count: 0 },
       ]);
     });
   });

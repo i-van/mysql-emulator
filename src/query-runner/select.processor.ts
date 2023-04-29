@@ -1,12 +1,12 @@
 import { Server } from '../server';
-import { SelectQuery } from '../parser';
+import { Expression, SelectQuery } from '../parser';
 import { mapKeys, md5, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 
 export class SelectProcessor {
   protected rows: object[] = [];
   protected groupedRows = new Map<string, object[]>();
-  protected fields: string[] = [];
+  protected columns: string[] = [];
 
   constructor(protected server: Server, protected query: SelectQuery) {}
 
@@ -21,15 +21,50 @@ export class SelectProcessor {
   }
 
   protected applyFrom(): void {
-    if (!this.query.from) {
+    if (this.query.from.length === 0) {
       return;
     }
 
-    const { database, table: tableName } = this.query.from;
-    const table = this.server.getDatabase(database).getTable(tableName);
+    this.query.from.forEach((from, i) => {
+      const table = this.server.getDatabase(from.database).getTable(from.table);
+      const columns = table.getColumns().map(c => `${from.table}::${c.getName()}`);
+      const rows = table.getRows().map(r => mapKeys(r, (key) => `${from.table}::${key}`));
 
-    this.fields = table.getColumns().map(c => `${tableName}::${c.getName()}`);
-    this.rows = table.getRows().map(r => mapKeys(r, (key) => `${tableName}::${key}`));
+      this.columns.push(...columns);
+      if (i === 0) {
+        this.rows = rows;
+      } else if (from.join === null) { // f.e. FROM table1, table2
+        this.rows = this.joinRows(this.rows, rows, null);
+      } else if (from.join === 'INNER JOIN') {
+        this.rows = this.joinRows(this.rows, rows, from.on);
+      } else if (from.join === 'LEFT JOIN') {
+        this.rows = this.joinRows(this.rows, rows, from.on, true);
+      } else {
+        throw new Error(`Unknown "${from.join}" join type`);
+      }
+    });
+  }
+
+  private joinRows(
+    rowsA: object[],
+    rowsB: object[],
+    expression: Expression | null,
+    includeRowIfNoMatch = false,
+  ): object[] {
+    const evaluator = this.createEvaluator();
+    return rowsA.reduce((res: object[], rowA: object) => {
+      const group: object[] = [];
+      for (const rowB of rowsB) {
+        const mergedRow = { ...rowA, ...rowB };
+        if (expression === null || evaluator.evaluateExpression(expression, mergedRow)) {
+          group.push(mergedRow);
+        }
+      }
+      if (group.length === 0 && includeRowIfNoMatch) {
+        group.push(rowA);
+      }
+      return [...res, ...group];
+    }, []);
   }
 
   protected applyWhere(): void {
@@ -114,6 +149,6 @@ export class SelectProcessor {
   }
 
   private createEvaluator(): Evaluator {
-    return new Evaluator(this.server, this.fields);
+    return new Evaluator(this.server, this.columns);
   }
 }

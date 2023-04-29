@@ -5,12 +5,12 @@ import { Server } from '../server';
 export class Evaluator {
   constructor(
     protected server: Server,
-    protected fields: string[],
+    protected columns: string[],
   ) {}
 
   evaluateExpression(e: Expression, row: object, group: object[] = []): any {
     switch (e.type) {
-      case 'unary_expression': return true;
+      // todo: handle 'unary_expression'
       case 'binary_expression': return this.evaluateBinaryExpression(e, row);
       case 'function': return this.evaluateFunction(e, row, group);
       case 'column_ref': return this.evaluateColumnReference(e, row);
@@ -42,7 +42,7 @@ export class Evaluator {
     const key = c.table
       ? `${c.table}::${c.column}`
       : Object.keys(row).find(key => extractColumn(key) === c.column);
-    if (!key || !this.fields.includes(key)) {
+    if (!key || !this.columns.includes(key)) {
       throw new Error(`Unknown column '${c.column}' in 'field list'`);
     }
     return row[key] || null;
@@ -52,9 +52,25 @@ export class Evaluator {
     switch (f.name.toLowerCase()) {
       case 'database': return this.server.getDatabase(null).getName();
       case 'version': return '8.0.0';
-      case 'count': return group.length;
+      case 'count': return group.filter((row) => {
+        const [arg] = f.args;
+        if (!arg) {
+          throw new Error(`Could not evaluate "${f.name}" function`);
+        }
+        // count every row when COUNT(*)
+        if (arg.type === 'star') {
+          return true;
+        }
+        // count only not nullable fields when COUNT(t.id)
+        const value = this.evaluateExpression(arg, row);
+        return value !== null && value !== undefined;
+      }).length;
       case 'sum': return group.reduce((res, row) => {
-        return res + this.evaluateExpression(f.args[0], row);
+        const [arg] = f.args;
+        if (!arg) {
+          throw new Error(`Could not evaluate "${f.name}" function`);
+        }
+        return res + this.evaluateExpression(arg, row);
       }, 0);
       default: throw new Error(`Function ${f.name} is not implemented`);
     }

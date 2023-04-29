@@ -8,7 +8,6 @@ describe('select query', () => {
     const res = parser.parse(sql, []) as SelectQuery;
 
     expect(res).toBeInstanceOf(SelectQuery);
-    expect(res.from).toBe(null);
     expect(res.columns).toEqual([
       { type: 'function', name: 'database', column: 'database()', args: [], alias: null },
     ]);
@@ -18,7 +17,6 @@ describe('select query', () => {
     const res = parser.parse(sql, []) as SelectQuery;
 
     expect(res).toBeInstanceOf(SelectQuery);
-    expect(res.from).toBe(null);
     expect(res.columns).toEqual([
       { type: 'function', name: 'database', column: 'database()', args: [], alias: 'name' },
     ]);
@@ -76,22 +74,18 @@ describe('select query', () => {
     const res = parser.parse(sql, []) as SelectQuery;
 
     expect(res).toBeInstanceOf(SelectQuery);
-    expect(res.from).toEqual({
-      database: null,
-      table: 'users',
-      alias: null,
-    });
+    expect(res.from).toEqual([
+      { database: null, table: 'users', join: null, on: null },
+    ]);
   });
   it('should parse aliased FROM', () => {
     const sql = 'SELECT u.* FROM users u';
     const res = parser.parse(sql, []) as SelectQuery;
 
     expect(res).toBeInstanceOf(SelectQuery);
-    expect(res.from).toEqual({
-      database: null,
-      table: 'users',
-      alias: 'u',
-    });
+    expect(res.from).toEqual([
+      { database: null, table: 'users', join: null, on: null },
+    ]);
   });
   it('should parse equals expression', () => {
     const sql = 'SELECT * FROM users u where u.id = 1';
@@ -172,6 +166,26 @@ describe('select query', () => {
     expect(res).toBeInstanceOf(SelectQuery);
     expect(res.orderBy).toEqual([
       { type: 'column_ref', table: 'users', column: 'id', order: 'ASC' },
+    ]);
+  });
+  it('should parse INNER JOIN', () => {
+    const sql = `SELECT * FROM users u JOIN posts p ON p.user_id = u.id`;
+    const res = parser.parse(sql, []) as SelectQuery;
+
+    expect(res).toBeInstanceOf(SelectQuery);
+    expect(res.from).toEqual([
+      { database: null, table: 'users', join: null, on: null },
+      {
+        database: null,
+        table: 'posts',
+        join: 'INNER JOIN',
+        on: {
+          type: 'binary_expression',
+          operator: '=',
+          left: { type: 'column_ref', table: 'posts', column: 'user_id' },
+          right: { type: 'column_ref', table: 'users', column: 'id' }
+        },
+      },
     ]);
   });
 });

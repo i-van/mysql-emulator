@@ -6,7 +6,8 @@ type WithNullableAlias<T> = T & { alias: string | null };
 export type From = {
   database: string | null;
   table: string;
-  alias: string | null;
+  join: 'INNER JOIN' | 'LEFT JOIN' | 'RIGHT JOIN' | null;
+  on: Expression | null;
 };
 export type Star = {
   type: 'star';
@@ -127,7 +128,7 @@ const buildExpression = (ast: any, tableAliases: Map<string, string>): Expressio
 
 export class SelectQuery {
   constructor(
-    public from: From | null,
+    public from: From[],
     public columns: Column[],
     public where: Expression | null,
     public groupBy: ColumnRef[],
@@ -135,17 +136,14 @@ export class SelectQuery {
   ) {}
 
   static fromAst(ast: Select): SelectQuery {
-    const from = ast.from
-      ? {
-          database: ast.from[0].db,
-          table: ast.from[0].table,
-          alias: ast.from[0].as,
-        }
-      : null;
     const tableAliases = new Map<string, string>();
-    if (from?.alias) {
-      tableAliases.set(from.alias, from.table);
-    }
+    (ast.from || []).forEach(f => f.as && tableAliases.set(f.as, f.table));
+    const from = (ast.from || []).map(f => ({
+      database: f.database || null,
+      table: f.table,
+      join: f.join || null,
+      on: f.on ? buildExpression(f.on, tableAliases) : null,
+    }));
 
     const columns = [...ast.columns].map((c): Column => {
       if (c === '*') {
