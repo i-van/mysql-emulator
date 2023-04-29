@@ -212,7 +212,12 @@ describe('table', () => {
       ]);
     });
     it('should LEFT JOIN posts', async () => {
-      const res = await query(`SELECT u.name, p.text FROM users u LEFT JOIN posts p ON p.user_id = u.id`);
+      const res = await query(`
+        SELECT u.name, p.text
+        FROM users u
+        LEFT JOIN posts p ON p.user_id = u.id
+        ORDER BY u.id, p.id
+      `);
 
       expect(res).toEqual([
         { name: 'name1', text: 'text' },
