@@ -5,8 +5,9 @@ import { ParserException } from './parser-exception';
 import { InsertQuery } from './insert-query';
 import { CreateTableQuery } from './create-table-query';
 import { DropTableQuery } from './drop-table-query';
+import { DeleteQuery } from './delete-query';
 
-type Query = TransactionQuery | SelectQuery | InsertQuery | CreateTableQuery | DropTableQuery;
+type Query = TransactionQuery | SelectQuery | InsertQuery | DeleteQuery | CreateTableQuery | DropTableQuery;
 
 const injectParams = (s: string, params: any[]): string => {
   let i = 0;
@@ -37,6 +38,7 @@ export class Parser {
       switch (ast.type) {
         case 'select': return SelectQuery.fromAst(ast);
         case 'insert': return InsertQuery.fromAst(ast);
+        case 'delete': return DeleteQuery.fromAst(ast);
         case 'create': return CreateTableQuery.fromAst(ast);
         case 'drop' as unknown: return DropTableQuery.fromAst(ast);
       }

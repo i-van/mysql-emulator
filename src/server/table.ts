@@ -22,4 +22,8 @@ export class Table {
   getRows() {
     return this.rows;
   }
+
+  setRows(rows: object[]) {
+    this.rows = rows;
+  }
 }
