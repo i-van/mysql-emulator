@@ -17,7 +17,7 @@ type CreateDefinition = {
 
 export class CreateTableQuery {
   constructor(
-    public database: string,
+    public database: string | null,
     public table: string,
     public columns: Column[],
     public constraints: any[],

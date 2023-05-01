@@ -7,7 +7,7 @@ const buildRow = (keys: any[], values: any[]) => keys.reduce((object, key, index
 
 export class InsertQuery {
   constructor(
-    public database: string,
+    public database: string | null,
     public table: string,
     public rows: any[],
   ) {}
