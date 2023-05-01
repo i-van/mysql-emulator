@@ -1,6 +1,6 @@
-import { query } from '../src';
+import { query } from '../../src';
 
-describe('table', () => {
+describe('select', () => {
   beforeAll(async () => {
     await query(`CREATE TABLE users (id int, name varchar(255))`);
     await query(`INSERT INTO users (id, name) VALUES (1, 'name1'), (2, 'name2'), (3, 'name3')`);
@@ -22,44 +22,71 @@ describe('table', () => {
     await query(`DROP TABLE profiles`);
   });
 
-  it('should select *', async () => {
-    const res = await query(`SELECT * from users`);
+  describe('columns', () => {
+    it('should select *', async () => {
+      const res = await query(`SELECT * from users`);
 
-    expect(res).toEqual([
-      { id: 1, name: 'name1' },
-      { id: 2, name: 'name2' },
-      { id: 3, name: 'name3' },
-    ]);
-  });
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+        { id: 2, name: 'name2' },
+        { id: 3, name: 'name3' },
+      ]);
+    });
+    it('should select ids', async () => {
+      const res = await query(`SELECT id from users`);
 
-  it('should select ids', async () => {
-    const res = await query(`SELECT id from users`);
+      expect(res).toEqual([
+        { id: 1 },
+        { id: 2 },
+        { id: 3 },
+      ]);
+    });
+    it('should select ids and names', async () => {
+      const res = await query(`SELECT id, name from users`);
 
-    expect(res).toEqual([
-      { id: 1 },
-      { id: 2 },
-      { id: 3 },
-    ]);
-  });
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+        { id: 2, name: 'name2' },
+        { id: 3, name: 'name3' },
+      ]);
+    });
+    it('should select "name fullName"', async () => {
+      const res = await query(`SELECT name fullName from users`);
 
-  it('should select ids and names', async () => {
-    const res = await query(`SELECT id, name from users`);
+      expect(res).toEqual([
+        { fullName: 'name1' },
+        { fullName: 'name2' },
+        { fullName: 'name3' },
+      ]);
+    });
+    it('should select database', async () => {
+      const res = await query(`SELECT database()`);
 
-    expect(res).toEqual([
-      { id: 1, name: 'name1' },
-      { id: 2, name: 'name2' },
-      { id: 3, name: 'name3' },
-    ]);
-  });
+      expect(res).toEqual([
+        { 'database()': expect.any(String) },
+      ]);
+    });
+    it('should select alias to database', async () => {
+      const res = await query(`SELECT database() as name`);
 
-  it('should select "name fullName"', async () => {
-    const res = await query(`SELECT name fullName from users`);
+      expect(res).toEqual([
+        { 'name': expect.any(String) },
+      ]);
+    });
+    it('should select version', async () => {
+      const res = await query(`SELECT version()`);
 
-    expect(res).toEqual([
-      { fullName: 'name1' },
-      { fullName: 'name2' },
-      { fullName: 'name3' },
-    ]);
+      expect(res).toEqual([
+        { 'version()': expect.any(String) },
+      ]);
+    });
+    it('should select alias to version', async () => {
+      const res = await query(`SELECT version() as v`);
+
+      expect(res).toEqual([
+        { 'v': expect.any(String) },
+      ]);
+    });
   });
 
   describe('from clause', () => {
@@ -72,7 +99,6 @@ describe('table', () => {
         { id: 3, name: 'name3' },
       ]);
     });
-
     it('should select t.* from aliased table', async () => {
       const res = await query(`SELECT t.* from users t`);
 
@@ -82,7 +108,6 @@ describe('table', () => {
         { id: 3, name: 'name3' },
       ]);
     });
-
     it('should select t.name from aliased table', async () => {
       const res = await query(`SELECT t.name from users t`);
 
@@ -92,7 +117,6 @@ describe('table', () => {
         { name: 'name3' },
       ]);
     });
-
     it('should select "t.name fullName" from aliased table', async () => {
       const res = await query(`SELECT t.name fullName from users t`);
 
