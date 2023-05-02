@@ -26,7 +26,7 @@ export class Evaluator {
     return mapKeys(row, extractColumn, filter);
   }
 
-  protected evaluateBinaryExpression(be: BinaryExpression, row: object): boolean {
+  protected evaluateBinaryExpression(be: BinaryExpression, row: object): any {
     const left = this.evaluateExpression(be.left, row);
     const right = this.evaluateExpression(be.right, row);
     switch (be.operator) {
@@ -34,6 +34,10 @@ export class Evaluator {
       case 'IN': return right.some((i) => i == left);
       case 'AND': return left && right;
       case 'OR': return left || right;
+      case '+': return left + right;
+      case '-': return left - right;
+      case '*': return left * right;
+      case '/': return left / right;
     }
     throw new Error(`Unknown "${be.operator}" expression type`);
   }

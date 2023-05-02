@@ -6,6 +6,7 @@ import { InsertQuery } from './insert-query';
 import { CreateTableQuery } from './create-table-query';
 import { DropTableQuery } from './drop-table-query';
 import { DeleteQuery } from './delete-query';
+import { UpdateQuery } from './update-query';
 
 type Query = TransactionQuery | SelectQuery | InsertQuery | DeleteQuery | CreateTableQuery | DropTableQuery;
 
@@ -37,6 +38,7 @@ export class Parser {
     try {
       switch (ast.type) {
         case 'select': return SelectQuery.fromAst(ast);
+        case 'update': return UpdateQuery.fromAst(ast);
         case 'insert': return InsertQuery.fromAst(ast);
         case 'delete': return DeleteQuery.fromAst(ast);
         case 'create': return CreateTableQuery.fromAst(ast);
