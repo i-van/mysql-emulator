@@ -25,7 +25,7 @@ export class SelectQuery {
     const tableAliases = new Map<string, string>();
     (ast.from || []).forEach(f => f.as && tableAliases.set(f.as, f.table));
     const from = (ast.from || []).map(f => ({
-      database: f.database || null,
+      database: f.db || null,
       table: f.table,
       join: f.join || null,
       on: f.on ? buildExpression(f.on, tableAliases) : null,

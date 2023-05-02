@@ -91,6 +91,15 @@ describe('select query', () => {
         { database: null, table: 'users', join: null, on: null },
       ]);
     });
+    it('should parse FROM with database', () => {
+      const sql = 'SELECT * FROM `INFORMATION_SCHEMA`.`COLUMNS`';
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.from).toEqual([
+        { database: 'INFORMATION_SCHEMA', table: 'COLUMNS', join: null, on: null },
+      ]);
+    });
     it('should parse INNER JOIN', () => {
       const sql = `SELECT * FROM users u JOIN posts p ON p.user_id = u.id`;
       const res = parser.parse(sql, []) as SelectQuery;
