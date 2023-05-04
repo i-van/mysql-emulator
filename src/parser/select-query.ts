@@ -9,13 +9,13 @@ export type From = {
 };
 
 type WithAlias<T> = T & { alias: string | null };
-export type Column = WithAlias<ColumnRef> | WithAlias<FunctionType> | Star;
+export type SelectColumn = WithAlias<ColumnRef> | WithAlias<FunctionType> | Star;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
 
 export class SelectQuery {
   constructor(
     public from: From[],
-    public columns: Column[],
+    public columns: SelectColumn[],
     public where: Expression | null,
     public groupBy: ColumnRef[],
     public orderBy: OrderBy[],
@@ -31,7 +31,7 @@ export class SelectQuery {
       on: f.on ? buildExpression(f.on, tableAliases) : null,
     }));
 
-    const columns = [...ast.columns].map((c): Column => {
+    const columns = [...ast.columns].map((c): SelectColumn => {
       if (c === '*') {
         return buildExpression({ type: 'star', value: c }, tableAliases) as Star;
       } else if (c.expr?.type === 'column_ref' && c.expr.column === '*') {

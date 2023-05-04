@@ -7,7 +7,7 @@ describe('create table query', () => {
     const sql = `
         CREATE TABLE \`companies\` (
           \`id\` int UNSIGNED NOT NULL AUTO_INCREMENT,
-          \`name\` varchar(255) NOT NULL,
+          \`name\` varchar(255) NOT NULL DEFAULT '',
           PRIMARY KEY (\`id\`)
         ) ENGINE=InnoDB
       `;
@@ -17,8 +17,24 @@ describe('create table query', () => {
     expect(res.database).toBe(null);
     expect(res.table).toBe('companies');
     expect(res.columns).toEqual([
-      { name: 'id', dataType: 'INT' },
-      { name: 'name', dataType: 'VARCHAR' },
+      {
+        name: 'id',
+        dataType: 'INT',
+        nullable: false,
+        defaultValue: null,
+        unsigned: true,
+        length: null,
+        autoIncrement: true,
+      },
+      {
+        name: 'name',
+        dataType: 'VARCHAR',
+        nullable: false,
+        defaultValue: { type: 'string', value: '' },
+        unsigned: null,
+        length: 255,
+        autoIncrement: null,
+      },
     ]);
   });
 });

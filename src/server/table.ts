@@ -1,13 +1,13 @@
-import { DataType, TableColumn } from './table-column';
+import { Column } from './column';
 
 export class Table {
-  protected columns: TableColumn[] = [];
-  protected rows: any[] = [];
+  protected columns: Column[] = [];
+  protected rows: object[] = [];
 
   constructor(protected name: string) {}
 
-  addColumn(name: string, type: DataType) {
-    this.columns.push(new TableColumn(name, type));
+  addColumn(c: Column) {
+    this.columns.push(c);
   }
 
   // todo: verify if data matches columns
