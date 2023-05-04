@@ -25,6 +25,9 @@ export type ArrayType = {
   type: 'array';
   value: (string | number)[];
 };
+export type DefaultType = {
+  type: 'default';
+};
 export type UnaryExpression = {
   type: 'unary_expression';
   operator: string;
@@ -37,13 +40,14 @@ export type BinaryExpression = {
   right: Expression;
 }
 export type Expression =
-  UnaryExpression
+  | UnaryExpression
   | BinaryExpression
   | ColumnRef
   | FunctionType
   | NumberType
   | StringType
   | ArrayType
+  | DefaultType
   | Star;
 
 export const buildExpression = (ast: any, tableAliases: Map<string, string>): Expression => {
@@ -74,6 +78,16 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
       table: tableAliases.get(ast.table) || ast.table,
     };
   }
+  if (ast.type === 'column_ref' && ast.column.toLowerCase() === 'default') {
+    return { type: 'default' };
+  }
+  if (ast.type === 'column_ref') {
+    return {
+      type: 'column_ref',
+      table: tableAliases.get(ast.table) || ast.table,
+      column: ast.column,
+    };
+  }
   if (ast.type === 'function' || ast.type === 'aggr_func') {
     const args = ast.args.type === 'expr_list'
       ? ast.args.value.map(e => buildExpression(e, tableAliases))
@@ -83,13 +97,6 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
       name: ast.name,
       column: `${ast.name}()`,
       args,
-    };
-  }
-  if (ast.type === 'column_ref') {
-    return {
-      type: 'column_ref',
-      table: tableAliases.get(ast.table) || ast.table,
-      column: ast.column,
     };
   }
   if (ast.type === 'number') {

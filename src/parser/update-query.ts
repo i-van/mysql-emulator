@@ -1,4 +1,4 @@
-import { From, Update } from 'node-sql-parser/types';
+import { From, Update } from 'node-sql-parser';
 import { buildExpression, Expression } from './expression';
 
 type Assignment = {

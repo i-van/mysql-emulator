@@ -10,7 +10,6 @@ export class Table {
     this.columns.push(c);
   }
 
-  // todo: verify if data matches columns
   insertRow(data: any) {
     this.rows.push(data);
   }

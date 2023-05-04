@@ -1,6 +1,4 @@
-import { CreateColumn, Expression } from '../parser';
-import { IntColumn } from './columns/int-column';
-import { VarcharColumn } from './columns/varchar-column';
+import { Expression } from '../parser';
 
 export class Column {
   constructor(
@@ -11,5 +9,13 @@ export class Column {
 
   getName() {
     return this.name;
+  }
+
+  isNullable() {
+    return this.nullable;
+  }
+
+  getDefaultValueExpression() {
+    return this.defaultValue;
   }
 }

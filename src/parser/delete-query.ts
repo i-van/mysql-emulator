@@ -1,4 +1,4 @@
-import { Delete, From } from 'node-sql-parser/types';
+import { Delete, From } from 'node-sql-parser';
 import { buildExpression, Expression } from './expression';
 
 export class DeleteQuery {
