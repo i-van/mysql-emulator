@@ -16,6 +16,7 @@ export class SelectProcessor {
     this.applyGroupBy();
     this.applyOrderBy();
     this.applySelect();
+    this.applyLimit();
 
     return this.rows;
   }
@@ -146,6 +147,15 @@ export class SelectProcessor {
       }, {});
       this.rows.push(result);
     });
+  }
+
+  protected applyLimit() {
+    if (this.query.offset) {
+      this.rows = this.rows.filter((_, i) => i >= this.query.offset);
+    }
+    if (this.query.limit && this.rows.length > this.query.limit) {
+      this.rows.length = this.query.limit;
+    }
   }
 
   private createEvaluator(): Evaluator {

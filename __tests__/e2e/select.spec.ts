@@ -265,4 +265,22 @@ describe('select', () => {
       ]);
     });
   });
+
+  describe('limit', () => {
+    it('should LIMIT users', async () => {
+      const res = await query(`SELECT * FROM users LIMIT 1`);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+      ]);
+    });
+    it('should LIMIT and OFFSET users', async () => {
+      const res = await query(`SELECT * FROM users LIMIT 1, 2`);
+
+      expect(res).toEqual([
+        { id: 2, name: 'name2' },
+        { id: 3, name: 'name3' },
+      ]);
+    });
+  });
 });

@@ -19,6 +19,8 @@ export class SelectQuery {
     public where: Expression | null,
     public groupBy: ColumnRef[],
     public orderBy: OrderBy[],
+    public limit: number,
+    public offset: number,
   ) {}
 
   static fromAst(ast: Select): SelectQuery {
@@ -51,6 +53,15 @@ export class SelectQuery {
       ...buildExpression(o.expr, tableAliases),
       order: o.type,
     } as OrderBy));
+    let limit = 0;
+    let offset = 0;
+    if (ast.limit?.value.length === 1) {
+      [{ value: limit }] = ast.limit?.value;
+    } else if (ast.limit?.value.length === 2 && ast.limit?.seperator === ',') {
+      [{ value: offset }, { value: limit }] = ast.limit?.value;
+    } else if (ast.limit?.value.length === 2 && ast.limit?.seperator === 'offset') {
+      [{ value: limit }, { value: offset }] = ast.limit?.value;
+    }
 
     return new SelectQuery(
       from,
@@ -58,6 +69,8 @@ export class SelectQuery {
       ast.where ? buildExpression(ast.where, tableAliases) : null,
       groupBy,
       orderBy,
+      limit,
+      offset,
     );
   }
 }

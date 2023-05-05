@@ -211,4 +211,31 @@ describe('select query', () => {
       ]);
     });
   });
+
+  describe('limit', () => {
+    it('should parse LIMIT', () => {
+      const sql = `SELECT * FROM users LIMIT 1`;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.limit).toEqual(1);
+      expect(res.offset).toEqual(0);
+    });
+    it('should parse LIMIT/OFFSET', () => {
+      const sql = `SELECT * FROM users LIMIT 1 OFFSET 5`;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.limit).toEqual(1);
+      expect(res.offset).toEqual(5);
+    });
+    it('should parse short syntax LIMIT', () => {
+      const sql = `SELECT * FROM users LIMIT 5, 1`;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.limit).toEqual(1);
+      expect(res.offset).toEqual(5);
+    });
+  });
 });
