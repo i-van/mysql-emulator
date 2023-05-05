@@ -105,7 +105,7 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
       value: ast.value,
     };
   }
-  if (ast.type === 'single_quote_string') {
+  if (ast.type === 'single_quote_string' || ast.type === 'string') {
     return {
       type: 'string',
       value: ast.value,

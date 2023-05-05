@@ -27,11 +27,26 @@ async function typeormBasicSample() {
     await dataSource.synchronize();
     const companyRepository = dataSource.getRepository(Company);
 
-    const newCompany = companyRepository.create({ name: 'first' });
-    await companyRepository.save(newCompany);
+    // insert
+    const company1 = companyRepository.create({ name: 'first' });
+    const company2 = companyRepository.create({ name: 'second' });
+    const company3 = companyRepository.create({ name: 'third' });
+    await companyRepository.save([company1, company2, company3]);
+    console.log(await companyRepository.find());
 
-    const fetchedCompanies = await companyRepository.find();
-    console.log(fetchedCompanies);
+    // update
+    const firstCompany = await companyRepository.findOne({
+      where: { name: 'first' },
+    });
+    if (firstCompany) {
+      firstCompany.name = 'updated';
+      await companyRepository.save(firstCompany);
+    }
+    console.log(await companyRepository.find());
+
+    // delete
+    await companyRepository.delete({ name: 'second' });
+    console.log(await companyRepository.find());
   } finally {
     await dataSource.close();
   }
