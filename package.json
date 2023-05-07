@@ -7,7 +7,7 @@
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:db": "jest --setupFilesAfterEnv ./__tests__/tear-up",
-    "build": "rimraf dist && tsc -p tsconfig.json"
+    "build": "rimraf dist && tsc -p tsconfig.build.json"
   },
   "author": "Ivan Nosov",
   "license": "MIT",

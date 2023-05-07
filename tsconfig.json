@@ -12,6 +12,7 @@
     "strict": true
   },
   "include": [
+    "examples/**/*",
     "src/**/*"
   ]
 }
