@@ -6,4 +6,5 @@ export * from './insert-query';
 export * from './select-query';
 export * from './update-query';
 export * from './delete-query';
+export * from './set-query';
 export * from './expression';

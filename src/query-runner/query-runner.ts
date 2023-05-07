@@ -8,6 +8,7 @@ import {
   InsertQuery,
   Parser,
   SelectQuery,
+  SetQuery,
   TransactionQuery,
   UpdateQuery,
 } from '../parser';
@@ -50,6 +51,10 @@ export class QueryRunner {
     if (query instanceof DropTableQuery) {
       const p = new DropTableProcessor(this.server);
       return p.process(query);
+    }
+    if (query instanceof SetQuery) {
+      // todo: handle it
+      return;
     }
 
     throw new Error(`Cannot handle query: ${sql}`);

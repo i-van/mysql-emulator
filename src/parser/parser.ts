@@ -7,8 +7,16 @@ import { CreateTableQuery } from './create-table-query';
 import { DropTableQuery } from './drop-table-query';
 import { DeleteQuery } from './delete-query';
 import { UpdateQuery } from './update-query';
+import { SetQuery } from './set-query';
 
-type Query = TransactionQuery | SelectQuery | InsertQuery | DeleteQuery | CreateTableQuery | DropTableQuery;
+type Query =
+  | TransactionQuery
+  | SelectQuery
+  | InsertQuery
+  | DeleteQuery
+  | CreateTableQuery
+  | DropTableQuery
+  | SetQuery;
 
 const injectParams = (s: string, params: any[]): string => {
   let i = 0;
@@ -43,6 +51,7 @@ export class Parser {
         case 'delete': return DeleteQuery.fromAst(ast);
         case 'create': return CreateTableQuery.fromAst(ast);
         case 'drop' as unknown: return DropTableQuery.fromAst(ast);
+        case 'set' as unknown: return SetQuery.fromAst(ast);
       }
     } catch (err: any) {
       throw new ParserException(`${err.message}: ${injectedSql}`);
