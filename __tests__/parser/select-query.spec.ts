@@ -70,6 +70,22 @@ describe('select query', () => {
         { type: 'star', table: 'users' },
       ]);
     });
+    it.skip('should parse expression', () => {
+      const sql = 'SELECT 1 + 1 result';
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.columns).toEqual([
+        {
+          type: 'binary_expression',
+          operator: '+',
+          left: { type: 'number', value: 1 },
+          right: { type: 'number', value: 1 },
+          column: '1 + 1',
+          alias: 'result',
+        },
+      ]);
+    });
   });
 
   describe('from', () => {

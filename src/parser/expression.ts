@@ -10,7 +10,6 @@ export type ColumnRef = {
 export type FunctionType = {
   type: 'function';
   name: string;
-  column: string;
   args: Expression[];
 };
 export type NumberType = {
@@ -95,7 +94,6 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
     return {
       type: 'function',
       name: ast.name,
-      column: `${ast.name}()`,
       args,
     };
   }

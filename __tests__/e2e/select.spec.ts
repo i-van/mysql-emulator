@@ -87,6 +87,13 @@ describe('select', () => {
         { 'v': expect.any(String) },
       ]);
     });
+    it('should select 1 + 1', async () => {
+      const res = await query(`SELECT 1 + 1 result`);
+
+      expect(res).toEqual([
+        { 'result': 2 },
+      ]);
+    });
   });
 
   describe('from clause', () => {

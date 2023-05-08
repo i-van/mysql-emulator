@@ -1,5 +1,5 @@
 import { Select } from 'node-sql-parser';
-import { buildExpression, ColumnRef, Expression, FunctionType, Star } from './expression';
+import { BinaryExpression, buildExpression, ColumnRef, Expression, FunctionType, Star } from './expression';
 
 export type From = {
   database: string | null;
@@ -9,7 +9,11 @@ export type From = {
 };
 
 type WithAlias<T> = T & { alias: string | null };
-export type SelectColumn = WithAlias<ColumnRef> | WithAlias<FunctionType> | Star;
+export type SelectColumn =
+  | WithAlias<ColumnRef>
+  | WithAlias<FunctionType & { column: string }>
+  | WithAlias<BinaryExpression & { column: string }>
+  | Star;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
 
 export class SelectQuery {
@@ -38,9 +42,18 @@ export class SelectQuery {
         return buildExpression({ type: 'star', value: c }, tableAliases) as Star;
       } else if (c.expr?.type === 'column_ref' && c.expr.column === '*') {
         return buildExpression(c.expr, tableAliases) as Star;
-      } else if (['column_ref', 'aggr_func', 'function'].includes(c.expr?.type)) {
+      } else if (c.expr?.type === 'column_ref') {
         return {
-          ...buildExpression(c.expr, tableAliases) as ColumnRef | FunctionType,
+          ...buildExpression(c.expr, tableAliases) as ColumnRef,
+          alias: c.as,
+        };
+      } else if (['binary_expr', 'aggr_func', 'function'].includes(c.expr?.type)) {
+        return {
+          ...buildExpression(c.expr, tableAliases) as FunctionType | BinaryExpression,
+          // todo: build column name
+          column: ['aggr_func', 'function'].includes(c.expr?.type)
+            ? `${c.expr.name}()`
+            : '',
           alias: c.as,
         };
       }
