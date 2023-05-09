@@ -11,16 +11,18 @@ describe('delete', () => {
   });
 
   it('should delete all', async () => {
-    await query(`DELETE FROM authors`);
-    const res = await query(`SELECT * from authors`);
+    const res = await query(`DELETE FROM authors`);
+    const rows = await query(`SELECT * from authors`);
 
-    expect(res).toEqual([]);
+    expect(res.affectedRows).toEqual(3);
+    expect(rows).toEqual([]);
   });
   it(`should delete WHERE a.name = 'name2'`, async () => {
-    await query(`DELETE FROM authors a WHERE a.name = 'name2'`);
-    const res = await query(`SELECT * from authors`);
+    const res = await query(`DELETE FROM authors a WHERE a.name = 'name2'`);
+    const rows = await query(`SELECT * from authors`);
 
-    expect(res).toEqual([
+    expect(res.affectedRows).toEqual(1);
+    expect(rows).toEqual([
       { id: 1, name: 'name1' },
       { id: 3, name: 'name3' },
     ]);

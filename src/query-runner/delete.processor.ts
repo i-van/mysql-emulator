@@ -22,6 +22,6 @@ export class DeleteProcessor {
     });
     table.setRows(updatedRows);
 
-    return affectedRows;
+    return { affectedRows };
   }
 }

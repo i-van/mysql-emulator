@@ -27,6 +27,6 @@ export class UpdateProcessor {
     });
     table.setRows(updatedRows);
 
-    return affectedRows;
+    return { affectedRows };
   }
 }

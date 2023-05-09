@@ -25,7 +25,7 @@ export class Database {
   getTable(name: string): Table {
     const table = this.tables.get(name);
     if (!table) {
-      throw new Error(`Unknown table '${this.name}.${name}'`);
+      throw new Error(`Table '${this.name}.${name}' doesn't exist`);
     }
 
     return table;

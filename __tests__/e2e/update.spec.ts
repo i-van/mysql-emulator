@@ -13,30 +13,33 @@ describe('update', () => {
   });
 
   it('should update all', async () => {
-    await query(`UPDATE books SET name = 'new name'`);
-    const res = await query(`SELECT * from books`);
+    const res = await query(`UPDATE books SET name = 'new name'`);
+    const rows = await query(`SELECT * from books`);
 
-    expect(res).toEqual([
+    expect(res.affectedRows).toEqual(3);
+    expect(rows).toEqual([
       { id: 1, name: 'new name', pages: 100 },
       { id: 2, name: 'new name', pages: 300 },
       { id: 3, name: 'new name', pages: 500 },
     ]);
   });
   it(`should update WHERE b.name = 'name2'`, async () => {
-    await query(`UPDATE books b SET b.name = 'new name' WHERE b.name = 'name2'`);
-    const res = await query(`SELECT * from books`);
+    const res = await query(`UPDATE books b SET b.name = 'new name' WHERE b.name = 'name2'`);
+    const rows = await query(`SELECT * from books`);
 
-    expect(res).toEqual([
+    expect(res.affectedRows).toEqual(1);
+    expect(rows).toEqual([
       { id: 1, name: 'name1', pages: 100 },
       { id: 2, name: 'new name', pages: 300 },
       { id: 3, name: 'name3', pages: 500 },
     ]);
   });
   it(`should increment pages`, async () => {
-    await query(`UPDATE books b SET b.pages = b.pages + 1`);
-    const res = await query(`SELECT * from books`);
+    const res = await query(`UPDATE books b SET b.pages = b.pages + 1`);
+    const rows = await query(`SELECT * from books`);
 
-    expect(res).toEqual([
+    expect(res.affectedRows).toEqual(3);
+    expect(rows).toEqual([
       { id: 1, name: 'name1', pages: 101 },
       { id: 2, name: 'name2', pages: 301 },
       { id: 3, name: 'name3', pages: 501 },

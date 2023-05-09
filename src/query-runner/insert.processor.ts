@@ -35,6 +35,8 @@ export class InsertProcessor {
       return null;
     };
 
+    let insertId = 0;
+    let affectedRows = 0;
     query.values.forEach((values, rowIndex) => {
       if (values.length !== columns.length) {
         throw new Error(`Column count doesn't match value count at row ${rowIndex + 1}`);
@@ -61,6 +63,11 @@ export class InsertProcessor {
         }
       }, {});
       table.insertRow(row);
+      affectedRows++;
+      // todo: find primary id
+      insertId = row['id'];
     });
+
+    return { affectedRows, insertId };
   }
 }

@@ -8,7 +8,7 @@ describe('drop-table', () => {
     try {
       await query(`SELECT * FROM books`);
     } catch (err: any) {
-      expect(err.message).toMatch(/^Unknown table '(.+)\.books'$/);
+      expect(err.message).toMatch(/^Table '(.+)\.books' doesn't exist$/);
     }
   });
   it('should throw an error if table did not exist', async () => {
