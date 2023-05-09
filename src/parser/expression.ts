@@ -24,6 +24,9 @@ export type ArrayType = {
   type: 'array';
   value: (string | number)[];
 };
+export type NullType = {
+  type: 'null';
+};
 export type DefaultType = {
   type: 'default';
 };
@@ -46,6 +49,7 @@ export type Expression =
   | NumberType
   | StringType
   | ArrayType
+  | NullType
   | DefaultType
   | Star;
 
@@ -114,6 +118,9 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
       type: 'array',
       value: ast.value.map(i => i.value),
     };
+  }
+  if (ast.type === 'null') {
+    return { type: 'null' };
   }
   throw new Error(`Unknown "${ast.type}" expression type`);
 };
