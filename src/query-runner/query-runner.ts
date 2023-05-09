@@ -9,6 +9,7 @@ import {
   Parser,
   SelectQuery,
   SetQuery,
+  ShowIndexesQuery,
   TransactionQuery,
   UpdateQuery,
 } from '../parser';
@@ -27,6 +28,10 @@ export class QueryRunner {
     if (query instanceof TransactionQuery) {
       // todo: handle it
       return;
+    }
+    if (query instanceof ShowIndexesQuery) {
+      // todo: handle it
+      return [];
     }
     if (query instanceof SelectQuery) {
       const p = new SelectProcessor(this.server, query);

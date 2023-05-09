@@ -8,3 +8,4 @@ export * from './update-query';
 export * from './delete-query';
 export * from './set-query';
 export * from './expression';
+export * from './show-indexes-query';
