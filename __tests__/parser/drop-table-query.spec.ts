@@ -9,6 +9,16 @@ describe('drop table query', () => {
 
     expect(res).toBeInstanceOf(DropTableQuery);
     expect(res.database).toBe(null);
+    expect(res.ifExists).toBe(false);
+    expect(res.table).toBe('users');
+  });
+  it('should return DropTableQuery', () => {
+    const sql = 'DROP TABLE IF EXISTS users';
+    const res = parser.parse(sql, []) as DropTableQuery;
+
+    expect(res).toBeInstanceOf(DropTableQuery);
+    expect(res.database).toBe(null);
+    expect(res.ifExists).toBe(true);
     expect(res.table).toBe('users');
   });
 });

@@ -15,15 +15,17 @@ export class Database {
     return table;
   }
 
-  dropTable(name: string): void {
-    this.getTable(name);
-    this.tables.delete(name);
+  dropTable(name: string, skipIfNotExists = false): void {
+    const deleted = this.tables.delete(name);
+    if (!deleted && !skipIfNotExists) {
+      throw new Error(`Unknown table '${this.name}.${name}'`);
+    }
   }
 
   getTable(name: string): Table {
     const table = this.tables.get(name);
     if (!table) {
-      throw new Error(`Unknown ${name} table`);
+      throw new Error(`Unknown table '${this.name}.${name}'`);
     }
 
     return table;
