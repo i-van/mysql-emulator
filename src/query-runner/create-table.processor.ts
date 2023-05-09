@@ -1,7 +1,5 @@
-import { Column, Server } from '../server';
+import { Column, DatetimeColumn, IntColumn, Server, VarcharColumn } from '../server';
 import { CreateColumn, CreateTableQuery } from '../parser';
-import { IntColumn } from '../server/columns/int-column';
-import { VarcharColumn } from '../server/columns/varchar-column';
 
 export class CreateTableProcessor {
   constructor(protected server: Server) {}
@@ -18,9 +16,12 @@ export class CreateTableProcessor {
   private buildColumn(c: CreateColumn): Column {
     switch (c.dataType) {
       case 'INT':
+      case 'INTEGER':
         return new IntColumn(c.name, c.nullable, c.defaultValue, c.unsigned!, c.autoIncrement!);
       case 'VARCHAR':
         return new VarcharColumn(c.name, c.nullable, c.defaultValue, c.length!);
+      case 'DATETIME':
+        return new DatetimeColumn(c.name, c.nullable, c.defaultValue);
     }
     throw new Error(`Unknown ${c.dataType} column data type`);
   }

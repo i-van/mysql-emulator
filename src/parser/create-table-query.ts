@@ -1,7 +1,7 @@
 import { Create } from 'node-sql-parser';
 import { buildExpression, ColumnRef, Expression } from './expression';
 
-export type DataType = 'INT' | 'VARCHAR';
+export type DataType = 'INT' | 'INTEGER' | 'VARCHAR' | 'DATETIME';
 export type CreateColumn = {
   name: string;
   dataType: DataType;
