@@ -8,6 +8,7 @@ export class Server {
     const infoDb = this.createDatabase('INFORMATION_SCHEMA')
     infoDb.createTable('TABLES');
     infoDb.createTable('COLUMNS');
+    infoDb.createTable('KEY_COLUMN_USAGE');
     this.createDatabase(databaseName);
     this.useDatabase(databaseName);
   }

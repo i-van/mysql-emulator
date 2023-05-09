@@ -10,7 +10,7 @@ class Company {
   name!: string;
 }
 
-async function typeormBasicSample() {
+async function typeormBasicExample() {
   const dataSource = await createTypeormDataSource({
     type: 'mysql',
     entities: [Company],
@@ -52,4 +52,4 @@ async function typeormBasicSample() {
   }
 }
 
-typeormBasicSample().then(console.log, console.log);
+typeormBasicExample().then(console.log, console.log);

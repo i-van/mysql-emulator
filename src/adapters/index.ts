@@ -1,16 +1,33 @@
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { Options as SequelizeOptions, Sequelize } from 'sequelize';
 import { QueryRunner } from '../query-runner';
 import { Server } from '../server';
 import { MysqlEmulatorDriver } from './mysql-emulator.driver';
 
-export const createTypeormDataSource = (options: any): DataSource => {
+const createDriver = () => {
   const server = new Server();
   const qr = new QueryRunner(server);
-  const driver = new MysqlEmulatorDriver(qr);
+  return new MysqlEmulatorDriver(qr);
+}
 
-  if (options?.type !== 'mysql' && options?.type !== 'mysql2') {
-    throw new Error(`Only mysql supported, got ${options?.type}`);
+export const createTypeormDataSource = (options: DataSourceOptions): DataSource => {
+  if (options.type !== 'mysql') {
+    throw new Error(`Only mysql supported, got ${options.type}`);
   }
 
-  return new DataSource({ driver, ...options });
+  return new DataSource({
+    driver: createDriver(),
+    ...options,
+  });
+};
+
+export const createSequelize = (options: SequelizeOptions): Sequelize => {
+  if (options.dialect !== 'mysql') {
+    throw new Error(`Only mysql supported, got ${options.dialect}`);
+  }
+
+  return new Sequelize({
+    dialectModule: createDriver(),
+    ...options,
+  });
 };
