@@ -17,6 +17,7 @@ export class Evaluator {
       case 'number': return e.value;
       case 'string': return e.value;
       case 'array': return e.value;
+      case 'null': return null;
     }
     throw new Error(`Unknown "${e.type}" expression type`);
   };

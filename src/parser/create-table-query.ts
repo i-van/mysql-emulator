@@ -1,7 +1,7 @@
 import { Create } from 'node-sql-parser';
 import { buildExpression, ColumnRef, Expression } from './expression';
 
-export type DataType = 'INT' | 'INTEGER' | 'VARCHAR' | 'DATETIME';
+export type DataType = 'INT' | 'INTEGER' | 'VARCHAR' | 'DATETIME' | 'ENUM';
 export type CreateColumn = {
   name: string;
   dataType: DataType;
@@ -9,6 +9,7 @@ export type CreateColumn = {
   defaultValue: Expression | null;
   unsigned: boolean | null;
   length: number | null;
+  enumValues: Expression | null;
   autoIncrement: boolean | null;
 };
 type ColumnDefinition = {
@@ -17,6 +18,7 @@ type ColumnDefinition = {
     dataType: DataType;
     suffix?: string[];
     length?: number;
+    expr?: object;
   };
   nullable?: {
     type: 'not null';
@@ -25,7 +27,7 @@ type ColumnDefinition = {
   auto_increment?: 'auto_increment';
   default_val?: {
     type: 'default';
-    value: Expression;
+    value: object;
   };
   resource: 'column';
 };
@@ -54,11 +56,14 @@ export class CreateTableQuery {
           name: c.column.column,
           dataType: c.definition.dataType,
           defaultValue: c.default_val?.value
-            ? buildExpression(c.default_val?.value, new Map())
+            ? buildExpression(c.default_val.value, new Map())
             : null,
           nullable: !c.nullable,
           unsigned: c.definition.suffix ? c.definition.suffix.includes('UNSIGNED') : null,
           length: c.definition.length ? c.definition.length : null,
+          enumValues: c.definition.dataType === 'ENUM'
+            ? buildExpression(c.definition.expr, new Map())
+            : null,
           autoIncrement: c.auto_increment ? true : null,
         });
       } else if (c.resource === 'constraint') {
