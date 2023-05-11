@@ -1,7 +1,15 @@
 import { Create } from 'node-sql-parser';
 import { buildExpression, ColumnRef, Expression } from './expression';
 
-export type DataType = 'INT' | 'INTEGER' | 'VARCHAR' | 'DATETIME' | 'ENUM';
+export type DataType =
+  | 'TINYINT' | 'SMALLINT' | 'MEDIUMINT' | 'INT' | 'INTEGER' | 'BIGINT'
+  | 'DECIMAL' | 'FLOAT' | 'DOUBLE'
+  | 'TINYTEXT' | 'TEXT' | 'MEDIUMTEXT' | 'LONGTEXT'
+  | 'CHAR' | 'VARCHAR'
+  | 'BINARY' | 'VARBINARY'
+  | 'TINYBLOB' | 'BLOB' | 'MEDIUMBLOB' | 'LONGBLOB'
+  | 'TIMESTAMP' | 'DATETIME' | 'DATE' | 'TIME' | 'YEAR'
+  | 'ENUM';
 export type CreateColumn = {
   name: string;
   dataType: DataType;

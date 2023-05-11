@@ -1,7 +1,7 @@
 import { Column } from '../column';
 import { Expression } from '../../parser';
 
-export class VarcharColumn extends Column {
+export class StringColumn extends Column {
   constructor(
     name: string,
     nullable: boolean,

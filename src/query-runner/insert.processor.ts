@@ -1,4 +1,4 @@
-import { Column, IntColumn, Server } from '../server';
+import { Column, IntegerColumn, Server } from '../server';
 import { ColumnRef, InsertQuery } from '../parser';
 import { Evaluator } from './evaluator';
 
@@ -25,7 +25,7 @@ export class InsertProcessor {
       return c;
     };
     const evaluateDefaultValue = (column: Column, row: Object): any | null => {
-      if (column instanceof IntColumn && column.hasAutoIncrement()) {
+      if (column instanceof IntegerColumn && column.hasAutoIncrement()) {
         return column.getNextAutoIncrementValue();
       }
       const defaultValue = column.getDefaultValueExpression();

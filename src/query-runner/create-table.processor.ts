@@ -1,4 +1,13 @@
-import { Column, DatetimeColumn, EnumColumn, IntColumn, Server, VarcharColumn } from '../server';
+import {
+  Column,
+  DateColumn,
+  DecimalColumn,
+  EnumColumn,
+  FloatColumn,
+  IntegerColumn,
+  Server,
+  StringColumn,
+} from '../server';
 import { CreateColumn, CreateTableQuery, Expression } from '../parser';
 import { Evaluator } from './evaluator';
 
@@ -16,13 +25,44 @@ export class CreateTableProcessor {
 
   private buildColumn(c: CreateColumn): Column {
     switch (c.dataType) {
+      case 'TINYINT':
+        return new IntegerColumn(c.name, c.nullable, c.defaultValue, c.unsigned!, c.autoIncrement!, 8);
+      case 'SMALLINT':
+        return new IntegerColumn(c.name, c.nullable, c.defaultValue, c.unsigned!, c.autoIncrement!, 16);
+      case 'MEDIUMINT':
+        return new IntegerColumn(c.name, c.nullable, c.defaultValue, c.unsigned!, c.autoIncrement!, 24);
       case 'INT':
       case 'INTEGER':
-        return new IntColumn(c.name, c.nullable, c.defaultValue, c.unsigned!, c.autoIncrement!);
+        return new IntegerColumn(c.name, c.nullable, c.defaultValue, c.unsigned!, c.autoIncrement!, 32);
+      case 'BIGINT':
+        return new IntegerColumn(c.name, c.nullable, c.defaultValue, c.unsigned!, c.autoIncrement!, 64);
+      case 'DECIMAL':
+        return new DecimalColumn(c.name, c.nullable, c.defaultValue, c.unsigned!);
+      case 'FLOAT':
+      case 'DOUBLE':
+        return new FloatColumn(c.name, c.nullable, c.defaultValue, c.unsigned!);
+      case 'CHAR':
       case 'VARCHAR':
-        return new VarcharColumn(c.name, c.nullable, c.defaultValue, c.length!);
+        return new StringColumn(c.name, c.nullable, c.defaultValue, c.length!);
+      case 'TINYTEXT':
+      case 'TEXT':
+      case 'MEDIUMTEXT':
+      case 'LONGTEXT':
+        return new StringColumn(c.name, c.nullable, c.defaultValue, Number.MAX_VALUE);
+      case 'BINARY':
+      case 'VARBINARY':
+        return new StringColumn(c.name, c.nullable, c.defaultValue, c.length!);
+      case 'TINYBLOB':
+      case 'BLOB':
+      case 'MEDIUMBLOB':
+      case 'LONGBLOB':
+        return new StringColumn(c.name, c.nullable, c.defaultValue, Number.MAX_VALUE);
+      case 'TIMESTAMP':
       case 'DATETIME':
-        return new DatetimeColumn(c.name, c.nullable, c.defaultValue);
+      case 'DATE':
+      case 'TIME':
+      case 'YEAR':
+        return new DateColumn(c.name, c.nullable, c.defaultValue);
       case 'ENUM':
         if (c.defaultValue) {
           const evaluator = new Evaluator(this.server, []);
