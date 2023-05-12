@@ -1,6 +1,6 @@
 {
   "name": "mysql-emulator",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "MySQL emulator",
   "main": "dist/index.js",
   "scripts": {
@@ -10,9 +10,34 @@
     "build": "rimraf dist && tsc -p tsconfig.build.json"
   },
   "author": "Ivan Nosov",
+  "repository": "https://github.com/i-van/mysql-emulator",
   "license": "MIT",
+  "keywords": [
+    "mysql",
+    "mysql-mock",
+    "mock",
+    "mysql-emulator",
+    "emulator",
+    "db",
+    "database",
+    "typeorm",
+    "sequelize",
+    "unit test"
+  ],
   "dependencies": {
     "node-sql-parser": "4.6.6"
+  },
+  "peerDependencies": {
+    "sequelize": ">=6.0.0",
+    "typeorm": ">=0.3.0"
+  },
+  "peerDependenciesMeta": {
+    "sequelize": {
+      "optional": true
+    },
+    "typeorm": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",
