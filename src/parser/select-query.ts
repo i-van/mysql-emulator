@@ -1,5 +1,16 @@
 import { Select } from 'node-sql-parser';
-import { BinaryExpression, buildExpression, ColumnRef, Expression, FunctionType, Star } from './expression';
+import {
+  BinaryExpression,
+  buildExpression,
+  ColumnRef,
+  Expression,
+  FunctionType,
+  NullType,
+  NumberType,
+  Star,
+  StringType,
+} from './expression';
+import { parseColumnNames } from './column-name-parser';
 
 export type From = {
   database: string | null;
@@ -9,10 +20,14 @@ export type From = {
 };
 
 type WithAlias<T> = T & { alias: string | null };
+type WithColumn<T> = T & { column: string };
 export type SelectColumn =
   | WithAlias<ColumnRef>
-  | WithAlias<FunctionType & { column: string }>
-  | WithAlias<BinaryExpression & { column: string }>
+  | WithAlias<WithColumn<FunctionType>>
+  | WithAlias<WithColumn<BinaryExpression>>
+  | WithAlias<WithColumn<StringType>>
+  | WithAlias<WithColumn<NumberType>>
+  | WithAlias<WithColumn<NullType>>
   | Star;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
 
@@ -27,7 +42,7 @@ export class SelectQuery {
     public offset: number,
   ) {}
 
-  static fromAst(ast: Select): SelectQuery {
+  static fromAst(ast: Select, sql: string): SelectQuery {
     const tableAliases = new Map<string, string>();
     (ast.from || []).forEach(f => f.as && tableAliases.set(f.as, f.table));
     const from = (ast.from || []).map(f => ({
@@ -37,6 +52,9 @@ export class SelectQuery {
       on: f.on ? buildExpression(f.on, tableAliases) : null,
     }));
 
+    const columnNames = parseColumnNames(sql);
+    const functions = ['aggr_func', 'function'];
+    const primitives = ['number', 'string', 'single_quote_string', 'null'];
     const columns = [...ast.columns].map((c): SelectColumn => {
       if (c === '*') {
         return buildExpression({ type: 'star', value: c }, tableAliases) as Star;
@@ -47,13 +65,10 @@ export class SelectQuery {
           ...buildExpression(c.expr, tableAliases) as ColumnRef,
           alias: c.as,
         };
-      } else if (['binary_expr', 'aggr_func', 'function'].includes(c.expr?.type)) {
+      } else if (['binary_expr', ...functions, ...primitives].includes(c.expr?.type)) {
         return {
-          ...buildExpression(c.expr, tableAliases) as FunctionType | BinaryExpression,
-          // todo: build column name
-          column: ['aggr_func', 'function'].includes(c.expr?.type)
-            ? `${c.expr.name}()`
-            : '',
+          ...buildExpression(c.expr, tableAliases) as FunctionType | BinaryExpression | StringType | NumberType | NullType,
+          column: columnNames.shift()!,
           alias: c.as,
         };
       }

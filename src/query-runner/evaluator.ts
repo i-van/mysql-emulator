@@ -54,7 +54,7 @@ export class Evaluator {
   }
 
   protected evaluateFunction(f: FunctionType, _row: object, group: object[]): any {
-    switch (f.name.toLowerCase()) {
+    switch (f.name) {
       case 'database': return this.server.getDatabase(null).getName();
       case 'version': return '8.0.0';
       case 'count': return group.filter((row) => {

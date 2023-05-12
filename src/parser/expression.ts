@@ -97,7 +97,7 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
       : [buildExpression(ast.args.expr, tableAliases)];
     return {
       type: 'function',
-      name: ast.name,
+      name: ast.name.toLowerCase(),
       args,
     };
   }

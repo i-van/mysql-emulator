@@ -22,7 +22,7 @@ describe('select query', () => {
         { type: 'function', name: 'database', column: 'database()', args: [], alias: 'name' },
       ]);
     });
-    it.skip('should parse COUNT(*) function', () => {
+    it('should parse COUNT(*) function', () => {
       const sql = 'SELECT COUNT(*) FROM users';
       const res = parser.parse(sql, []) as SelectQuery;
 
@@ -37,7 +37,7 @@ describe('select query', () => {
         },
       ]);
     });
-    it.skip('should parse COUNT(u.id) function', () => {
+    it('should parse COUNT(u.id) function', () => {
       const sql = 'SELECT count(u.id) FROM users u GROUP BY u.id';
       const res = parser.parse(sql, []) as SelectQuery;
 
@@ -70,7 +70,7 @@ describe('select query', () => {
         { type: 'star', table: 'users' },
       ]);
     });
-    it.skip('should parse expression', () => {
+    it('should parse expression', () => {
       const sql = 'SELECT 1 + 1 result';
       const res = parser.parse(sql, []) as SelectQuery;
 
@@ -84,6 +84,17 @@ describe('select query', () => {
           column: '1 + 1',
           alias: 'result',
         },
+      ]);
+    });
+    it('should parse primitives', () => {
+      const sql = `SELECT 1, 'two', null`;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.columns).toEqual([
+        { type: 'number', value: 1, column: '1', alias: null },
+        { type: 'string', value: 'two', column: 'two', alias: null },
+        { type: 'null', column: 'NULL', alias: null },
       ]);
     });
   });

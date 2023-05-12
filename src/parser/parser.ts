@@ -50,7 +50,7 @@ export class Parser {
 
     try {
       switch (ast.type) {
-        case 'select': return SelectQuery.fromAst(ast);
+        case 'select': return SelectQuery.fromAst(ast, injectedSql);
         case 'update': return UpdateQuery.fromAst(ast);
         case 'insert': return InsertQuery.fromAst(ast);
         case 'delete': return DeleteQuery.fromAst(ast);
