@@ -1,5 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { createTypeormDataSource } from '../../src/adapters';
+import { createTypeormDataSource } from '../../src/typeorm';
 
 @Entity('companies')
 class Company {

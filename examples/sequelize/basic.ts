@@ -1,5 +1,5 @@
-import { Sequelize, Model, DataTypes } from 'sequelize';
-import { createSequelize } from '../../src/adapters';
+import { DataTypes } from 'sequelize';
+import { createSequelize } from '../../src/sequelize';
 
 async function sequelizeBasicExample() {
   const sequelize = await createSequelize({
