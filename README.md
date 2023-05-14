@@ -1,2 +1,2 @@
-# mysql-emulator
-MySQL Emulator
+# MySQL Emulator
+The library is under active development
