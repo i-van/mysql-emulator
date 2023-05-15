@@ -77,6 +77,8 @@ export class Evaluator {
         }
         return res + this.evaluateExpression(arg, row);
       }, 0).toString();
+      case 'now':
+      case 'current_timestamp': return new Date();
       default: throw new Error(`Function ${f.name} is not implemented`);
     }
   };
