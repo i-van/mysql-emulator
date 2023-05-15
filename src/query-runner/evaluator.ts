@@ -16,6 +16,7 @@ export class Evaluator {
       case 'column_ref': return this.evaluateColumnReference(e, row);
       case 'number': return e.value;
       case 'string': return e.value;
+      case 'boolean': return Number(e.value);
       case 'array': return e.value;
       case 'null': return null;
     }

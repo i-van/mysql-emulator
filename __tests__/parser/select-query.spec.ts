@@ -87,11 +87,13 @@ describe('select query', () => {
       ]);
     });
     it('should parse primitives', () => {
-      const sql = `SELECT 1, 'two', null`;
+      const sql = `SELECT true, false, 1, 'two', null`;
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.columns).toEqual([
+        { type: 'boolean', value: true, column: 'true', alias: null },
+        { type: 'boolean', value: false, column: 'false', alias: null },
         { type: 'number', value: 1, column: '1', alias: null },
         { type: 'string', value: 'two', column: 'two', alias: null },
         { type: 'null', column: 'NULL', alias: null },

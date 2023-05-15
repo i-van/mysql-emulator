@@ -94,6 +94,13 @@ describe('select', () => {
         { 'result': 2 },
       ]);
     });
+    it('should select primitives', async () => {
+      const res = await query(`SELECT true, false, 10, 'two', null`);
+
+      expect(res).toEqual([
+        { 'true': 1, 'false': 0, '10': 10, 'two': 'two', 'NULL': null },
+      ]);
+    });
   });
 
   describe('from clause', () => {

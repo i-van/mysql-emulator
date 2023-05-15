@@ -107,8 +107,9 @@ export class SelectProcessor {
 
   protected applySelect() {
     const hasFunctionColumn = this.query.columns.find(c => c.type === 'function');
+    const hasPrimitiveColumn = this.query.columns.find(c => ['number', 'string', 'boolean', 'null'].includes(c.type));
     const hasExpressionColumn = this.query.columns.find(c => c.type === 'binary_expression');
-    if (this.rows.length === 0 && (hasFunctionColumn || hasExpressionColumn)) {
+    if (this.rows.length === 0 && (hasFunctionColumn || hasExpressionColumn || hasPrimitiveColumn)) {
       this.rows = [{}];
     }
 

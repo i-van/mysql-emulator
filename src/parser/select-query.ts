@@ -1,6 +1,7 @@
 import { Select } from 'node-sql-parser';
 import {
   BinaryExpression,
+  BooleanType,
   buildExpression,
   ColumnRef,
   Expression,
@@ -27,6 +28,7 @@ export type SelectColumn =
   | WithAlias<WithColumn<BinaryExpression>>
   | WithAlias<WithColumn<StringType>>
   | WithAlias<WithColumn<NumberType>>
+  | WithAlias<WithColumn<BooleanType>>
   | WithAlias<WithColumn<NullType>>
   | Star;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
@@ -65,9 +67,9 @@ export class SelectQuery {
           ...buildExpression(c.expr, tableAliases) as ColumnRef,
           alias: c.as,
         };
-      } else if (['binary_expr', ...functions, ...primitives].includes(c.expr?.type)) {
+      } else if (['binary_expr', 'bool', ...functions, ...primitives].includes(c.expr?.type)) {
         return {
-          ...buildExpression(c.expr, tableAliases) as FunctionType | BinaryExpression | StringType | NumberType | NullType,
+          ...buildExpression(c.expr, tableAliases) as FunctionType | BinaryExpression | StringType | NumberType | BooleanType | NullType,
           column: columnNames.shift()!,
           alias: c.as,
         };

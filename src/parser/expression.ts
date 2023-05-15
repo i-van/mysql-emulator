@@ -20,6 +20,10 @@ export type StringType = {
   type: 'string';
   value: string;
 };
+export type BooleanType = {
+  type: 'boolean';
+  value: boolean;
+};
 export type ArrayType = {
   type: 'array';
   value: (string | number)[];
@@ -48,6 +52,7 @@ export type Expression =
   | FunctionType
   | NumberType
   | StringType
+  | BooleanType
   | ArrayType
   | NullType
   | DefaultType
@@ -110,6 +115,12 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
   if (ast.type === 'single_quote_string' || ast.type === 'string') {
     return {
       type: 'string',
+      value: ast.value,
+    };
+  }
+  if (ast.type === 'bool') {
+    return {
+      type: 'boolean',
       value: ast.value,
     };
   }
