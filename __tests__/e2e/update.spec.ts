@@ -70,4 +70,15 @@ describe('update', () => {
       { id: 3, name: 'name3', pages: 100 },
     ]);
   });
+  it('should cast boolean pages to integer', async () => {
+    await query(`UPDATE books b SET b.pages = true WHERE b.id = 1`);
+    await query(`UPDATE books b SET b.pages = false WHERE b.id = 2`);
+    const rows = await query(`SELECT * from books`);
+
+    expect(rows).toEqual([
+      { id: 1, name: 'name1', pages: 1 },
+      { id: 2, name: 'name2', pages: 0 },
+      { id: 3, name: 'name3', pages: 500 },
+    ]);
+  });
 });

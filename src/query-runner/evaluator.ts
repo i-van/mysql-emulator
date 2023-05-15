@@ -51,7 +51,7 @@ export class Evaluator {
     if (!key || !this.columns.includes(key)) {
       throw new Error(`Unknown column '${c.column}' in 'field list'`);
     }
-    return row[key] || null;
+    return row[key] ?? null;
   }
 
   protected evaluateFunction(f: FunctionType, _row: object, group: object[]): any {

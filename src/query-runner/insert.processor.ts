@@ -55,7 +55,7 @@ export class InsertProcessor {
           table: query.table,
           column: c.getName(),
         };
-        const value = evaluator.evaluateExpression(columnRef, rawRow) || evaluateDefaultValue(c, rawRow);
+        const value = evaluator.evaluateExpression(columnRef, rawRow) ?? evaluateDefaultValue(c, rawRow);
         if (value === null && !c.isNullable()) {
           throw new ProcessorError(`Field '${c.getName()}' doesn't have a default value`);
         }

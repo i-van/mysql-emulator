@@ -10,10 +10,19 @@ describe('insert', () => {
         PRIMARY KEY (id)
       )
     `);
+    await query(`
+      CREATE TABLE student_profiles (
+        student_id INT UNSIGNED NOT NULL,
+        rating TINYINT NOT NULL,
+        active TINYINT NOT NULL,
+        PRIMARY KEY (student_id)
+      )
+    `);
   });
 
   afterEach(async () => {
     await query(`DROP TABLE students`);
+    await query(`DROP TABLE student_profiles`);
   });
 
   it('should insert default year', async () => {
@@ -92,6 +101,17 @@ describe('insert', () => {
     expect(res.affectedRows).toEqual(1);
     expect(rows).toEqual([
       { id: 1, name: 'John', year: 2 },
+    ]);
+  });
+  it('should cast boolean value to integer', async () => {
+    const res = await query(`INSERT INTO student_profiles VALUES (1, 5, false), (2, 4, true)`);
+    const rows = await query(`SELECT * from student_profiles`);
+
+    expect(res.insertId).toEqual(0);
+    expect(res.affectedRows).toEqual(2);
+    expect(rows).toEqual([
+      { student_id: 1, rating: 5, active: 0 },
+      { student_id: 2, rating: 4, active: 1 },
     ]);
   });
 });
