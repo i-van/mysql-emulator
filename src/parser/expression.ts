@@ -97,9 +97,9 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
     };
   }
   if (ast.type === 'function' || ast.type === 'aggr_func') {
-    const args = ast.args.type === 'expr_list'
+    const args = ast.args?.type === 'expr_list'
       ? ast.args.value.map(e => buildExpression(e, tableAliases))
-      : [buildExpression(ast.args.expr, tableAliases)];
+      : ast.args?.expr ? [buildExpression(ast.args.expr, tableAliases)] : [];
     return {
       type: 'function',
       name: ast.name.toLowerCase(),
