@@ -53,7 +53,7 @@ export class SelectProcessor {
     includeRowIfNoMatch = false,
   ): object[] {
     const evaluator = this.createEvaluator();
-    return rowsA.reduce((res: object[], rowA: object) => {
+    return rowsA.reduce<object[]>((res: object[], rowA: object) => {
       const group: object[] = [];
       for (const rowB of rowsB) {
         const mergedRow = { ...rowA, ...rowB };
