@@ -59,6 +59,9 @@ export class InsertProcessor {
         if (value === null && !c.isNullable()) {
           throw new ProcessorError(`Field '${c.getName()}' doesn't have a default value`);
         }
+        if (c instanceof IntegerColumn && c.hasAutoIncrement()) {
+          insertId = value;
+        }
         try {
           return {
             ...res,
@@ -73,8 +76,6 @@ export class InsertProcessor {
       }, {});
       table.insertRow(row);
       affectedRows++;
-      // todo: find primary id
-      insertId = row['id'];
     });
 
     return { affectedRows, insertId };
