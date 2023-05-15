@@ -70,4 +70,28 @@ describe('insert', () => {
       { id: 1, name: 'John', year: 2 },
     ]);
   });
+  it('should throw an error if year is string', async () => {
+    try {
+      await query(`INSERT INTO students VALUES (1, 'John', 'second')`);
+    } catch (err: any) {
+      expect(err.message).toEqual(`Incorrect integer value: 'second' for column 'year' at row 1`);
+    }
+  });
+  it('should throw an error if year is negative', async () => {
+    try {
+      await query(`INSERT INTO students VALUES (1, 'John', -5)`);
+    } catch (err: any) {
+      expect(err.message).toEqual(`Out of range value for column 'year' at row 1`);
+    }
+  });
+  it('should cast string year to integer', async () => {
+    const res = await query(`INSERT INTO students VALUES (1, 'John', '2')`);
+    const rows = await query(`SELECT * from students`);
+
+    expect(res.insertId).toEqual(1);
+    expect(res.affectedRows).toEqual(1);
+    expect(rows).toEqual([
+      { id: 1, name: 'John', year: 2 },
+    ]);
+  });
 });

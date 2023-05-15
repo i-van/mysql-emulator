@@ -7,6 +7,10 @@ export class Column {
     protected defaultValue: Expression | null,
   ) {}
 
+  cast(value: any): any {
+    return value;
+  }
+
   getName() {
     return this.name;
   }

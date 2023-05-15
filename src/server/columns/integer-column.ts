@@ -1,5 +1,6 @@
 import { Column } from '../column';
 import { Expression } from '../../parser';
+import { ServerError } from '../server-error';
 
 export class IntegerColumn extends Column {
   private autoIncrementCursor = 0;
@@ -13,6 +14,23 @@ export class IntegerColumn extends Column {
     protected exponent = 32,
   ) {
     super(name, nullable, defaultValue);
+  }
+
+  cast(value: any): number {
+    if (value > this.getMaxValue() || value < this.getMinValue()) {
+      throw new ServerError({
+        message: `Out of range value for column '${this.name}'`,
+        code: 'OUT_OF_RANGE_VALUE',
+      });
+    }
+    if (isNaN(+value)) {
+      throw new ServerError({
+        message: `Incorrect integer value: '${value}' for column '${this.name}'`,
+        code: 'INCORRECT_INTEGER_VALUE',
+      });
+    }
+
+    return +value;
   }
 
   getMinValue() {
