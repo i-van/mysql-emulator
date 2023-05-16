@@ -14,11 +14,11 @@ export class DeleteProcessor {
     let affectedRows = 0;
     const updatedRows = table.getRows().filter(r => {
       const row = mapKeys(r, (key) => `${query.table}::${key}`);
-      const remove = query.where === null || evaluator.evaluateExpression(query.where, row);
-      if (remove) {
+      const needsRemove = query.where === null || evaluator.evaluateExpression(query.where, row);
+      if (needsRemove) {
         affectedRows++;
       }
-      return !remove;
+      return !needsRemove;
     });
     table.setRows(updatedRows);
 
