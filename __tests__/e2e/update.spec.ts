@@ -16,6 +16,7 @@ describe('update', () => {
     const res = await query(`UPDATE books SET name = 'new name'`);
     const rows = await query(`SELECT * from books`);
 
+    expect(res.changedRows).toEqual(3);
     expect(res.affectedRows).toEqual(3);
     expect(rows).toEqual([
       { id: 1, name: 'new name', pages: 100 },
@@ -27,6 +28,7 @@ describe('update', () => {
     const res = await query(`UPDATE books b SET b.name = 'new name' WHERE b.name = 'name2'`);
     const rows = await query(`SELECT * from books`);
 
+    expect(res.changedRows).toEqual(1);
     expect(res.affectedRows).toEqual(1);
     expect(rows).toEqual([
       { id: 1, name: 'name1', pages: 100 },
@@ -38,6 +40,7 @@ describe('update', () => {
     const res = await query(`UPDATE books b SET b.pages = b.pages + 1`);
     const rows = await query(`SELECT * from books`);
 
+    expect(res.changedRows).toEqual(3);
     expect(res.affectedRows).toEqual(3);
     expect(rows).toEqual([
       { id: 1, name: 'name1', pages: 101 },
@@ -63,6 +66,7 @@ describe('update', () => {
     const res = await query(`UPDATE books b SET b.pages = '100'`);
     const rows = await query(`SELECT * from books`);
 
+    expect(res.changedRows).toEqual(2);
     expect(res.affectedRows).toEqual(3);
     expect(rows).toEqual([
       { id: 1, name: 'name1', pages: 100 },

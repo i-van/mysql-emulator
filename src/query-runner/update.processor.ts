@@ -23,33 +23,41 @@ export class UpdateProcessor {
       return c;
     };
 
+    let changedRows = 0;
     let affectedRows = 0;
-    const updatedRows = table.getRows().map(r => {
-      const row = mapKeys(r, (key) => `${query.table}::${key}`);
-      const needsUpdate = query.where === null || evaluator.evaluateExpression(query.where, row);
+    const updatedRows = table.getRows().map(existingRow => {
+      const rawRow = mapKeys(existingRow, (key) => `${query.table}::${key}`);
+      const needsUpdate = query.where === null || evaluator.evaluateExpression(query.where, rawRow);
       if (!needsUpdate) {
-        return r;
+        return existingRow;
       }
 
       affectedRows++;
-      return query.assignments.reduce((res, a) => {
-        const column = getColumnDefinition(a.column);
-        const value = evaluator.evaluateExpression(a.value, row);
+      const updatedRow = query.assignments.reduce((row, a) => {
         try {
-          return {
-            ...res,
-            [column.getName()]: column.cast(value),
-          }
+          const column = getColumnDefinition(a.column);
+          const nextValue = column.cast(evaluator.evaluateExpression(a.value, rawRow));
+          const currentValue = row[column.getName()] ?? null;
+
+          return nextValue !== currentValue
+            ? { ...row, [column.getName()]: nextValue }
+            : row;
         } catch (err: any) {
           if (['OUT_OF_RANGE_VALUE', 'INCORRECT_INTEGER_VALUE'].includes(err.code)) {
             throw new ProcessorError(`${err.message} at row ${affectedRows}`);
           }
           throw err;
         }
-      }, r);
+      }, existingRow);
+
+      if (existingRow !== updatedRow) {
+        changedRows++;
+      }
+
+      return updatedRow;
     });
     table.setRows(updatedRows);
 
-    return { affectedRows };
+    return { affectedRows, changedRows };
   }
 }
