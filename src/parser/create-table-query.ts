@@ -20,6 +20,11 @@ export type CreateColumn = {
   enumValues: Expression | null;
   autoIncrement: boolean | null;
 };
+export type CreateConstraint = {
+  name: string;
+  type: 'primary_key' | 'unique_index';
+  columns: ColumnRef[];
+};
 type ColumnDefinition = {
   column: ColumnRef;
   definition: {
@@ -41,23 +46,31 @@ type ColumnDefinition = {
 };
 type ConstraintDefinition = {
   definition: ColumnRef[];
+  constraint_type: 'primary key' | 'unique key' | 'unique index';
+  index?: string;
   resource: 'constraint';
 };
 type CreateDefinition = ColumnDefinition | ConstraintDefinition;
+
+const constraintTypeMap: Record<ConstraintDefinition['constraint_type'], CreateConstraint['type']> = {
+  'primary key': 'primary_key',
+  'unique key': 'unique_index',
+  'unique index': 'unique_index',
+};
 
 export class CreateTableQuery {
   constructor(
     public database: string | null,
     public table: string,
     public columns: CreateColumn[],
-    public constraints: any[],
+    public constraints: CreateConstraint[],
   ) {}
 
   static fromAst(ast: Create): CreateTableQuery {
     const [{ db, table }] = ast.table!;
 
     const columns: CreateColumn[] = [];
-    const constraints = [];
+    const constraints: CreateConstraint[] = [];
     for (const c of ast.create_definitions as CreateDefinition[]) {
       if (c.resource === 'column') {
         columns.push({
@@ -74,8 +87,22 @@ export class CreateTableQuery {
             : null,
           autoIncrement: c.auto_increment ? true : null,
         });
-      } else if (c.resource === 'constraint') {
-        // todo: implement
+      } else if (c.resource === 'constraint' && constraintTypeMap[c.constraint_type] === 'primary_key') {
+        constraints.push({
+          name: 'PRIMARY',
+          type: 'primary_key',
+          columns: c.definition.map((d) => {
+            return buildExpression(d, new Map()) as ColumnRef;
+          }),
+        });
+      } else if (c.resource === 'constraint' && constraintTypeMap[c.constraint_type] === 'unique_index') {
+        constraints.push({
+          name: c.index || c.definition[0].column,
+          type: 'unique_index',
+          columns: c.definition.map((d) => {
+            return buildExpression(d, new Map()) as ColumnRef;
+          }),
+        });
       }
     }
 

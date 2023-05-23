@@ -1,7 +1,6 @@
 import { Column, IntegerColumn, Server } from '../server';
 import { ColumnRef, InsertQuery } from '../parser';
 import { Evaluator } from './evaluator';
-import { ServerError } from '../server/server-error';
 import { ProcessorError } from './processor-error';
 
 export class InsertProcessor {

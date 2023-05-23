@@ -5,6 +5,7 @@ describe('drop-table', () => {
     await query(`CREATE TABLE movies (id INT NOT NULL, name VARCHAR(255) NOT NULL)`);
     await query(`DROP TABLE movies`);
 
+    expect.assertions(1);
     try {
       await query(`SELECT * FROM movies`);
     } catch (err: any) {
@@ -12,6 +13,7 @@ describe('drop-table', () => {
     }
   });
   it('should throw an error if table did not exist', async () => {
+    expect.assertions(1);
     try {
       await query(`DROP TABLE movies`);
     } catch (err: any) {

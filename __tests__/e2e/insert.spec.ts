@@ -80,6 +80,7 @@ describe('insert', () => {
     ]);
   });
   it('should throw an error if year is string', async () => {
+    expect.assertions(1);
     try {
       await query(`INSERT INTO students VALUES (1, 'John', 'second')`);
     } catch (err: any) {
@@ -87,6 +88,7 @@ describe('insert', () => {
     }
   });
   it('should throw an error if year is negative', async () => {
+    expect.assertions(1);
     try {
       await query(`INSERT INTO students VALUES (1, 'John', -5)`);
     } catch (err: any) {

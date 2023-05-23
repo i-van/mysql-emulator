@@ -16,6 +16,7 @@ describe('create-table', () => {
     expect(res).toEqual([]);
   });
   it('should throw an error if enum default value is not in values', async () => {
+    expect.assertions(1);
     try {
       await query(`
         CREATE TABLE \`companies\` (

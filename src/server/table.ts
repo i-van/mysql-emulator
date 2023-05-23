@@ -1,6 +1,8 @@
 import { Column } from './column';
+import { UniqueConstraint } from './unique-constraint';
 
 export class Table {
+  protected constraints: UniqueConstraint[] = [];
   protected columns: Column[] = [];
   protected rows: object[] = [];
 
@@ -10,12 +12,26 @@ export class Table {
     this.columns.push(c);
   }
 
-  insertRow(data: any) {
-    this.rows.push(data);
-  }
-
   getColumns() {
     return this.columns;
+  }
+
+  addConstraint(c: UniqueConstraint) {
+    this.constraints.push(c);
+  }
+
+  getConstraints() {
+    return this.constraints;
+  }
+
+  insertRow(row: object) {
+    for (const constraint of this.constraints) {
+      const indexValue = constraint.getColumns()
+        .map((c) => String(row[c.column] ?? null))
+        .join('-');
+      constraint.addValue(indexValue);
+    }
+    this.rows.push(row);
   }
 
   getRows() {
@@ -23,6 +39,12 @@ export class Table {
   }
 
   setRows(rows: object[]) {
-    this.rows = rows;
+    for (const constraint of this.constraints) {
+      constraint.clearIndex();
+    }
+    this.rows = [];
+    for (const row of rows) {
+      this.insertRow(row);
+    }
   }
 }

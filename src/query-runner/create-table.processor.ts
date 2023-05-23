@@ -8,8 +8,9 @@ import {
   Server,
   StringColumn,
 } from '../server';
-import { CreateColumn, CreateTableQuery, Expression } from '../parser';
+import { CreateColumn, CreateTableQuery } from '../parser';
 import { Evaluator } from './evaluator';
+import { UniqueConstraint } from '../server/unique-constraint';
 
 export class CreateTableProcessor {
   constructor(protected server: Server) {}
@@ -20,6 +21,10 @@ export class CreateTableProcessor {
 
     for (const column of query.columns) {
       table.addColumn(this.buildColumn(column));
+    }
+    for (const constraint of query.constraints) {
+      const name = `${query.table}.${constraint.name}`;
+      table.addConstraint(new UniqueConstraint(name, constraint.columns));
     }
   }
 

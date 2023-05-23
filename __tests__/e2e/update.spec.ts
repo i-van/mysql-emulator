@@ -49,6 +49,7 @@ describe('update', () => {
     ]);
   });
   it('should throw an error if pages is string', async () => {
+    expect.assertions(1);
     try {
       await query(`UPDATE books b SET b.pages = 'many'`);
     } catch (err: any) {
@@ -56,6 +57,7 @@ describe('update', () => {
     }
   });
   it('should throw an error if pages is negative', async () => {
+    expect.assertions(1);
     try {
       await query(`UPDATE books b SET b.pages = -100`);
     } catch (err: any) {
