@@ -32,10 +32,18 @@ export class Evaluator {
     const left = this.evaluateExpression(be.left, row);
     const right = this.evaluateExpression(be.right, row);
     switch (be.operator) {
-      case '=': return left == right;
-      case 'IN': return right.some((i) => i == left);
-      case 'AND': return left && right;
-      case 'OR': return left || right;
+      case '=': return Number(left == right);
+      case '<>':
+      case '!=': return Number(left != right);
+      case 'IN': return Number(right.some((i) => i == left));
+      case 'AND': return Number(left && right);
+      case 'OR': return Number(left || right);
+      case 'IS': return Number(left == right);
+      case 'IS NOT': return Number(left != right);
+      case '>': return Number(left > right);
+      case '>=': return Number(left >= right);
+      case '<': return Number(left < right);
+      case '<=': return Number(left <= right);
       case '+': return left + right;
       case '-': return left - right;
       case '*': return left * right;
