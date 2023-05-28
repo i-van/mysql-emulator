@@ -29,14 +29,14 @@ export type SortByKey = {
 }
 
 export const sortBy = (keys: SortByKey[]) => (a: any, b: any): 0 | 1 | -1 => {
-  const [{ mapper, order }] = keys;
+  const [{ mapper, order }, ...restKeys] = keys;
   const valueA = mapper(a);
   const valueB = mapper(b);
 
   if (valueA === valueB) {
     return keys.length === 1
       ? 0
-      : sortBy(keys.slice(1))(a, b);
+      : sortBy(restKeys)(a, b);
   }
 
   if (typeof valueA === 'string') {
