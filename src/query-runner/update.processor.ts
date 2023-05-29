@@ -2,7 +2,7 @@ import { Column, Server } from '../server';
 import { UpdateQuery } from '../parser';
 import { mapKeys } from '../utils';
 import { Evaluator } from './evaluator';
-import { ProcessorError } from './processor-error';
+import { ProcessorException } from './processor.exception';
 
 export class UpdateProcessor {
   constructor(protected server: Server) {}
@@ -18,7 +18,7 @@ export class UpdateProcessor {
     const getColumnDefinition = (column: string): Column => {
       const c = columnDefinitionMap.get(column);
       if (!c) {
-        throw new ProcessorError(`Unknown column '${column}' in 'field list'`);
+        throw new ProcessorException(`Unknown column '${column}' in 'field list'`);
       }
       return c;
     };
@@ -44,7 +44,7 @@ export class UpdateProcessor {
             : row;
         } catch (err: any) {
           if (['OUT_OF_RANGE_VALUE', 'INCORRECT_INTEGER_VALUE'].includes(err.code)) {
-            throw new ProcessorError(`${err.message} at row ${affectedRows}`);
+            throw new ProcessorException(`${err.message} at row ${affectedRows}`);
           }
           throw err;
         }

@@ -1,6 +1,7 @@
 import { BinaryExpression, ColumnRef, Expression, FunctionType, Star } from '../parser';
 import { extractColumn, extractTable, mapKeys } from '../utils';
 import { Server } from '../server';
+import { EvaluatorException } from './evaluator.exception';
 
 export class Evaluator {
   constructor(
@@ -20,7 +21,7 @@ export class Evaluator {
       case 'array': return e.value;
       case 'null': return null;
     }
-    throw new Error(`Unknown "${e.type}" expression type`);
+    throw new EvaluatorException(`Unknown "${e.type}" expression type`);
   };
 
   evaluateStar(s: Star, row: object): object {
@@ -49,7 +50,7 @@ export class Evaluator {
       case '*': return left * right;
       case '/': return left / right;
     }
-    throw new Error(`Unknown "${be.operator}" expression type`);
+    throw new EvaluatorException(`Unknown "${be.operator}" expression type`);
   }
 
   protected evaluateColumnReference(c: ColumnRef, row: object): any {
@@ -57,7 +58,7 @@ export class Evaluator {
       ? `${c.table}::${c.column}`
       : Object.keys(row).find(key => extractColumn(key) === c.column);
     if (!key || !this.columns.includes(key)) {
-      throw new Error(`Unknown column '${c.column}' in 'field list'`);
+      throw new EvaluatorException(`Unknown column '${c.column}' in 'field list'`);
     }
     return row[key] ?? null;
   }
@@ -69,7 +70,7 @@ export class Evaluator {
       case 'count': return group.filter((row) => {
         const [arg] = f.args;
         if (!arg) {
-          throw new Error(`Could not evaluate "${f.name}" function`);
+          throw new EvaluatorException(`Could not evaluate "${f.name}" function`);
         }
         // count every row when COUNT(*)
         if (arg.type === 'star') {
@@ -82,13 +83,13 @@ export class Evaluator {
       case 'sum': return group.reduce((res, row) => {
         const [arg] = f.args;
         if (!arg) {
-          throw new Error(`Could not evaluate "${f.name}" function`);
+          throw new EvaluatorException(`Could not evaluate "${f.name}" function`);
         }
         return res + this.evaluateExpression(arg, row);
       }, 0).toString();
       case 'now':
       case 'current_timestamp': return new Date();
-      default: throw new Error(`Function ${f.name} is not implemented`);
+      default: throw new EvaluatorException(`Function ${f.name} is not implemented`);
     }
   };
 }

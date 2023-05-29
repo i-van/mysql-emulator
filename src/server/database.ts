@@ -1,5 +1,5 @@
 import { Table } from './table';
-import { ServerError } from './server-error';
+import { ServerException } from './server.exception';
 
 export class Database {
   protected tables = new Map<string, Table>();
@@ -8,7 +8,7 @@ export class Database {
 
   createTable(name: string): Table {
     if (this.tables.has(name)) {
-      throw new ServerError({
+      throw new ServerException({
         message: `Table '${name}' already exists`,
         code: 'TABLE_EXISTS',
       });
@@ -22,7 +22,7 @@ export class Database {
   dropTable(name: string, skipIfNotExists = false): void {
     const deleted = this.tables.delete(name);
     if (!deleted && !skipIfNotExists) {
-      throw new ServerError({
+      throw new ServerException({
         message: `Unknown table '${this.name}.${name}'`,
         code: 'UNKNOWN_TABLE',
       });
@@ -32,7 +32,7 @@ export class Database {
   getTable(name: string): Table {
     const table = this.tables.get(name);
     if (!table) {
-      throw new ServerError({
+      throw new ServerException({
         message: `Table '${this.name}.${name}' doesn't exist`,
         code: 'TABLE_DOES_NOT_EXIST',
       });

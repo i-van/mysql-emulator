@@ -1,3 +1,5 @@
+import { ParserException } from './parser.exception';
+
 export type Star = {
   type: 'star';
   table: string | null;
@@ -133,5 +135,5 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
   if (ast.type === 'null') {
     return { type: 'null' };
   }
-  throw new Error(`Unknown "${ast.type}" expression type`);
+  throw new ParserException(`Unknown "${ast.type}" expression type`);
 };

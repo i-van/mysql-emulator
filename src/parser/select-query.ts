@@ -12,6 +12,7 @@ import {
   StringType,
 } from './expression';
 import { parseColumnNames } from './column-name-parser';
+import { ParserException } from './parser.exception';
 
 export type From = {
   database: string | null;
@@ -75,7 +76,7 @@ export class SelectQuery {
           alias: c.as,
         };
       }
-      throw new Error('Could not map columns');
+      throw new ParserException('Could not map columns');
     });
     const groupBy: ColumnRef[] = (ast.groupby || []).map(g => (
       buildExpression(g, tableAliases) as ColumnRef

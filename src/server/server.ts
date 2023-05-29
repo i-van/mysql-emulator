@@ -1,4 +1,5 @@
 import { Database } from './database';
+import { ServerException } from './server.exception';
 
 export class Server {
   protected databases = new Map<string, Database>();
@@ -15,7 +16,10 @@ export class Server {
 
   createDatabase(name: string): Database {
     if (this.databases.has(name)) {
-      throw new Error(`Database ${name} already exists`);
+      throw new ServerException({
+        message: `Database ${name} already exists`,
+        code: 'DATABASE_EXISTS',
+      });
     }
     const db = new Database(name);
     this.databases.set(name, db);
@@ -24,7 +28,10 @@ export class Server {
 
   useDatabase(name: string) {
     if (!this.databases.has(name)) {
-      throw new Error(`Unknown database ${name}`);
+      throw new ServerException({
+        message: `Unknown database ${name}`,
+        code: 'UNKNOWN_DATABASE',
+      });
     }
     this.usedDatabase = name;
   }
@@ -34,12 +41,18 @@ export class Server {
       name = this.usedDatabase;
     }
     if (!name) {
-      throw new Error('Database name is empty');
+      throw new ServerException({
+        message: 'Database name is empty',
+        code: 'EMPTY_DATABASE',
+      });
     }
 
     const db = this.databases.get(name);
     if (!db) {
-      throw new Error(`Unknown database ${name}`);
+      throw new ServerException({
+        message: `Unknown database ${name}`,
+        code: 'UNKNOWN_DATABASE',
+      });
     }
 
     return db;

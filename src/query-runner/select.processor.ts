@@ -2,6 +2,7 @@ import { Server } from '../server';
 import { Expression, SelectQuery } from '../parser';
 import { mapKeys, md5, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
+import { ProcessorException } from './processor.exception';
 
 export class SelectProcessor {
   protected rows: object[] = [];
@@ -41,7 +42,7 @@ export class SelectProcessor {
       } else if (from.join === 'LEFT JOIN') {
         this.rows = this.joinRows(this.rows, rows, from.on, true);
       } else {
-        throw new Error(`Unknown "${from.join}" join type`);
+        throw new ProcessorException(`Unknown "${from.join}" join type`);
       }
     });
   }

@@ -3,7 +3,7 @@ type Options = {
   code: string;
 };
 
-export class ServerError extends Error {
+export class ServerException extends Error {
   public code: string;
 
   constructor({ message, code }: Options) {

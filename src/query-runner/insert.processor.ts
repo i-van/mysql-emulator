@@ -1,7 +1,7 @@
 import { Column, IntegerColumn, Server } from '../server';
 import { ColumnRef, InsertQuery } from '../parser';
 import { Evaluator } from './evaluator';
-import { ProcessorError } from './processor-error';
+import { ProcessorException } from './processor.exception';
 
 export class InsertProcessor {
   constructor(protected server: Server) {}
@@ -21,7 +21,7 @@ export class InsertProcessor {
     const getColumnDefinition = (column: string): Column => {
       const c = columnDefinitionMap.get(column);
       if (!c) {
-        throw new ProcessorError(`Unknown column '${column}' in 'field list'`);
+        throw new ProcessorException(`Unknown column '${column}' in 'field list'`);
       }
       return c;
     };
@@ -40,7 +40,7 @@ export class InsertProcessor {
     let affectedRows = 0;
     query.values.forEach((values, rowIndex) => {
       if (values.length !== columns.length) {
-        throw new ProcessorError(`Column count doesn't match value count at row ${rowIndex + 1}`);
+        throw new ProcessorException(`Column count doesn't match value count at row ${rowIndex + 1}`);
       }
       const rawRow = values.reduce((res, expression, valueIndex) => ({
         ...res,
@@ -56,7 +56,7 @@ export class InsertProcessor {
         };
         const value = evaluator.evaluateExpression(columnRef, rawRow) ?? evaluateDefaultValue(c, rawRow);
         if (value === null && !c.isNullable()) {
-          throw new ProcessorError(`Field '${c.getName()}' doesn't have a default value`);
+          throw new ProcessorException(`Field '${c.getName()}' doesn't have a default value`);
         }
         if (c instanceof IntegerColumn && c.hasAutoIncrement()) {
           insertId = value;
@@ -68,7 +68,7 @@ export class InsertProcessor {
           }
         } catch (err: any) {
           if (['OUT_OF_RANGE_VALUE', 'INCORRECT_INTEGER_VALUE'].includes(err.code)) {
-            throw new ProcessorError(`${err.message} at row ${rowIndex + 1}`);
+            throw new ProcessorException(`${err.message} at row ${rowIndex + 1}`);
           }
           throw err;
         }

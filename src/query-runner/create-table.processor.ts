@@ -12,6 +12,7 @@ import {
 import { CreateColumn, CreateTableQuery } from '../parser';
 import { Evaluator } from './evaluator';
 import { UniqueConstraint } from '../server/unique-constraint';
+import { ProcessorException } from './processor.exception';
 
 export class CreateTableProcessor {
   constructor(protected server: Server) {}
@@ -87,11 +88,11 @@ export class CreateTableProcessor {
             right: c.enumValues!,
           }, {});
           if (!included) {
-            throw new Error(`Invalid default value for '${c.name}'`);
+            throw new ProcessorException(`Invalid default value for '${c.name}'`);
           }
         }
         return new EnumColumn(c.name, c.nullable, c.defaultValue, c.enumValues!);
     }
-    throw new Error(`Unknown ${c.dataType} column data type`);
+    throw new ProcessorException(`Unknown ${c.dataType} column data type`);
   }
 }

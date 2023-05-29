@@ -1,7 +1,7 @@
 import { Parser as SqlParser } from 'node-sql-parser';
 import { TransactionQuery } from './transaction-query';
 import { SelectQuery } from './select-query';
-import { ParserException } from './parser-exception';
+import { ParserException } from './parser.exception';
 import { InsertQuery } from './insert-query';
 import { CreateTableQuery } from './create-table-query';
 import { DropTableQuery } from './drop-table-query';

@@ -1,5 +1,5 @@
 import { ColumnRef } from '../parser';
-import { ServerError } from './server-error';
+import { ServerException } from './server.exception';
 
 export class UniqueConstraint {
   protected index = new Set<string>();
@@ -15,7 +15,7 @@ export class UniqueConstraint {
 
   addValue(value: string) {
     if (this.index.has(value)) {
-      throw new ServerError({
+      throw new ServerException({
         message: `Duplicate entry '${value}' for key '${this.name}'`,
         code: 'DUPLICATE_ENTRY',
       });
