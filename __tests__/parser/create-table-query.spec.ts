@@ -39,7 +39,15 @@ describe('create table query', () => {
       },
     ]);
   });
+  it('should parse IF NOT EXISTS', () => {
+    const sql = `CREATE TABLE IF NOT EXISTS companies (id int)`;
+    const res = parser.parse(sql, []) as CreateTableQuery;
 
+    expect(res).toBeInstanceOf(CreateTableQuery);
+    expect(res.database).toBe(null);
+    expect(res.table).toBe('companies');
+    expect(res.ifNotExists).toBe(true);
+  });
   it('should parse enum dataType', () => {
     const sql = `
       CREATE TABLE \`companies\` (
@@ -64,7 +72,6 @@ describe('create table query', () => {
       },
     ]);
   });
-
   it('should parse constraints', () => {
     const sql = `
       CREATE TABLE \`companies\` (

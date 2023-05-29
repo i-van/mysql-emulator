@@ -64,6 +64,7 @@ export class CreateTableQuery {
     public table: string,
     public columns: CreateColumn[],
     public constraints: CreateConstraint[],
+    public ifNotExists: boolean,
   ) {}
 
   static fromAst(ast: Create): CreateTableQuery {
@@ -106,6 +107,12 @@ export class CreateTableQuery {
       }
     }
 
-    return new CreateTableQuery(db, table, columns, constraints);
+    return new CreateTableQuery(
+      db,
+      table,
+      columns,
+      constraints,
+      (ast.if_not_exists || '').toLocaleLowerCase() === 'if not exists',
+    );
   }
 }

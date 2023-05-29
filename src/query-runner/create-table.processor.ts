@@ -7,6 +7,7 @@ import {
   IntegerColumn,
   Server,
   StringColumn,
+  Table,
 } from '../server';
 import { CreateColumn, CreateTableQuery } from '../parser';
 import { Evaluator } from './evaluator';
@@ -17,7 +18,15 @@ export class CreateTableProcessor {
 
   process(query: CreateTableQuery): void {
     const db = this.server.getDatabase(query.database);
-    const table = db.createTable(query.table);
+    let table: Table;
+    try {
+      table = db.createTable(query.table);
+    } catch (err: any) {
+      if (err.code === 'TABLE_EXISTS' && query.ifNotExists) {
+        return;
+      }
+      throw err;
+    }
 
     for (const column of query.columns) {
       table.addColumn(this.buildColumn(column));

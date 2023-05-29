@@ -5,6 +5,20 @@ describe('create-table', () => {
     await query(`DROP TABLE IF EXISTS companies`);
   });
 
+  it('should throw an error if table exists', async () => {
+    expect.assertions(1);
+    try {
+      await query(`CREATE TABLE companies (id INT)`);
+      await query(`CREATE TABLE companies (id INT)`);
+    } catch (err: any) {
+      expect(err.message).toEqual(`Table 'companies' already exists`);
+    }
+  });
+  it('should skip crating table if table already exists', async () => {
+    await query(`CREATE TABLE companies (id INT)`);
+    await query(`CREATE TABLE IF NOT EXISTS companies (id INT)`);
+    expect(1).toEqual(1);
+  });
   it('should create table with enum field', async () => {
     await query(`
       CREATE TABLE \`companies\` (
