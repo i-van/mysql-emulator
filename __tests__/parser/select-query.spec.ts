@@ -211,6 +211,36 @@ describe('select query', () => {
     });
   });
 
+  describe('having', () => {
+    it('should parse HAVING', () => {
+      const sql = `
+        SELECT u.name, COUNT(u.name) count
+        FROM users u
+        GROUP BY u.name
+        HAVING u.name = 'Jane' AND count > 0
+      `;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.having).toEqual({
+        type: 'binary_expression',
+        operator: 'AND',
+        left: {
+          type: 'binary_expression',
+          operator: '=',
+          left: { type: 'column_ref', table: 'users', column: 'name' },
+          right: { type: 'string', value: 'Jane' },
+        },
+        right: {
+          type: 'binary_expression',
+          operator: '>',
+          left: { type: 'column_ref', table: null, column: 'count' },
+          right: { type: 'number', value: 0 },
+        },
+      });
+    });
+  });
+
   describe('orderBy', () => {
     it('should parse default ORDER BY', () => {
       const sql = `SELECT * FROM users ORDER BY id`;

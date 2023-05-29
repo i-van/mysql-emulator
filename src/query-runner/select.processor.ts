@@ -15,7 +15,7 @@ export class SelectProcessor {
     this.applyWhere();
     this.applyGroupBy();
     this.applyOrderBy();
-    this.applySelect();
+    this.applySelectAndHaving();
     this.applyLimit();
 
     return this.rows;
@@ -105,7 +105,7 @@ export class SelectProcessor {
     this.rows = this.rows.sort(sortBy(sortKeys));
   }
 
-  protected applySelect() {
+  protected applySelectAndHaving() {
     const hasFunctionColumn = this.query.columns.find(c => c.type === 'function');
     const hasPrimitiveColumn = this.query.columns.find(c => ['number', 'string', 'boolean', 'null'].includes(c.type));
     const hasExpressionColumn = this.query.columns.find(c => c.type === 'binary_expression');
@@ -113,42 +113,52 @@ export class SelectProcessor {
       this.rows = [{}];
     }
 
-    const evaluator = this.createEvaluator();
-    if (this.query.groupBy.length === 0) {
-      this.rows = this.rows.map((row) => {
-        return this.query.columns.reduce((res, c) => {
-          if (c.type === 'star') {
-            return {
-              ...res,
-              ...evaluator.evaluateStar(c, row),
-            };
-          }
-          return {
-            ...res,
-            [c.alias || c.column]: evaluator.evaluateExpression(c, row),
-          };
-        }, {});
-      });
-      return;
-    }
-
-    this.rows = [];
-    this.groupedRows.forEach((rows) => {
-      const [firstRow] = rows;
-      const result = this.query.columns.reduce((res, c) => {
-        if (c.type === 'star') {
-          return {
-            ...res,
-            ...evaluator.evaluateStar(c, firstRow),
-          };
-        }
-        return {
-          ...res,
-          [c.alias || c.column]: evaluator.evaluateExpression(c, firstRow, rows),
-        };
-      }, {});
-      this.rows.push(result);
+    this.query.columns.forEach((c) => {
+      if (c.type !== 'star' && c.alias) {
+        this.columns.push(`::${c.alias}`);
+      }
     });
+    const evaluator = this.createEvaluator();
+    const mapRow = (rawRow: object, group: object[]): [object, object] => {
+      let rawRowWithAliases = rawRow;
+      const mappedRow = this.query.columns.reduce((res, c) => {
+        if (c.type === 'star') {
+          return { ...res, ...evaluator.evaluateStar(c, rawRow) };
+        }
+        const value = evaluator.evaluateExpression(c, rawRow, group);
+        if (c.alias) {
+          rawRowWithAliases = { ...rawRowWithAliases, [`::${c.alias}`]: value };
+        }
+        return { ...res, [c.alias || c.column]: value };
+      }, {});
+
+      return [mappedRow, rawRowWithAliases];
+    };
+    const checkIfKeep = (row: object): boolean => {
+      if (this.query.having === null) {
+        return true;
+      }
+      return evaluator.evaluateExpression(this.query.having, row);
+    };
+    if (this.query.groupBy.length === 0) {
+      const existingRows = this.rows;
+      this.rows = [];
+      existingRows.forEach((rawRow) => {
+        const [mappedRow, rawRowWithAliases] = mapRow(rawRow, []);
+        if (checkIfKeep(rawRowWithAliases)) {
+          this.rows.push(mappedRow);
+        }
+      });
+    } else {
+      this.rows = [];
+      this.groupedRows.forEach((group) => {
+        const [firstRawRow] = group;
+        const [mappedRow, rawRowWithAliases] = mapRow(firstRawRow, group);
+        if (checkIfKeep(rawRowWithAliases)) {
+          this.rows.push(mappedRow);
+        }
+      });
+    }
   }
 
   protected applyLimit() {

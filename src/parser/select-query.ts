@@ -39,6 +39,7 @@ export class SelectQuery {
     public columns: SelectColumn[],
     public where: Expression | null,
     public groupBy: ColumnRef[],
+    public having: Expression | null,
     public orderBy: OrderBy[],
     public limit: number,
     public offset: number,
@@ -56,7 +57,7 @@ export class SelectQuery {
 
     const columnNames = parseColumnNames(sql);
     const functions = ['aggr_func', 'function'];
-    const primitives = ['number', 'string', 'single_quote_string', 'null'];
+    const primitives = ['bool', 'number', 'string', 'single_quote_string', 'null'];
     const columns = [...ast.columns].map((c): SelectColumn => {
       if (c === '*') {
         return buildExpression({ type: 'star', value: c }, tableAliases) as Star;
@@ -67,7 +68,7 @@ export class SelectQuery {
           ...buildExpression(c.expr, tableAliases) as ColumnRef,
           alias: c.as,
         };
-      } else if (['binary_expr', 'bool', ...functions, ...primitives].includes(c.expr?.type)) {
+      } else if (['binary_expr', ...functions, ...primitives].includes(c.expr?.type)) {
         return {
           ...buildExpression(c.expr, tableAliases) as FunctionType | BinaryExpression | StringType | NumberType | BooleanType | NullType,
           column: columnNames.shift()!,
@@ -98,6 +99,7 @@ export class SelectQuery {
       columns,
       ast.where ? buildExpression(ast.where, tableAliases) : null,
       groupBy,
+      ast.having ? buildExpression(ast.having, tableAliases) : null,
       orderBy,
       limit,
       offset,

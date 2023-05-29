@@ -219,6 +219,56 @@ describe('select', () => {
     });
   });
 
+  describe('having clause', () => {
+    it('should filter w/o group by clause', async () => {
+      const res = await query(`
+        SELECT id, name full_name
+        FROM users
+        HAVING full_name = 'name1'
+      `);
+
+      expect(res).toEqual([
+        { id: 1, full_name: 'name1' },
+      ]);
+    });
+    it('should filter by "count > 1"', async () => {
+      const res = await query(`
+        SELECT p.user_id, COUNT(p.user_id) count
+        FROM posts p
+        GROUP BY p.user_id
+        HAVING count > 1
+      `);
+
+      expect(res).toEqual([
+        { user_id: 1, count: 2 },
+      ]);
+    });
+    it('should filter by "p.user_id = 1"', async () => {
+      const res = await query(`
+        SELECT p.user_id, COUNT(p.user_id) count
+        FROM posts p
+        GROUP BY p.user_id
+        HAVING p.user_id = 1
+      `);
+
+      expect(res).toEqual([
+        { user_id: 1, count: 2 },
+      ]);
+    });
+    it('should filter by "user_id = 1"', async () => {
+      const res = await query(`
+        SELECT p.user_id, COUNT(p.user_id) count
+        FROM posts p
+        GROUP BY p.user_id
+        HAVING user_id = 1
+      `);
+
+      expect(res).toEqual([
+        { user_id: 1, count: 2 },
+      ]);
+    });
+  });
+
   describe('order by clause', () => {
     it('should ORDER BY p.id', async () => {
       const res = await query(`SELECT * from profiles p ORDER BY p.id`);
