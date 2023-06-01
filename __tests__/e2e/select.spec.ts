@@ -376,4 +376,29 @@ describe('select', () => {
       ]);
     });
   });
+
+  describe('sub query', () => {
+    it('should throw an error if sub query has no alias', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT * FROM (SELECT 3 n)`);
+      } catch (err: any) {
+        expect(err.message).toBe('Every derived table must have its own alias');
+      }
+    });
+    it('should select everything from sub query with primitive', async () => {
+      const res = await query(`SELECT * FROM (SELECT 3 n) t`);
+
+      expect(res).toEqual([{ n: 3 }]);
+    });
+    it('should select one field from sub query', async () => {
+      const res = await query(`SELECT t.name FROM (SELECT name FROM users) t`);
+
+      expect(res).toEqual([
+        { name: 'name1' },
+        { name: 'name2' },
+        { name: 'name3' },
+      ]);
+    });
+  });
 });

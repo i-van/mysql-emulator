@@ -1,4 +1,4 @@
-import { Select } from 'node-sql-parser';
+import { Parser as SqlParser, Select } from 'node-sql-parser';
 import {
   BinaryExpression,
   BooleanType,
@@ -14,11 +14,20 @@ import {
 import { parseColumnNames } from './column-name-parser';
 import { ParserException } from './parser.exception';
 
-export type From = {
-  database: string | null;
-  table: string;
+type WithJoin<T> = T & {
   join: 'INNER JOIN' | 'LEFT JOIN' | 'RIGHT JOIN' | null;
   on: Expression | null;
+};
+export type SubQuery = {
+  query: SelectQuery;
+  alias: string | null;
+};
+export type From =
+  | WithJoin<{ database: string | null; table: string }>
+  | WithJoin<SubQuery>;
+
+export const isSubQuery = (s: any): s is SubQuery => {
+  return s.query instanceof SelectQuery;
 };
 
 type WithAlias<T> = T & { alias: string | null };
@@ -47,14 +56,28 @@ export class SelectQuery {
   ) {}
 
   static fromAst(ast: Select, sql: string): SelectQuery {
+    const sqlParser = new SqlParser();
     const tableAliases = new Map<string, string>();
-    (ast.from || []).forEach(f => f.as && tableAliases.set(f.as, f.table));
-    const from = (ast.from || []).map(f => ({
-      database: f.db || null,
-      table: f.table,
-      join: f.join || null,
-      on: f.on ? buildExpression(f.on, tableAliases) : null,
-    }));
+    (ast.from || []).forEach((f) => {
+      f.as && f.table && tableAliases.set(f.as, f.table);
+    });
+    const from = (ast.from || []).map((f) => {
+      if (f.expr?.ast) {
+        const subSql = sqlParser.sqlify(f.expr.ast, { database: 'MariaDB' });
+        return {
+          query: SelectQuery.fromAst(f.expr.ast, subSql),
+          alias: f.as,
+          join: f.join || null,
+          on: f.on ? buildExpression(f.on, tableAliases) : null,
+        };
+      }
+      return {
+        database: f.db || null,
+        table: f.table,
+        join: f.join || null,
+        on: f.on ? buildExpression(f.on, tableAliases) : null,
+      };
+    });
 
     const columnNames = parseColumnNames(sql);
     const functions = ['aggr_func', 'function'];

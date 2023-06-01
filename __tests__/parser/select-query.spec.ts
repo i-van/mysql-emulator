@@ -1,4 +1,5 @@
 import { Parser, SelectQuery } from '../../src/parser';
+import { query } from '../../src';
 
 describe('select query', () => {
   const parser = new Parser();
@@ -295,6 +296,39 @@ describe('select query', () => {
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.limit).toEqual(1);
       expect(res.offset).toEqual(5);
+    });
+  });
+
+  describe('sub query', () => {
+    it('should parse sub query', () => {
+      const sql = `SELECT * FROM (SELECT 3 n) t`;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.from).toEqual([
+        {
+          query: new SelectQuery(
+            [],
+            [
+              {
+                type: 'number',
+                value: 3,
+                alias: 'n',
+                column: '3',
+              },
+            ],
+            null,
+            [],
+            null,
+            [],
+            0,
+            0,
+          ),
+          alias: 't',
+          join: null,
+          on: null,
+        },
+      ]);
     });
   });
 });

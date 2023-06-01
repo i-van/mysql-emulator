@@ -1,5 +1,5 @@
 import { Server } from '../server';
-import { Expression, SelectQuery } from '../parser';
+import { Expression, isSubQuery, SelectQuery } from '../parser';
 import { mapKeys, md5, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
@@ -28,9 +28,20 @@ export class SelectProcessor {
     }
 
     this.query.from.forEach((from, i) => {
-      const table = this.server.getDatabase(from.database).getTable(from.table);
-      const columns = table.getColumns().map(c => `${from.table}::${c.getName()}`);
-      const rows = table.getRows().map(r => mapKeys(r, (key) => `${from.table}::${key}`));
+      let rows: object[];
+      let columns: string[];
+      if (isSubQuery(from)) {
+        if (!from.alias) {
+          throw new ProcessorException('Every derived table must have its own alias');
+        }
+        const p = new SelectProcessor(this.server, from.query);
+        rows = p.process().map(r => mapKeys(r, (key) => `${from.alias}::${key}`));
+        columns = rows.length ? Object.keys(rows[0]) : [];
+      } else {
+        const table = this.server.getDatabase(from.database).getTable(from.table);
+        rows = table.getRows().map(r => mapKeys(r, (key) => `${from.table}::${key}`));
+        columns = table.getColumns().map(c => `${from.table}::${c.getName()}`);
+      }
 
       this.columns.push(...columns);
       if (i === 0) {
