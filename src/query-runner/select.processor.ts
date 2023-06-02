@@ -8,6 +8,7 @@ export class SelectProcessor {
   protected rows: object[] = [];
   protected groupedRows = new Map<string, object[]>();
   protected columns: string[] = [];
+  protected evaluator = new Evaluator(this.server);
 
   constructor(protected server: Server, protected query: SelectQuery) {}
 
@@ -52,7 +53,8 @@ export class SelectProcessor {
       } else if (from.join === 'INNER JOIN') {
         this.rows = this.joinRows(this.rows, rows, from.on);
       } else if (from.join === 'LEFT JOIN') {
-        this.rows = this.joinRows(this.rows, rows, from.on, true);
+        const placeholder = columns.reduce((res, key) => ({ ...res, [key]: null }), {});
+        this.rows = this.joinRows(this.rows, rows, from.on, placeholder);
       } else {
         throw new ProcessorException(`Unknown "${from.join}" join type`);
       }
@@ -63,19 +65,18 @@ export class SelectProcessor {
     rowsA: object[],
     rowsB: object[],
     expression: Expression | null,
-    includeRowIfNoMatch = false,
+    placeholderIfNoMatch: object | null = null,
   ): object[] {
-    const evaluator = this.createEvaluator();
     return rowsA.reduce<object[]>((res: object[], rowA: object) => {
       const group: object[] = [];
       for (const rowB of rowsB) {
         const mergedRow = { ...rowA, ...rowB };
-        if (expression === null || evaluator.evaluateExpression(expression, mergedRow)) {
+        if (expression === null || this.evaluator.evaluateExpression(expression, mergedRow)) {
           group.push(mergedRow);
         }
       }
-      if (group.length === 0 && includeRowIfNoMatch) {
-        group.push(rowA);
+      if (group.length === 0 && placeholderIfNoMatch) {
+        group.push({ ...rowA, ...placeholderIfNoMatch });
       }
       return [...res, ...group];
     }, []);
@@ -87,8 +88,7 @@ export class SelectProcessor {
       return;
     }
 
-    const evaluator = this.createEvaluator();
-    this.rows = this.rows.filter((row) => evaluator.evaluateExpression(where, row));
+    this.rows = this.rows.filter((row) => this.evaluator.evaluateExpression(where, row));
   }
 
   protected applyGroupBy(): void {
@@ -96,10 +96,9 @@ export class SelectProcessor {
       return;
     }
 
-    const evaluator = this.createEvaluator();
     this.rows.forEach(row => {
       const hash = md5(this.query.groupBy.map(c => {
-        return evaluator.evaluateExpression(c, row);
+        return this.evaluator.evaluateExpression(c, row);
       }).join('::'));
       this.groupedRows.set(hash, [...this.groupedRows.get(hash) || [], row]);
     });
@@ -110,9 +109,8 @@ export class SelectProcessor {
       return;
     }
 
-    const evaluator = this.createEvaluator();
     const sortKeys: SortByKey[] = this.query.orderBy.map(o => ({
-      mapper: (row) => evaluator.evaluateExpression(o, row),
+      mapper: (row) => this.evaluator.evaluateExpression(o, row),
       order: o.order === 'ASC' ? 1 : -1,
     }));
     this.rows = this.rows.sort(sortBy(sortKeys));
@@ -131,14 +129,13 @@ export class SelectProcessor {
         this.columns.push(`::${c.alias}`);
       }
     });
-    const evaluator = this.createEvaluator();
     const mapRow = (rawRow: object, group: object[]): [object, object] => {
       let rawRowWithAliases = rawRow;
       const mappedRow = this.query.columns.reduce((res, c) => {
         if (c.type === 'star') {
-          return { ...res, ...evaluator.evaluateStar(c, rawRow) };
+          return { ...res, ...this.evaluator.evaluateStar(c, rawRow) };
         }
-        const value = evaluator.evaluateExpression(c, rawRow, group);
+        const value = this.evaluator.evaluateExpression(c, rawRow, group);
         if (c.alias) {
           rawRowWithAliases = { ...rawRowWithAliases, [`::${c.alias}`]: value };
         }
@@ -151,7 +148,7 @@ export class SelectProcessor {
       if (this.query.having === null) {
         return true;
       }
-      return evaluator.evaluateExpression(this.query.having, row);
+      return this.evaluator.evaluateExpression(this.query.having, row);
     };
     if (this.query.groupBy.length === 0) {
       const existingRows = this.rows;
@@ -181,9 +178,5 @@ export class SelectProcessor {
     if (this.query.limit && this.rows.length > this.query.limit) {
       this.rows.length = this.query.limit;
     }
-  }
-
-  private createEvaluator(): Evaluator {
-    return new Evaluator(this.server, this.columns);
   }
 }

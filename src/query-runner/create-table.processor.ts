@@ -15,6 +15,8 @@ import { UniqueConstraint } from '../server/unique-constraint';
 import { ProcessorException } from './processor.exception';
 
 export class CreateTableProcessor {
+  protected evaluator = new Evaluator(this.server);
+
   constructor(protected server: Server) {}
 
   process(query: CreateTableQuery): void {
@@ -80,8 +82,7 @@ export class CreateTableProcessor {
         return new DateColumn(c.name, c.nullable, c.defaultValue);
       case 'ENUM':
         if (c.defaultValue) {
-          const evaluator = new Evaluator(this.server, []);
-          const included = evaluator.evaluateExpression({
+          const included = this.evaluator.evaluateExpression({
             type: 'binary_expression',
             operator: 'IN',
             left: c.defaultValue,

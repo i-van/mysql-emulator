@@ -4,10 +4,7 @@ import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
 
 export class Evaluator {
-  constructor(
-    protected server: Server,
-    protected columns: string[],
-  ) {}
+  constructor(protected server: Server) {}
 
   evaluateExpression(e: Expression, row: object, group: object[] = []): any {
     switch (e.type) {
@@ -57,10 +54,11 @@ export class Evaluator {
     const key = c.table
       ? `${c.table}::${c.column}`
       : Object.keys(row).find(key => extractColumn(key) === c.column);
-    if (!key || !this.columns.includes(key)) {
-      throw new EvaluatorException(`Unknown column '${c.column}' in 'field list'`);
+    if (!key || !(key in row)) {
+      const columnName = c.table ? `${c.table}.${c.column}`: c.column;
+      throw new EvaluatorException(`Unknown column '${columnName}' in 'field list'`);
     }
-    return row[key] ?? null;
+    return row[key];
   }
 
   protected evaluateFunction(f: FunctionType, _row: object, group: object[]): any {

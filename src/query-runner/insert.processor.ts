@@ -4,6 +4,8 @@ import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
 
 export class InsertProcessor {
+  protected evaluator = new Evaluator(this.server);
+
   constructor(protected server: Server) {}
 
   process(query: InsertQuery) {
@@ -12,10 +14,6 @@ export class InsertProcessor {
     const columnDefinitions = table.getColumns();
     const columnDefinitionMap = new Map<string, Column>(
       columnDefinitions.map((c) => [c.getName(), c])
-    );
-    const evaluator = new Evaluator(
-      this.server,
-      columnDefinitions.map(c => `${query.table}::${c.getName()}`),
     );
     const columns = query.columns || columnDefinitions.map(c => c.getName());
     const getColumnDefinition = (column: string): Column => {
@@ -31,13 +29,17 @@ export class InsertProcessor {
       }
       const defaultValue = column.getDefaultValueExpression();
       if (defaultValue) {
-        return evaluator.evaluateExpression(defaultValue, row);
+        return this.evaluator.evaluateExpression(defaultValue, row);
       }
       return null;
     };
 
     let insertId = 0;
     let affectedRows = 0;
+    const placeholder = columnDefinitions.reduce((res, c) => ({
+      ...res,
+      [`${query.table}::${c.getName()}`]: null,
+    }), {});
     query.values.forEach((values, rowIndex) => {
       if (values.length !== columns.length) {
         throw new ProcessorException(`Column count doesn't match value count at row ${rowIndex + 1}`);
@@ -51,16 +53,16 @@ export class InsertProcessor {
           ...res,
           [`${query.table}::${columnName}`]: expression.type === 'default'
             ? evaluateDefaultValue(getColumnDefinition(columnName), res)
-            : evaluator.evaluateExpression(expression, res),
+            : this.evaluator.evaluateExpression(expression, res),
         };
-      }, {});
+      }, placeholder);
       const row = columnDefinitions.reduce((res, c) => {
         const columnRef: ColumnRef = {
           type: 'column_ref',
           table: query.table,
           column: c.getName(),
         };
-        const value = evaluator.evaluateExpression(columnRef, rawRow) ?? evaluateDefaultValue(c, rawRow);
+        const value = this.evaluator.evaluateExpression(columnRef, rawRow) ?? evaluateDefaultValue(c, rawRow);
         if (value === null && !c.isNullable()) {
           throw new ProcessorException(`Field '${c.getName()}' doesn't have a default value`);
         }

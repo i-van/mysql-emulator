@@ -5,17 +5,17 @@ import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
 
 export class UpdateProcessor {
+  protected evaluator = new Evaluator(this.server);
+
   constructor(protected server: Server) {}
 
   process(query: UpdateQuery) {
     const table = this.server.getDatabase(query.database).getTable(query.table);
     const keyMapper = (key: string) => `${query.alias || query.table}::${key}`;
-    const columns = table.getColumns().map(c => keyMapper(c.getName()));
     const columnDefinitions = table.getColumns();
     const columnDefinitionMap = new Map<string, Column>(
       columnDefinitions.map((c) => [c.getName(), c])
     );
-    const evaluator = new Evaluator(this.server, columns);
     const getColumnDefinition = (column: string): Column => {
       const c = columnDefinitionMap.get(column);
       if (!c) {
@@ -28,7 +28,7 @@ export class UpdateProcessor {
     let affectedRows = 0;
     const updatedRows = table.getRows().map(existingRow => {
       const rawRow = mapKeys(existingRow, keyMapper);
-      const needsUpdate = query.where === null || evaluator.evaluateExpression(query.where, rawRow);
+      const needsUpdate = query.where === null || this.evaluator.evaluateExpression(query.where, rawRow);
       if (!needsUpdate) {
         return existingRow;
       }
@@ -37,8 +37,8 @@ export class UpdateProcessor {
       const updatedRow = query.assignments.reduce((row, a) => {
         try {
           const column = getColumnDefinition(a.column);
-          const nextValue = column.cast(evaluator.evaluateExpression(a.value, rawRow));
-          const currentValue = row[column.getName()] ?? null;
+          const nextValue = column.cast(this.evaluator.evaluateExpression(a.value, rawRow));
+          const currentValue = row[column.getName()];
 
           return nextValue !== currentValue
             ? { ...row, [column.getName()]: nextValue }

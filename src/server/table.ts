@@ -27,7 +27,7 @@ export class Table {
   insertRow(row: object) {
     for (const constraint of this.constraints) {
       const indexValue = constraint.getColumns()
-        .map((c) => String(row[c.column] ?? null))
+        .map((c) => String(row[c.column]))
         .join('-');
       constraint.addValue(indexValue);
     }
