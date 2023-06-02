@@ -55,6 +55,14 @@ describe('insert', () => {
       { id: 1, name: 'Jane', year: 2 },
     ]);
   });
+  it('should throw an error if column is unknown', async () => {
+    expect.assertions(1);
+    try {
+      await query(`INSERT INTO students (user_name, year) VALUES ('John', 3)`);
+    } catch (err: any) {
+      expect(err.message).toBe(`Unknown column 'user_name' in 'field list'`);
+    }
+  });
   it('should insert incremented id', async () => {
     const res1 = await query(`INSERT INTO students (name, year) VALUES ('John', 3)`);
     const res2 = await query(`INSERT INTO students (name, year) VALUES ('Jane', 3)`);
@@ -84,7 +92,7 @@ describe('insert', () => {
     try {
       await query(`INSERT INTO students VALUES (1, 'John', 'second')`);
     } catch (err: any) {
-      expect(err.message).toEqual(`Incorrect integer value: 'second' for column 'year' at row 1`);
+      expect(err.message).toBe(`Incorrect integer value: 'second' for column 'year' at row 1`);
     }
   });
   it('should throw an error if year is negative', async () => {
@@ -92,7 +100,7 @@ describe('insert', () => {
     try {
       await query(`INSERT INTO students VALUES (1, 'John', -5)`);
     } catch (err: any) {
-      expect(err.message).toEqual(`Out of range value for column 'year' at row 1`);
+      expect(err.message).toBe(`Out of range value for column 'year' at row 1`);
     }
   });
   it('should cast string year to integer', async () => {

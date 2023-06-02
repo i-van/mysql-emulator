@@ -42,12 +42,18 @@ export class InsertProcessor {
       if (values.length !== columns.length) {
         throw new ProcessorException(`Column count doesn't match value count at row ${rowIndex + 1}`);
       }
-      const rawRow = values.reduce((res, expression, valueIndex) => ({
-        ...res,
-        [`${query.table}::${columns[valueIndex]}`]: expression.type === 'default'
-          ? evaluateDefaultValue(getColumnDefinition(columns[valueIndex]), res)
-          : evaluator.evaluateExpression(expression, res),
-      }), {});
+      const rawRow = values.reduce((res, expression, valueIndex) => {
+        const columnName = columns[valueIndex];
+        if (!columnDefinitionMap.has(columnName)) {
+          throw new ProcessorException(`Unknown column '${columnName}' in 'field list'`);
+        }
+        return {
+          ...res,
+          [`${query.table}::${columnName}`]: expression.type === 'default'
+            ? evaluateDefaultValue(getColumnDefinition(columnName), res)
+            : evaluator.evaluateExpression(expression, res),
+        };
+      }, {});
       const row = columnDefinitions.reduce((res, c) => {
         const columnRef: ColumnRef = {
           type: 'column_ref',
