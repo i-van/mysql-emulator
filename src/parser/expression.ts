@@ -60,20 +60,20 @@ export type Expression =
   | DefaultType
   | Star;
 
-export const buildExpression = (ast: any, tableAliases: Map<string, string>): Expression => {
+export const buildExpression = (ast: any): Expression => {
   if (ast.type === 'unary_expr') {
     return {
       type: 'unary_expression',
       operator: ast.operator,
-      expression: buildExpression(ast.expr, tableAliases),
+      expression: buildExpression(ast.expr),
     };
   }
   if (ast.type === 'binary_expr') {
     return {
       type: 'binary_expression',
       operator: ast.operator,
-      left: buildExpression(ast.left, tableAliases),
-      right: buildExpression(ast.right, tableAliases),
+      left: buildExpression(ast.left),
+      right: buildExpression(ast.right),
     };
   }
   if (ast.type === 'star') {
@@ -85,7 +85,7 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
   if (ast.type === 'column_ref' && ast.column === '*') {
     return {
       type: 'star',
-      table: tableAliases.get(ast.table) || ast.table,
+      table: ast.table,
     };
   }
   if (ast.type === 'column_ref' && ast.column.toLowerCase() === 'default') {
@@ -94,14 +94,14 @@ export const buildExpression = (ast: any, tableAliases: Map<string, string>): Ex
   if (ast.type === 'column_ref') {
     return {
       type: 'column_ref',
-      table: tableAliases.get(ast.table) || ast.table,
+      table: ast.table,
       column: ast.column,
     };
   }
   if (ast.type === 'function' || ast.type === 'aggr_func') {
     const args = ast.args?.type === 'expr_list'
-      ? ast.args.value.map(e => buildExpression(e, tableAliases))
-      : ast.args?.expr ? [buildExpression(ast.args.expr, tableAliases)] : [];
+      ? ast.args.value.map(buildExpression)
+      : ast.args?.expr ? [buildExpression(ast.args.expr)] : [];
     return {
       type: 'function',
       name: ast.name.toLowerCase(),

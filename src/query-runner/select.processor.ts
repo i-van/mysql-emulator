@@ -39,8 +39,9 @@ export class SelectProcessor {
         columns = rows.length ? Object.keys(rows[0]) : [];
       } else {
         const table = this.server.getDatabase(from.database).getTable(from.table);
-        rows = table.getRows().map(r => mapKeys(r, (key) => `${from.table}::${key}`));
-        columns = table.getColumns().map(c => `${from.table}::${c.getName()}`);
+        const keyMapper = (key: string) => `${from.alias || from.table}::${key}`;
+        rows = table.getRows().map(r => mapKeys(r, keyMapper));
+        columns = table.getColumns().map(c => keyMapper(c.getName()));
       }
 
       this.columns.push(...columns);

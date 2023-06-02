@@ -48,7 +48,7 @@ describe('select query', () => {
           type: 'function',
           name: 'count',
           column: 'count(u.id)',
-          args: [{ type: 'column_ref', table: 'users', column: 'id' }],
+          args: [{ type: 'column_ref', table: 'u', column: 'id' }],
           alias: null,
         },
       ]);
@@ -68,7 +68,7 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.columns).toEqual([
-        { type: 'star', table: 'users' },
+        { type: 'star', table: 'u' },
       ]);
     });
     it('should parse expression', () => {
@@ -109,7 +109,7 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.from).toEqual([
-        { database: null, table: 'users', join: null, on: null },
+        { database: null, table: 'users', alias: null, join: null, on: null },
       ]);
     });
     it('should parse aliased FROM', () => {
@@ -118,7 +118,7 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.from).toEqual([
-        { database: null, table: 'users', join: null, on: null },
+        { database: null, table: 'users', alias: 'u', join: null, on: null },
       ]);
     });
     it('should parse FROM with database', () => {
@@ -127,7 +127,7 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.from).toEqual([
-        { database: 'INFORMATION_SCHEMA', table: 'COLUMNS', join: null, on: null },
+        { database: 'INFORMATION_SCHEMA', table: 'COLUMNS', alias: null, join: null, on: null },
       ]);
     });
     it('should parse INNER JOIN', () => {
@@ -136,16 +136,23 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.from).toEqual([
-        { database: null, table: 'users', join: null, on: null },
+        {
+          database: null,
+          table: 'users',
+          alias: 'u',
+          join: null,
+          on: null,
+        },
         {
           database: null,
           table: 'posts',
+          alias: 'p',
           join: 'INNER JOIN',
           on: {
             type: 'binary_expression',
             operator: '=',
-            left: { type: 'column_ref', table: 'posts', column: 'user_id' },
-            right: { type: 'column_ref', table: 'users', column: 'id' },
+            left: { type: 'column_ref', table: 'p', column: 'user_id' },
+            right: { type: 'column_ref', table: 'u', column: 'id' },
           },
         },
       ]);
@@ -161,7 +168,7 @@ describe('select query', () => {
       expect(res.where).toEqual({
         type: 'binary_expression',
         operator: '=',
-        left: { type: 'column_ref', table: 'users', column: 'id' },
+        left: { type: 'column_ref', table: 'u', column: 'id' },
         right: { type: 'number', value: 1 },
       });
     });
@@ -173,7 +180,7 @@ describe('select query', () => {
       expect(res.where).toEqual({
         type: 'binary_expression',
         operator: 'IN',
-        left: { type: 'column_ref', table: 'users', column: 'id' },
+        left: { type: 'column_ref', table: 'u', column: 'id' },
         right: { type: 'array', value: [1, 2] },
       });
     });
@@ -185,7 +192,7 @@ describe('select query', () => {
       expect(res.where).toEqual({
         type: 'binary_expression',
         operator: 'IN',
-        left: { type: 'column_ref', table: 'users', column: 'id' },
+        left: { type: 'column_ref', table: 'u', column: 'id' },
         right: { type: 'array', value: ['1', '2'] },
       });
     });
@@ -207,7 +214,7 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.groupBy).toEqual([
-        { type: 'column_ref', table: 'users', column: 'id' },
+        { type: 'column_ref', table: 'u', column: 'id' },
       ]);
     });
   });
@@ -229,7 +236,7 @@ describe('select query', () => {
         left: {
           type: 'binary_expression',
           operator: '=',
-          left: { type: 'column_ref', table: 'users', column: 'name' },
+          left: { type: 'column_ref', table: 'u', column: 'name' },
           right: { type: 'string', value: 'Jane' },
         },
         right: {
@@ -267,7 +274,7 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.orderBy).toEqual([
-        { type: 'column_ref', table: 'users', column: 'id', order: 'ASC' },
+        { type: 'column_ref', table: 'u', column: 'id', order: 'ASC' },
       ]);
     });
   });
@@ -307,6 +314,7 @@ describe('select query', () => {
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.from).toEqual([
         {
+          type: 'select',
           query: new SelectQuery(
             [],
             [

@@ -9,7 +9,8 @@ export class UpdateProcessor {
 
   process(query: UpdateQuery) {
     const table = this.server.getDatabase(query.database).getTable(query.table);
-    const columns = table.getColumns().map(c => `${query.table}::${c.getName()}`);
+    const keyMapper = (key: string) => `${query.alias || query.table}::${key}`;
+    const columns = table.getColumns().map(c => keyMapper(c.getName()));
     const columnDefinitions = table.getColumns();
     const columnDefinitionMap = new Map<string, Column>(
       columnDefinitions.map((c) => [c.getName(), c])
@@ -26,7 +27,7 @@ export class UpdateProcessor {
     let changedRows = 0;
     let affectedRows = 0;
     const updatedRows = table.getRows().map(existingRow => {
-      const rawRow = mapKeys(existingRow, (key) => `${query.table}::${key}`);
+      const rawRow = mapKeys(existingRow, keyMapper);
       const needsUpdate = query.where === null || evaluator.evaluateExpression(query.where, rawRow);
       if (!needsUpdate) {
         return existingRow;

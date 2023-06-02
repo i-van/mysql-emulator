@@ -12,7 +12,7 @@ export class InsertQuery {
   static fromAst(ast: Insert_Replace): InsertQuery {
     const [{ db, table }] = ast.table!;
     const values = ast.values.map(({ value }) => {
-      return value.map(i => buildExpression(i, new Map()));
+      return value.map(buildExpression);
     });
 
     return new InsertQuery(db, table, ast.columns, values);

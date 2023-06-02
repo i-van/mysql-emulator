@@ -19,12 +19,12 @@ type WithJoin<T> = T & {
   on: Expression | null;
 };
 export type SubQuery = {
+  type: 'select';
   query: SelectQuery;
-  alias: string | null;
 };
 export type From =
-  | WithJoin<{ database: string | null; table: string }>
-  | WithJoin<SubQuery>;
+  | WithJoin<WithAlias<{ database: string | null; table: string }>>
+  | WithJoin<WithAlias<SubQuery>>;
 
 export const isSubQuery = (s: any): s is SubQuery => {
   return s.query instanceof SelectQuery;
@@ -57,25 +57,23 @@ export class SelectQuery {
 
   static fromAst(ast: Select, sql: string): SelectQuery {
     const sqlParser = new SqlParser();
-    const tableAliases = new Map<string, string>();
-    (ast.from || []).forEach((f) => {
-      f.as && f.table && tableAliases.set(f.as, f.table);
-    });
-    const from = (ast.from || []).map((f) => {
+    const from = (ast.from || []).map((f): From => {
       if (f.expr?.ast) {
         const subSql = sqlParser.sqlify(f.expr.ast, { database: 'MariaDB' });
         return {
+          type: 'select',
           query: SelectQuery.fromAst(f.expr.ast, subSql),
           alias: f.as,
           join: f.join || null,
-          on: f.on ? buildExpression(f.on, tableAliases) : null,
+          on: f.on ? buildExpression(f.on) : null,
         };
       }
       return {
         database: f.db || null,
         table: f.table,
+        alias: f.as || null,
         join: f.join || null,
-        on: f.on ? buildExpression(f.on, tableAliases) : null,
+        on: f.on ? buildExpression(f.on) : null,
       };
     });
 
@@ -84,17 +82,17 @@ export class SelectQuery {
     const primitives = ['bool', 'number', 'string', 'single_quote_string', 'null'];
     const columns = [...ast.columns].map((c): SelectColumn => {
       if (c === '*') {
-        return buildExpression({ type: 'star', value: c }, tableAliases) as Star;
+        return buildExpression({ type: 'star', value: c }) as Star;
       } else if (c.expr?.type === 'column_ref' && c.expr.column === '*') {
-        return buildExpression(c.expr, tableAliases) as Star;
+        return buildExpression(c.expr) as Star;
       } else if (c.expr?.type === 'column_ref') {
         return {
-          ...buildExpression(c.expr, tableAliases) as ColumnRef,
+          ...buildExpression(c.expr) as ColumnRef,
           alias: c.as,
         };
       } else if (['binary_expr', ...functions, ...primitives].includes(c.expr?.type)) {
         return {
-          ...buildExpression(c.expr, tableAliases) as FunctionType | BinaryExpression | StringType | NumberType | BooleanType | NullType,
+          ...buildExpression(c.expr) as FunctionType | BinaryExpression | StringType | NumberType | BooleanType | NullType,
           column: columnNames.shift()!,
           alias: c.as,
         };
@@ -102,12 +100,12 @@ export class SelectQuery {
       throw new ParserException('Could not map columns');
     });
     const groupBy: ColumnRef[] = (ast.groupby || []).map(g => (
-      buildExpression(g, tableAliases) as ColumnRef
+      buildExpression(g) as ColumnRef
     ));
     const orderBy: OrderBy[] = (ast.orderby || []).map(o => ({
-      ...buildExpression(o.expr, tableAliases),
+      ...buildExpression(o.expr) as ColumnRef,
       order: o.type,
-    } as OrderBy));
+    }));
     let limit = 0;
     let offset = 0;
     if (ast.limit?.value.length === 1) {
@@ -121,9 +119,9 @@ export class SelectQuery {
     return new SelectQuery(
       from,
       columns,
-      ast.where ? buildExpression(ast.where, tableAliases) : null,
+      ast.where ? buildExpression(ast.where) : null,
       groupBy,
-      ast.having ? buildExpression(ast.having, tableAliases) : null,
+      ast.having ? buildExpression(ast.having) : null,
       orderBy,
       limit,
       offset,

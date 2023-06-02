@@ -8,12 +8,13 @@ export class DeleteProcessor {
 
   process(query: DeleteQuery) {
     const table = this.server.getDatabase(query.database).getTable(query.table);
-    const columns = table.getColumns().map(c => `${query.table}::${c.getName()}`);
+    const keyMapper = (key: string) => `${query.alias || query.table}::${key}`;
+    const columns = table.getColumns().map(c => keyMapper(c.getName()));
     const evaluator = new Evaluator(this.server, columns);
 
     let affectedRows = 0;
     const updatedRows = table.getRows().filter(r => {
-      const row = mapKeys(r, (key) => `${query.table}::${key}`);
+      const row = mapKeys(r, keyMapper);
       const needsRemove = query.where === null || evaluator.evaluateExpression(query.where, row);
       if (needsRemove) {
         affectedRows++;

@@ -78,13 +78,13 @@ export class CreateTableQuery {
           name: c.column.column,
           dataType: c.definition.dataType,
           defaultValue: c.default_val?.value
-            ? buildExpression(c.default_val.value, new Map())
+            ? buildExpression(c.default_val.value)
             : null,
           nullable: !c.nullable,
           unsigned: c.definition.suffix ? c.definition.suffix.includes('UNSIGNED') : null,
           length: c.definition.length ? c.definition.length : null,
           enumValues: c.definition.dataType === 'ENUM'
-            ? buildExpression(c.definition.expr, new Map())
+            ? buildExpression(c.definition.expr)
             : null,
           autoIncrement: c.auto_increment ? true : null,
         });
@@ -93,7 +93,7 @@ export class CreateTableQuery {
           name: 'PRIMARY',
           type: 'primary_key',
           columns: c.definition.map((d) => {
-            return buildExpression(d, new Map()) as ColumnRef;
+            return buildExpression(d) as ColumnRef;
           }),
         });
       } else if (c.resource === 'constraint' && constraintTypeMap[c.constraint_type] === 'unique_index') {
@@ -101,7 +101,7 @@ export class CreateTableQuery {
           name: c.index || c.definition[0].column,
           type: 'unique_index',
           columns: c.definition.map((d) => {
-            return buildExpression(d, new Map()) as ColumnRef;
+            return buildExpression(d) as ColumnRef;
           }),
         });
       }
