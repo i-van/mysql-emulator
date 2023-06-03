@@ -1,8 +1,9 @@
 import { Server } from '../server';
-import { Expression, isSubQuery, SelectQuery } from '../parser';
+import { ColumnRef, Expression, isSubQuery, SelectQuery } from '../parser';
 import { mapKeys, md5, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
+import { EvaluatorException } from './evaluator.exception';
 
 export class SelectProcessor {
   protected rows: object[] = [];
@@ -68,17 +69,24 @@ export class SelectProcessor {
     placeholderIfNoMatch: object | null = null,
   ): object[] {
     return rowsA.reduce<object[]>((res: object[], rowA: object) => {
-      const group: object[] = [];
-      for (const rowB of rowsB) {
-        const mergedRow = { ...rowA, ...rowB };
-        if (expression === null || this.evaluator.evaluateExpression(expression, mergedRow)) {
-          group.push(mergedRow);
+      try {
+        const group: object[] = [];
+        for (const rowB of rowsB) {
+          const mergedRow = { ...rowA, ...rowB };
+          if (expression === null || this.evaluator.evaluateExpression(expression, mergedRow)) {
+            group.push(mergedRow);
+          }
         }
+        if (group.length === 0 && placeholderIfNoMatch) {
+          group.push({ ...rowA, ...placeholderIfNoMatch });
+        }
+        return [...res, ...group];
+      } catch (err: any) {
+        if (err instanceof EvaluatorException) {
+          throw new ProcessorException(`${err.message} in 'on clause'`);
+        }
+        throw err;
       }
-      if (group.length === 0 && placeholderIfNoMatch) {
-        group.push({ ...rowA, ...placeholderIfNoMatch });
-      }
-      return [...res, ...group];
     }, []);
   }
 
@@ -88,7 +96,14 @@ export class SelectProcessor {
       return;
     }
 
-    this.rows = this.rows.filter((row) => this.evaluator.evaluateExpression(where, row));
+    try {
+      this.rows = this.rows.filter((row) => this.evaluator.evaluateExpression(where, row));
+    } catch (err: any) {
+      if (err instanceof EvaluatorException) {
+        throw new ProcessorException(`${err.message} in 'where clause'`);
+      }
+      throw err;
+    }
   }
 
   protected applyGroupBy(): void {
@@ -96,12 +111,18 @@ export class SelectProcessor {
       return;
     }
 
-    this.rows.forEach(row => {
-      const hash = md5(this.query.groupBy.map(c => {
-        return this.evaluator.evaluateExpression(c, row);
-      }).join('::'));
-      this.groupedRows.set(hash, [...this.groupedRows.get(hash) || [], row]);
-    });
+    try {
+      this.rows.forEach(row => {
+        const mapper = (c: ColumnRef) => this.evaluator.evaluateExpression(c, row);
+        const hash = md5(this.query.groupBy.map(mapper).join('::'));
+        this.groupedRows.set(hash, [...this.groupedRows.get(hash) || [], row]);
+      });
+    } catch (err: any) {
+      if (err instanceof EvaluatorException) {
+        throw new ProcessorException(`${err.message} in 'group statement'`);
+      }
+      throw err;
+    }
   }
 
   protected applyOrderBy(): void {
@@ -109,11 +130,18 @@ export class SelectProcessor {
       return;
     }
 
-    const sortKeys: SortByKey[] = this.query.orderBy.map(o => ({
-      mapper: (row) => this.evaluator.evaluateExpression(o, row),
-      order: o.order === 'ASC' ? 1 : -1,
-    }));
-    this.rows = this.rows.sort(sortBy(sortKeys));
+    try {
+      const sortKeys: SortByKey[] = this.query.orderBy.map(o => ({
+        mapper: (row) => this.evaluator.evaluateExpression(o, row),
+        order: o.order === 'ASC' ? 1 : -1,
+      }));
+      this.rows = this.rows.sort(sortBy(sortKeys));
+    } catch (err: any) {
+      if (err instanceof EvaluatorException) {
+        throw new ProcessorException(`${err.message} in 'order clause'`);
+      }
+      throw err;
+    }
   }
 
   protected applySelectAndHaving() {
@@ -130,25 +158,39 @@ export class SelectProcessor {
       }
     });
     const mapRow = (rawRow: object, group: object[]): [object, object] => {
-      let rawRowWithAliases = rawRow;
-      const mappedRow = this.query.columns.reduce((res, c) => {
-        if (c.type === 'star') {
-          return { ...res, ...this.evaluator.evaluateStar(c, rawRow) };
-        }
-        const value = this.evaluator.evaluateExpression(c, rawRow, group);
-        if (c.alias) {
-          rawRowWithAliases = { ...rawRowWithAliases, [`::${c.alias}`]: value };
-        }
-        return { ...res, [c.alias || c.column]: value };
-      }, {});
+      try {
+        let rawRowWithAliases = rawRow;
+        const mappedRow = this.query.columns.reduce((res, c) => {
+          if (c.type === 'star') {
+            return { ...res, ...this.evaluator.evaluateStar(c, rawRow) };
+          }
+          const value = this.evaluator.evaluateExpression(c, rawRow, group);
+          if (c.alias) {
+            rawRowWithAliases = { ...rawRowWithAliases, [`::${c.alias}`]: value };
+          }
+          return { ...res, [c.alias || c.column]: value };
+        }, {});
 
-      return [mappedRow, rawRowWithAliases];
+        return [mappedRow, rawRowWithAliases];
+      } catch (err: any) {
+        if (err instanceof EvaluatorException) {
+          throw new ProcessorException(`${err.message} in 'field list'`);
+        }
+        throw err;
+      }
     };
     const checkIfKeep = (row: object): boolean => {
       if (this.query.having === null) {
         return true;
       }
-      return this.evaluator.evaluateExpression(this.query.having, row);
+      try {
+        return this.evaluator.evaluateExpression(this.query.having, row);
+      } catch (err: any) {
+        if (err instanceof EvaluatorException) {
+          throw new ProcessorException(`${err.message} in 'having clause'`);
+        }
+        throw err;
+      }
     };
     if (this.query.groupBy.length === 0) {
       const existingRows = this.rows;

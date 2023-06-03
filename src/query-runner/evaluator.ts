@@ -18,7 +18,7 @@ export class Evaluator {
       case 'array': return e.value;
       case 'null': return null;
     }
-    throw new EvaluatorException(`Unknown "${e.type}" expression type`);
+    throw new EvaluatorException(`Unknown expression type '${e.type}'`);
   };
 
   evaluateStar(s: Star, row: object): object {
@@ -47,7 +47,7 @@ export class Evaluator {
       case '*': return left * right;
       case '/': return left / right;
     }
-    throw new EvaluatorException(`Unknown "${be.operator}" expression type`);
+    throw new EvaluatorException(`Unknown operator '${be.operator}'`);
   }
 
   protected evaluateColumnReference(c: ColumnRef, row: object): any {
@@ -56,7 +56,7 @@ export class Evaluator {
       : Object.keys(row).find(key => extractColumn(key) === c.column);
     if (!key || !(key in row)) {
       const columnName = c.table ? `${c.table}.${c.column}`: c.column;
-      throw new EvaluatorException(`Unknown column '${columnName}' in 'field list'`);
+      throw new EvaluatorException(`Unknown column '${columnName}'`);
     }
     return row[key];
   }
@@ -68,7 +68,7 @@ export class Evaluator {
       case 'count': return group.filter((row) => {
         const [arg] = f.args;
         if (!arg) {
-          throw new EvaluatorException(`Could not evaluate "${f.name}" function`);
+          throw new EvaluatorException(`Could not evaluate function '${f.name}'`);
         }
         // count every row when COUNT(*)
         if (arg.type === 'star') {
@@ -81,13 +81,13 @@ export class Evaluator {
       case 'sum': return group.reduce((res, row) => {
         const [arg] = f.args;
         if (!arg) {
-          throw new EvaluatorException(`Could not evaluate "${f.name}" function`);
+          throw new EvaluatorException(`Could not evaluate function '${f.name}'`);
         }
         return res + this.evaluateExpression(arg, row);
       }, 0).toString();
       case 'now':
       case 'current_timestamp': return new Date();
-      default: throw new EvaluatorException(`Function ${f.name} is not implemented`);
+      default: throw new EvaluatorException(`Function '${f.name}' is not implemented`);
     }
   };
 }

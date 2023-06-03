@@ -130,6 +130,14 @@ describe('select', () => {
         'v14': 1,
       }]);
     });
+    it('should throw an error if column is unknown', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT user_id from users`);
+      } catch (err: any) {
+        expect(err.message).toBe(`Unknown column 'user_id' in 'field list'`);
+      }
+    });
   });
 
   describe('from clause', () => {
@@ -217,6 +225,14 @@ describe('select', () => {
         { id: 2, name: 'name2' },
       ]);
     });
+    it('should throw an error if column is unknown', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT * from users u WHERE u.user_id = 1`);
+      } catch (err: any) {
+        expect(err.message).toBe(`Unknown column 'u.user_id' in 'where clause'`);
+      }
+    });
   });
 
   describe('having clause', () => {
@@ -267,6 +283,14 @@ describe('select', () => {
         { user_id: 1, count: 2 },
       ]);
     });
+    it('should throw an error if column is unknown', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT * from users u HAVING u.user_id = 1`);
+      } catch (err: any) {
+        expect(err.message).toBe(`Unknown column 'u.user_id' in 'having clause'`);
+      }
+    });
   });
 
   describe('order by clause', () => {
@@ -297,6 +321,14 @@ describe('select', () => {
         { id: 3, name: 'Jane', post_count: 1 },
       ]);
     });
+    it('should throw an error if column is unknown', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT * from users u ORDER BY u.user_id`);
+      } catch (err: any) {
+        expect(err.message).toBe(`Unknown column 'u.user_id' in 'order clause'`);
+      }
+    });
   });
 
   describe('group by clause', () => {
@@ -315,6 +347,14 @@ describe('select', () => {
         { name: 'John', count: '15' },
         { name: 'Jane', count: '1' },
       ]);
+    });
+    it('should throw an error if column is unknown', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT * from users u GROUP BY u.user_id`);
+      } catch (err: any) {
+        expect(err.message).toBe(`Unknown column 'u.user_id' in 'group statement'`);
+      }
     });
   });
 
@@ -356,6 +396,14 @@ describe('select', () => {
         { name: 'name2', count: 1 },
         { name: 'name3', count: 0 },
       ]);
+    });
+    it('should throw an error if column is unknown', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT u.name, p.text FROM users u JOIN posts p ON p.user_id = u.user_id`);
+      } catch (err: any) {
+        expect(err.message).toBe(`Unknown column 'u.user_id' in 'on clause'`);
+      }
     });
   });
 
