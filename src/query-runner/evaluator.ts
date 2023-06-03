@@ -49,7 +49,7 @@ export class Evaluator {
       case '+': return left + right;
       case '-': return left - right;
       case '*': return left * right;
-      case '/': return left / right;
+      case '/': return (left / right).toFixed(4);
     }
     throw new EvaluatorException(`Unknown operator '${be.operator}'`);
   }
