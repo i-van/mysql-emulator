@@ -9,9 +9,13 @@ export class SelectProcessor {
   protected rows: object[] = [];
   protected groupedRows = new Map<string, object[]>();
   protected columns: string[] = [];
-  protected evaluator = new Evaluator(this.server);
+  protected evaluator = new Evaluator(this.server, this.context);
 
-  constructor(protected server: Server, protected query: SelectQuery) {}
+  constructor(
+    protected server: Server,
+    protected query: SelectQuery,
+    protected context: object = {},
+  ) {}
 
   process() {
     this.applyFrom();
@@ -148,7 +152,8 @@ export class SelectProcessor {
     const hasFunctionColumn = this.query.columns.find(c => c.type === 'function');
     const hasPrimitiveColumn = this.query.columns.find(c => ['number', 'string', 'boolean', 'null'].includes(c.type));
     const hasExpressionColumn = this.query.columns.find(c => c.type === 'binary_expression');
-    if (this.rows.length === 0 && (hasFunctionColumn || hasExpressionColumn || hasPrimitiveColumn)) {
+    const hasSubSelect = this.query.columns.find(c => c.type === 'select');
+    if (this.rows.length === 0 && (hasFunctionColumn || hasExpressionColumn || hasPrimitiveColumn || hasSubSelect)) {
       this.rows = [{}];
     }
 
@@ -164,7 +169,26 @@ export class SelectProcessor {
           if (c.type === 'star') {
             return { ...res, ...this.evaluator.evaluateStar(c, rawRow) };
           }
-          const value = this.evaluator.evaluateExpression(c, rawRow, group);
+          const runSubQuery = (query: SelectQuery) => {
+            const p = new SelectProcessor(this.server, query, rawRow);
+            const rows = p.process();
+
+            if (rows.length === 0) {
+              return null;
+            } else if (rows.length === 1) {
+              const [row] = rows;
+              const keys = Object.keys(row);
+              if (keys.length !== 1) {
+                throw new ProcessorException('Operand should contain 1 column(s)');
+              }
+              return row[keys[0]];
+            } else if (rows.length > 1) {
+              throw new ProcessorException('Subquery returns more than 1 row');
+            }
+          };
+          const value = c.type === 'select'
+            ? runSubQuery(c.query)
+            : this.evaluator.evaluateExpression(c, rawRow, group);
           if (c.alias) {
             rawRowWithAliases = { ...rawRowWithAliases, [`::${c.alias}`]: value };
           }

@@ -448,5 +448,43 @@ describe('select', () => {
         { name: 'name3' },
       ]);
     });
+    it('should throw an error if sub query returns several columns', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT (SELECT * FROM users LIMIT 1) t`);
+      } catch (err: any) {
+        expect(err.message).toBe('Operand should contain 1 column(s)');
+      }
+    });
+    it('should throw an error if sub query returns more than 1 row', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT (SELECT name FROM users) t`);
+      } catch (err: any) {
+        expect(err.message).toBe('Subquery returns more than 1 row');
+      }
+    });
+    it('should select from sub query at SELECT', async () => {
+      const res = await query(`SELECT (SELECT name FROM users LIMIT 1) t`);
+
+      expect(res).toEqual([
+        { t: 'name1' },
+      ]);
+    });
+    it('should select from sub query with where clause at SELECT', async () => {
+      const res = await query(`
+        SELECT
+          (SELECT u.name FROM users u WHERE u.id = p.user_id) name,
+          p.text
+        FROM
+          posts p
+      `);
+
+      expect(res).toEqual([
+        { name: 'name1', text: 'text' },
+        { name: 'name1', text: 'another text' },
+        { name: 'name2', text: 'another yet text' },
+      ]);
+    });
   });
 });

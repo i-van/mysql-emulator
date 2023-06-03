@@ -307,7 +307,7 @@ describe('select query', () => {
   });
 
   describe('sub query', () => {
-    it('should parse sub query', () => {
+    it('should parse sub query at FROM', () => {
       const sql = `SELECT * FROM (SELECT 3 n) t`;
       const res = parser.parse(sql, []) as SelectQuery;
 
@@ -335,6 +335,36 @@ describe('select query', () => {
           alias: 't',
           join: null,
           on: null,
+        },
+      ]);
+    });
+    it('should parse sub query at SELECT', () => {
+      const sql = `SELECT (SELECT 'two')`;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.columns).toEqual([
+        {
+          type: 'select',
+          query: new SelectQuery(
+            [],
+            [
+              {
+                type: 'string',
+                value: 'two',
+                alias: null,
+                column: 'two',
+              },
+            ],
+            null,
+            [],
+            null,
+            [],
+            0,
+            0,
+          ),
+          alias: null,
+          column: `(SELECT 'two')`,
         },
       ]);
     });

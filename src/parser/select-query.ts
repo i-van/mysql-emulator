@@ -40,6 +40,7 @@ export type SelectColumn =
   | WithAlias<WithColumn<NumberType>>
   | WithAlias<WithColumn<BooleanType>>
   | WithAlias<WithColumn<NullType>>
+  | WithAlias<WithColumn<SubQuery>>
   | Star;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
 
@@ -95,6 +96,14 @@ export class SelectQuery {
           ...buildExpression(c.expr) as FunctionType | BinaryExpression | StringType | NumberType | BooleanType | NullType,
           column: columnNames.shift()!,
           alias: c.as,
+        };
+      } else if (c.expr?.ast) {
+        const subSql = columnNames.shift()!;
+        return {
+          type: 'select',
+          query: SelectQuery.fromAst(c.expr.ast, subSql),
+          alias: c.as,
+          column: subSql,
         };
       }
       throw new ParserException('Could not map columns');

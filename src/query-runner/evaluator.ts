@@ -4,14 +4,18 @@ import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
 
 export class Evaluator {
-  constructor(protected server: Server) {}
+  constructor(
+    protected server: Server,
+    protected context: object = {},
+  ) {}
 
   evaluateExpression(e: Expression, row: object, group: object[] = []): any {
+    const rowWithContext = { ...row, ...this.context };
     switch (e.type) {
       // todo: handle 'unary_expression'
-      case 'binary_expression': return this.evaluateBinaryExpression(e, row);
-      case 'function': return this.evaluateFunction(e, row, group);
-      case 'column_ref': return this.evaluateColumnReference(e, row);
+      case 'binary_expression': return this.evaluateBinaryExpression(e, rowWithContext);
+      case 'function': return this.evaluateFunction(e, rowWithContext, group);
+      case 'column_ref': return this.evaluateColumnReference(e, rowWithContext);
       case 'number': return e.value;
       case 'string': return e.value;
       case 'boolean': return Number(e.value);

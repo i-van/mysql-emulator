@@ -19,4 +19,16 @@ describe('column name parser', () => {
 
     expect(res).toEqual(['1', 'two', 'NULL']);
   });
+  it('should parse column names for sub query', () => {
+    const sql = `SELECT (SELECT 1) n1, (SELECT 'two') n2`;
+    const res = parseColumnNames(sql);
+
+    expect(res).toEqual(['(SELECT 1)', `(SELECT 'two')`]);
+  });
+  it('should parse column names for wrapped query', () => {
+    const sql = `(SELECT 3, version())`;
+    const res = parseColumnNames(sql);
+
+    expect(res).toEqual(['3', 'version()']);
+  });
 });
