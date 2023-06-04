@@ -30,7 +30,7 @@ export const isSubQuery = (s: any): s is SubQuery => {
   return s.query instanceof SelectQuery;
 };
 
-type WithAlias<T> = T & { alias: string | null };
+export type WithAlias<T> = T & { alias: string | null };
 type WithColumn<T> = T & { column: string };
 export type SelectColumn =
   | WithAlias<ColumnRef>

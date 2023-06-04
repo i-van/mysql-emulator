@@ -138,6 +138,21 @@ describe('select', () => {
         expect(err.message).toBe(`Unknown column 'user_id' in 'field list'`);
       }
     });
+    it('should run aggregate functions', async () => {
+      const res = await query(`
+        SELECT
+          COUNT(p.name) count,
+          MAX(p.post_count) max,
+          MIN(p.post_count) min,
+          AVG(p.post_count) avg
+        FROM
+          profiles p
+      `);
+
+      expect(res).toEqual([
+        { count: 3, min: 1, max: 10, avg: '5.3333' },
+      ]);
+    });
   });
 
   describe('from clause', () => {
@@ -404,6 +419,25 @@ describe('select', () => {
       } catch (err: any) {
         expect(err.message).toBe(`Unknown column 'u.user_id' in 'on clause'`);
       }
+    });
+    it('should run aggregate functions', async () => {
+      const res = await query(`
+        SELECT
+          p.name,
+          COUNT(p.name) count,
+          MAX(p.post_count) max,
+          MIN(p.post_count) min,
+          AVG(p.post_count) avg
+        FROM
+          profiles p
+        GROUP BY
+          p.name
+      `);
+
+      expect(res).toEqual([
+        { name: 'John', count: 2, min: 5, max: 10, avg: '7.5000' },
+        { name: 'Jane', count: 1, min: 1, max: 1, avg: '1.0000' },
+      ]);
     });
   });
 

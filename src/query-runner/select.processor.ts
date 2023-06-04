@@ -1,5 +1,5 @@
 import { Server } from '../server';
-import { ColumnRef, Expression, isSubQuery, SelectQuery } from '../parser';
+import { ColumnRef, Expression, isSubQuery, SelectQuery, WithAlias } from '../parser';
 import { mapKeys, md5, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
@@ -112,6 +112,24 @@ export class SelectProcessor {
 
   protected applyGroupBy(): void {
     if (this.query.groupBy.length === 0) {
+      const hasAggregateFunction = this.query.columns.some((c) => {
+        return c.type === 'function' && ['count', 'min', 'max', 'avg'].includes(c.name);
+      });
+      if (!hasAggregateFunction) {
+        return;
+      }
+
+      const columnRef = this.query.columns.find((c): c is WithAlias<ColumnRef> => c.type === 'column_ref');
+      if (columnRef) {
+        const columnName = columnRef.table ? `${columnRef.table}.${columnRef.column}`: columnRef.column;
+        const columnRefIndex = this.query.columns.indexOf(columnRef);
+        throw new ProcessorException(
+          `In aggregated query without GROUP BY, ` +
+          `expression #${columnRefIndex + 1} of SELECT list contains nonaggregated column '${columnName}'`,
+        );
+      }
+
+      this.groupedRows.set('1', this.rows);
       return;
     }
 
@@ -149,10 +167,10 @@ export class SelectProcessor {
   }
 
   protected applySelectAndHaving() {
-    const hasFunctionColumn = this.query.columns.find(c => c.type === 'function');
-    const hasPrimitiveColumn = this.query.columns.find(c => ['number', 'string', 'boolean', 'null'].includes(c.type));
-    const hasExpressionColumn = this.query.columns.find(c => c.type === 'binary_expression');
-    const hasSubSelect = this.query.columns.find(c => c.type === 'select');
+    const hasFunctionColumn = this.query.columns.some(c => c.type === 'function');
+    const hasPrimitiveColumn = this.query.columns.some(c => ['number', 'string', 'boolean', 'null'].includes(c.type));
+    const hasExpressionColumn = this.query.columns.some(c => c.type === 'binary_expression');
+    const hasSubSelect = this.query.columns.some(c => c.type === 'select');
     if (this.rows.length === 0 && (hasFunctionColumn || hasExpressionColumn || hasPrimitiveColumn || hasSubSelect)) {
       this.rows = [{}];
     }
@@ -216,7 +234,7 @@ export class SelectProcessor {
         throw err;
       }
     };
-    if (this.query.groupBy.length === 0) {
+    if (this.groupedRows.size === 0) {
       const existingRows = this.rows;
       this.rows = [];
       existingRows.forEach((rawRow) => {
