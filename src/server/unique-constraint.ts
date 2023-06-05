@@ -4,10 +4,7 @@ import { ServerException } from './server.exception';
 export class UniqueConstraint {
   protected index = new Set<string>();
 
-  constructor(
-    protected name: string,
-    protected columns: ColumnRef[],
-  ) {}
+  constructor(protected name: string, protected columns: ColumnRef[]) {}
 
   getColumns() {
     return this.columns;

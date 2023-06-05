@@ -90,9 +90,7 @@ describe('create table query', () => {
       {
         type: 'primary_key',
         name: 'PRIMARY',
-        columns: [
-          { type: 'column_ref', table: null, column: 'id' },
-        ],
+        columns: [{ type: 'column_ref', table: null, column: 'id' }],
       },
       {
         type: 'unique_index',

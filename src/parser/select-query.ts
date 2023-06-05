@@ -82,12 +82,18 @@ export class SelectQuery {
         return buildExpression(c.expr) as Star;
       } else if (c.expr?.type === 'column_ref') {
         return {
-          ...buildExpression(c.expr) as ColumnRef,
+          ...(buildExpression(c.expr) as ColumnRef),
           alias: c.as,
         };
       } else if (['binary_expr', ...functions, ...primitives].includes(c.expr?.type)) {
         return {
-          ...buildExpression(c.expr) as FunctionType | BinaryExpression | StringType | NumberType | BooleanType | NullType,
+          ...(buildExpression(c.expr) as
+            | FunctionType
+            | BinaryExpression
+            | StringType
+            | NumberType
+            | BooleanType
+            | NullType),
           column: columnNames.shift()!,
           alias: c.as,
         };
@@ -102,11 +108,9 @@ export class SelectQuery {
       }
       throw new ParserException('Could not map columns');
     });
-    const groupBy: ColumnRef[] = (ast.groupby || []).map(g => (
-      buildExpression(g) as ColumnRef
-    ));
-    const orderBy: OrderBy[] = (ast.orderby || []).map(o => ({
-      ...buildExpression(o.expr) as ColumnRef,
+    const groupBy: ColumnRef[] = (ast.groupby || []).map((g) => buildExpression(g) as ColumnRef);
+    const orderBy: OrderBy[] = (ast.orderby || []).map((o) => ({
+      ...(buildExpression(o.expr) as ColumnRef),
       order: o.type,
     }));
     let limit = 0;

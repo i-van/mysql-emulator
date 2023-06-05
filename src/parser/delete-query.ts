@@ -12,11 +12,6 @@ export class DeleteQuery {
   static fromAst(ast: Delete): DeleteQuery {
     const [{ db, table, as }] = ast.from as From[];
 
-    return new DeleteQuery(
-      db,
-      table,
-      as,
-      ast.where ? buildExpression(ast.where) : null,
-    );
+    return new DeleteQuery(db, table, as, ast.where ? buildExpression(ast.where) : null);
   }
 }

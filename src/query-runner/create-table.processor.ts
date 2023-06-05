@@ -82,12 +82,15 @@ export class CreateTableProcessor {
         return new DateColumn(c.name, c.nullable, c.defaultValue);
       case 'ENUM':
         if (c.defaultValue) {
-          const included = this.evaluator.evaluateExpression({
-            type: 'binary_expression',
-            operator: 'IN',
-            left: c.defaultValue,
-            right: c.enumValues!,
-          }, {});
+          const included = this.evaluator.evaluateExpression(
+            {
+              type: 'binary_expression',
+              operator: 'IN',
+              left: c.defaultValue,
+              right: c.enumValues!,
+            },
+            {},
+          );
           if (!included) {
             throw new ProcessorException(`Invalid default value for '${c.name}'`);
           }

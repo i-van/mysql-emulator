@@ -31,9 +31,7 @@ describe('insert', () => {
 
     expect(res.insertId).toEqual(1);
     expect(res.affectedRows).toEqual(1);
-    expect(rows).toEqual([
-      { id: 1, name: 'John', year: 1 },
-    ]);
+    expect(rows).toEqual([{ id: 1, name: 'John', year: 1 }]);
   });
   it('should insert default year if it is not in column list', async () => {
     const res = await query(`INSERT INTO students (id, name) VALUES (1, 'John')`);
@@ -41,9 +39,7 @@ describe('insert', () => {
 
     expect(res.insertId).toEqual(1);
     expect(res.affectedRows).toEqual(1);
-    expect(rows).toEqual([
-      { id: 1, name: 'John', year: 1 },
-    ]);
+    expect(rows).toEqual([{ id: 1, name: 'John', year: 1 }]);
   });
   it('should insert values without columns', async () => {
     const res = await query(`INSERT INTO students VALUES (1, 'Jane', 2)`);
@@ -51,9 +47,7 @@ describe('insert', () => {
 
     expect(res.insertId).toEqual(1);
     expect(res.affectedRows).toEqual(1);
-    expect(rows).toEqual([
-      { id: 1, name: 'Jane', year: 2 },
-    ]);
+    expect(rows).toEqual([{ id: 1, name: 'Jane', year: 2 }]);
   });
   it('should throw an error if column is unknown', async () => {
     expect.assertions(1);
@@ -83,9 +77,7 @@ describe('insert', () => {
 
     expect(res.insertId).toEqual(1);
     expect(res.affectedRows).toEqual(1);
-    expect(rows).toEqual([
-      { id: 1, name: 'John', year: 2 },
-    ]);
+    expect(rows).toEqual([{ id: 1, name: 'John', year: 2 }]);
   });
   it('should throw an error if year is string', async () => {
     expect.assertions(1);
@@ -109,9 +101,7 @@ describe('insert', () => {
 
     expect(res.insertId).toEqual(1);
     expect(res.affectedRows).toEqual(1);
-    expect(rows).toEqual([
-      { id: 1, name: 'John', year: 2 },
-    ]);
+    expect(rows).toEqual([{ id: 1, name: 'John', year: 2 }]);
   });
   it('should cast boolean value to integer', async () => {
     const res = await query(`INSERT INTO student_profiles VALUES (1, 5, false), (2, 4, true)`);

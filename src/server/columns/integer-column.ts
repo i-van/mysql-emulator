@@ -34,15 +34,11 @@ export class IntegerColumn extends Column {
   }
 
   getMinValue() {
-    return this.unsigned
-      ? 0
-      : (-2) ** (this.exponent - 1);
+    return this.unsigned ? 0 : (-2) ** (this.exponent - 1);
   }
 
   getMaxValue() {
-    return this.unsigned
-      ? 2 ** this.exponent - 1
-      : 2 ** (this.exponent - 1) - 1;
+    return this.unsigned ? 2 ** this.exponent - 1 : 2 ** (this.exponent - 1) - 1;
   }
 
   hasAutoIncrement() {

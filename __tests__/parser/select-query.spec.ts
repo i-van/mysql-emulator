@@ -57,18 +57,14 @@ describe('select query', () => {
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
-      expect(res.columns).toEqual([
-        { type: 'star', table: null },
-      ]);
+      expect(res.columns).toEqual([{ type: 'star', table: null }]);
     });
     it('should parse star column for specific table', () => {
       const sql = 'SELECT u.* FROM users u';
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
-      expect(res.columns).toEqual([
-        { type: 'star', table: 'u' },
-      ]);
+      expect(res.columns).toEqual([{ type: 'star', table: 'u' }]);
     });
     it('should parse expression', () => {
       const sql = 'SELECT 1 + 1 result';
@@ -226,18 +222,14 @@ describe('select query', () => {
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
-      expect(res.groupBy).toEqual([
-        { type: 'column_ref', table: null, column: 'id' },
-      ]);
+      expect(res.groupBy).toEqual([{ type: 'column_ref', table: null, column: 'id' }]);
     });
     it('should parse aliased GROUP BY', () => {
       const sql = `SELECT * FROM users u GROUP BY u.id`;
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
-      expect(res.groupBy).toEqual([
-        { type: 'column_ref', table: 'u', column: 'id' },
-      ]);
+      expect(res.groupBy).toEqual([{ type: 'column_ref', table: 'u', column: 'id' }]);
     });
   });
 
@@ -277,27 +269,21 @@ describe('select query', () => {
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
-      expect(res.orderBy).toEqual([
-        { type: 'column_ref', table: null, column: 'id', order: 'ASC' },
-      ]);
+      expect(res.orderBy).toEqual([{ type: 'column_ref', table: null, column: 'id', order: 'ASC' }]);
     });
     it('should parse DESC ORDER BY', () => {
       const sql = `SELECT * FROM users ORDER BY id DESC`;
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
-      expect(res.orderBy).toEqual([
-        { type: 'column_ref', table: null, column: 'id', order: 'DESC' },
-      ]);
+      expect(res.orderBy).toEqual([{ type: 'column_ref', table: null, column: 'id', order: 'DESC' }]);
     });
     it('should parse ORDER BY aliased column', () => {
       const sql = `SELECT * FROM users u ORDER BY u.id ASC`;
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
-      expect(res.orderBy).toEqual([
-        { type: 'column_ref', table: 'u', column: 'id', order: 'ASC' },
-      ]);
+      expect(res.orderBy).toEqual([{ type: 'column_ref', table: 'u', column: 'id', order: 'ASC' }]);
     });
   });
 

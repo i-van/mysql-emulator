@@ -35,11 +35,7 @@ describe('select', () => {
     it('should select ids', async () => {
       const res = await query(`SELECT id from users`);
 
-      expect(res).toEqual([
-        { id: 1 },
-        { id: 2 },
-        { id: 3 },
-      ]);
+      expect(res).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
     });
     it('should select ids and names', async () => {
       const res = await query(`SELECT id, name from users`);
@@ -53,46 +49,32 @@ describe('select', () => {
     it('should select "name fullName"', async () => {
       const res = await query(`SELECT name fullName from users`);
 
-      expect(res).toEqual([
-        { fullName: 'name1' },
-        { fullName: 'name2' },
-        { fullName: 'name3' },
-      ]);
+      expect(res).toEqual([{ fullName: 'name1' }, { fullName: 'name2' }, { fullName: 'name3' }]);
     });
     it('should select database', async () => {
       const res = await query(`SELECT database()`);
 
-      expect(res).toEqual([
-        { 'database()': expect.any(String) },
-      ]);
+      expect(res).toEqual([{ 'database()': expect.any(String) }]);
     });
     it('should select alias to database', async () => {
       const res = await query(`SELECT database() as name`);
 
-      expect(res).toEqual([
-        { 'name': expect.any(String) },
-      ]);
+      expect(res).toEqual([{ name: expect.any(String) }]);
     });
     it('should select version', async () => {
       const res = await query(`SELECT version()`);
 
-      expect(res).toEqual([
-        { 'version()': expect.any(String) },
-      ]);
+      expect(res).toEqual([{ 'version()': expect.any(String) }]);
     });
     it('should select alias to version', async () => {
       const res = await query(`SELECT version() as v`);
 
-      expect(res).toEqual([
-        { 'v': expect.any(String) },
-      ]);
+      expect(res).toEqual([{ v: expect.any(String) }]);
     });
     it('should select primitives', async () => {
       const res = await query(`SELECT true, false, 10, 'two', null`);
 
-      expect(res).toEqual([
-        { 'true': 1, 'false': 0, '10': 10, 'two': 'two', 'NULL': null },
-      ]);
+      expect(res).toEqual([{ true: 1, false: 0, '10': 10, two: 'two', NULL: null }]);
     });
     it('should select expressions', async () => {
       const res = await query(`
@@ -113,22 +95,24 @@ describe('select', () => {
           1 is not null v14
       `);
 
-      expect(res).toEqual([{
-        'v1': 1,
-        'v2': 0,
-        'v3': 0,
-        'v4': 1,
-        'v5': 0,
-        'v6': 1,
-        'v7': 2,
-        'v8': 1,
-        'v9': 2,
-        'v10': '1.0000',
-        'v11': 0,
-        'v12': 1,
-        'v13': 1,
-        'v14': 1,
-      }]);
+      expect(res).toEqual([
+        {
+          v1: 1,
+          v2: 0,
+          v3: 0,
+          v4: 1,
+          v5: 0,
+          v6: 1,
+          v7: 2,
+          v8: 1,
+          v9: 2,
+          v10: '1.0000',
+          v11: 0,
+          v12: 1,
+          v13: 1,
+          v14: 1,
+        },
+      ]);
     });
     it('should throw an error if column is unknown', async () => {
       expect.assertions(1);
@@ -149,9 +133,7 @@ describe('select', () => {
           profiles p
       `);
 
-      expect(res).toEqual([
-        { count: 3, min: 1, max: 10, avg: '5.3333' },
-      ]);
+      expect(res).toEqual([{ count: 3, min: 1, max: 10, avg: '5.3333' }]);
     });
   });
 
@@ -177,20 +159,12 @@ describe('select', () => {
     it('should select t.name from aliased table', async () => {
       const res = await query(`SELECT t.name from users t`);
 
-      expect(res).toEqual([
-        { name: 'name1' },
-        { name: 'name2' },
-        { name: 'name3' },
-      ]);
+      expect(res).toEqual([{ name: 'name1' }, { name: 'name2' }, { name: 'name3' }]);
     });
     it('should select "t.name fullName" from aliased table', async () => {
       const res = await query(`SELECT t.name fullName from users t`);
 
-      expect(res).toEqual([
-        { fullName: 'name1' },
-        { fullName: 'name2' },
-        { fullName: 'name3' },
-      ]);
+      expect(res).toEqual([{ fullName: 'name1' }, { fullName: 'name2' }, { fullName: 'name3' }]);
     });
   });
 
@@ -198,16 +172,12 @@ describe('select', () => {
     it('should filter by "u.id = 1"', async () => {
       const res = await query(`SELECT * from users u where u.id = 1`);
 
-      expect(res).toEqual([
-        { id: 1, name: 'name1' },
-      ]);
+      expect(res).toEqual([{ id: 1, name: 'name1' }]);
     });
     it(`should filter by "u.id = '1'"`, async () => {
       const res = await query(`SELECT * from users u where u.id = '1'`);
 
-      expect(res).toEqual([
-        { id: 1, name: 'name1' },
-      ]);
+      expect(res).toEqual([{ id: 1, name: 'name1' }]);
     });
     it('should filter by "u.id in (1, 2)"', async () => {
       const res = await query(`SELECT * from users u where u.id in (1, 2)`);
@@ -236,9 +206,7 @@ describe('select', () => {
     it(`should filter by "u.id = 2 and u.name = 'name2'`, async () => {
       const res = await query(`SELECT * from users u where u.id = 2 and u.name = 'name2'`);
 
-      expect(res).toEqual([
-        { id: 2, name: 'name2' },
-      ]);
+      expect(res).toEqual([{ id: 2, name: 'name2' }]);
     });
     it('should throw an error if column is unknown', async () => {
       expect.assertions(1);
@@ -258,9 +226,7 @@ describe('select', () => {
         HAVING full_name = 'name1'
       `);
 
-      expect(res).toEqual([
-        { id: 1, full_name: 'name1' },
-      ]);
+      expect(res).toEqual([{ id: 1, full_name: 'name1' }]);
     });
     it('should filter by "count > 1"', async () => {
       const res = await query(`
@@ -270,9 +236,7 @@ describe('select', () => {
         HAVING count > 1
       `);
 
-      expect(res).toEqual([
-        { user_id: 1, count: 2 },
-      ]);
+      expect(res).toEqual([{ user_id: 1, count: 2 }]);
     });
     it('should filter by "p.user_id = 1"', async () => {
       const res = await query(`
@@ -282,9 +246,7 @@ describe('select', () => {
         HAVING p.user_id = 1
       `);
 
-      expect(res).toEqual([
-        { user_id: 1, count: 2 },
-      ]);
+      expect(res).toEqual([{ user_id: 1, count: 2 }]);
     });
     it('should filter by "user_id = 1"', async () => {
       const res = await query(`
@@ -294,9 +256,7 @@ describe('select', () => {
         HAVING user_id = 1
       `);
 
-      expect(res).toEqual([
-        { user_id: 1, count: 2 },
-      ]);
+      expect(res).toEqual([{ user_id: 1, count: 2 }]);
     });
     it('should throw an error if column is unknown', async () => {
       expect.assertions(1);
@@ -445,9 +405,7 @@ describe('select', () => {
     it('should LIMIT users', async () => {
       const res = await query(`SELECT * FROM users LIMIT 1`);
 
-      expect(res).toEqual([
-        { id: 1, name: 'name1' },
-      ]);
+      expect(res).toEqual([{ id: 1, name: 'name1' }]);
     });
     it('should LIMIT and OFFSET users', async () => {
       const res = await query(`SELECT * FROM users LIMIT 1, 2`);
@@ -476,11 +434,7 @@ describe('select', () => {
     it('should select one field from sub query', async () => {
       const res = await query(`SELECT t.name FROM (SELECT name FROM users) t`);
 
-      expect(res).toEqual([
-        { name: 'name1' },
-        { name: 'name2' },
-        { name: 'name3' },
-      ]);
+      expect(res).toEqual([{ name: 'name1' }, { name: 'name2' }, { name: 'name3' }]);
     });
     it('should throw an error if sub query returns several columns', async () => {
       expect.assertions(1);
@@ -501,9 +455,7 @@ describe('select', () => {
     it('should select from sub query in SELECT', async () => {
       const res = await query(`SELECT (SELECT name FROM users LIMIT 1) t`);
 
-      expect(res).toEqual([
-        { t: 'name1' },
-      ]);
+      expect(res).toEqual([{ t: 'name1' }]);
     });
     it('should select from sub query with where clause in SELECT', async () => {
       const res = await query(`
@@ -530,9 +482,7 @@ describe('select', () => {
           u.id = (SELECT user_id FROM posts LIMIT 1)
       `);
 
-      expect(res).toEqual([
-        { id: 1, name: 'name1' },
-      ]);
+      expect(res).toEqual([{ id: 1, name: 'name1' }]);
     });
     it('should filter by sub query in WHERE using IN operator', async () => {
       const res = await query(`
@@ -544,10 +494,7 @@ describe('select', () => {
           u.id IN (SELECT p.user_id FROM posts p)
       `);
 
-      expect(res).toEqual([
-        { name: 'name1' },
-        { name: 'name2' },
-      ]);
+      expect(res).toEqual([{ name: 'name1' }, { name: 'name2' }]);
     });
     it('should filter by sub query with where clause in WHERE', async () => {
       const res = await query(`

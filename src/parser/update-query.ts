@@ -25,12 +25,6 @@ export class UpdateQuery {
       value: buildExpression(s.value),
     }));
 
-    return new UpdateQuery(
-      db,
-      table,
-      as,
-      assignments,
-      ast.where ? buildExpression(ast.where) : null,
-    );
+    return new UpdateQuery(db, table, as, assignments, ast.where ? buildExpression(ast.where) : null);
   }
 }

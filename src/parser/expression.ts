@@ -42,13 +42,13 @@ export type UnaryExpression = {
   type: 'unary_expression';
   operator: string;
   expression: Expression;
-}
+};
 export type BinaryExpression = {
   type: 'binary_expression';
   operator: string;
   left: Expression;
   right: Expression;
-}
+};
 export type SubQuery = {
   type: 'select';
   query: SelectQuery;
@@ -106,9 +106,12 @@ export const buildExpression = (ast: any): Expression => {
     };
   }
   if (ast.type === 'function' || ast.type === 'aggr_func') {
-    const args = ast.args?.type === 'expr_list'
-      ? ast.args.value.map(buildExpression)
-      : ast.args?.expr ? [buildExpression(ast.args.expr)] : [];
+    const args =
+      ast.args?.type === 'expr_list'
+        ? ast.args.value.map(buildExpression)
+        : ast.args?.expr
+        ? [buildExpression(ast.args.expr)]
+        : [];
     return {
       type: 'function',
       name: ast.name.toLowerCase(),
@@ -149,7 +152,7 @@ export const buildExpression = (ast: any): Expression => {
   if (ast.type === 'expr_list') {
     return {
       type: 'array',
-      value: ast.value.map(i => i.value),
+      value: ast.value.map((i) => i.value),
     };
   }
   if (ast.ast) {

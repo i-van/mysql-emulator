@@ -11,11 +11,7 @@ export class SelectProcessor {
   protected columns: string[] = [];
   protected evaluator = new Evaluator(this.server, this.context);
 
-  constructor(
-    protected server: Server,
-    protected query: SelectQuery,
-    protected context: object = {},
-  ) {}
+  constructor(protected server: Server, protected query: SelectQuery, protected context: object = {}) {}
 
   process() {
     this.applyFrom();
@@ -41,19 +37,20 @@ export class SelectProcessor {
           throw new ProcessorException('Every derived table must have its own alias');
         }
         const p = new SelectProcessor(this.server, from.query);
-        rows = p.process().map(r => mapKeys(r, (key) => `${from.alias}::${key}`));
+        rows = p.process().map((r) => mapKeys(r, (key) => `${from.alias}::${key}`));
         columns = rows.length ? Object.keys(rows[0]) : [];
       } else {
         const table = this.server.getDatabase(from.database).getTable(from.table);
         const keyMapper = (key: string) => `${from.alias || from.table}::${key}`;
-        rows = table.getRows().map(r => mapKeys(r, keyMapper));
-        columns = table.getColumns().map(c => keyMapper(c.getName()));
+        rows = table.getRows().map((r) => mapKeys(r, keyMapper));
+        columns = table.getColumns().map((c) => keyMapper(c.getName()));
       }
 
       this.columns.push(...columns);
       if (i === 0) {
         this.rows = rows;
-      } else if (from.join === null) { // f.e. FROM table1, table2
+      } else if (from.join === null) {
+        // f.e. FROM table1, table2
         this.rows = this.joinRows(this.rows, rows, null);
       } else if (from.join === 'INNER JOIN') {
         this.rows = this.joinRows(this.rows, rows, from.on);
@@ -124,11 +121,11 @@ export class SelectProcessor {
 
       const columnRef = this.query.columns.find((c): c is WithAlias<ColumnRef> => c.type === 'column_ref');
       if (columnRef) {
-        const columnName = columnRef.table ? `${columnRef.table}.${columnRef.column}`: columnRef.column;
+        const columnName = columnRef.table ? `${columnRef.table}.${columnRef.column}` : columnRef.column;
         const columnRefIndex = this.query.columns.indexOf(columnRef);
         throw new ProcessorException(
           `In aggregated query without GROUP BY, ` +
-          `expression #${columnRefIndex + 1} of SELECT list contains nonaggregated column '${columnName}'`,
+            `expression #${columnRefIndex + 1} of SELECT list contains nonaggregated column '${columnName}'`,
         );
       }
 
@@ -137,10 +134,10 @@ export class SelectProcessor {
     }
 
     try {
-      this.rows.forEach(row => {
+      this.rows.forEach((row) => {
         const mapper = (c: ColumnRef) => this.evaluator.evaluateExpression(c, row);
         const hash = md5(this.query.groupBy.map(mapper).join('::'));
-        this.groupedRows.set(hash, [...this.groupedRows.get(hash) || [], row]);
+        this.groupedRows.set(hash, [...(this.groupedRows.get(hash) || []), row]);
       });
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
@@ -156,7 +153,7 @@ export class SelectProcessor {
     }
 
     try {
-      const sortKeys: SortByKey[] = this.query.orderBy.map(o => ({
+      const sortKeys: SortByKey[] = this.query.orderBy.map((o) => ({
         mapper: (row) => this.evaluator.evaluateExpression(o, row),
         order: o.order === 'ASC' ? 1 : -1,
       }));
@@ -170,10 +167,10 @@ export class SelectProcessor {
   }
 
   protected applySelectAndHaving() {
-    const hasFunctionColumn = this.query.columns.some(c => c.type === 'function');
-    const hasPrimitiveColumn = this.query.columns.some(c => ['number', 'string', 'boolean', 'null'].includes(c.type));
-    const hasExpressionColumn = this.query.columns.some(c => c.type === 'binary_expression');
-    const hasSubSelect = this.query.columns.some(c => c.type === 'select');
+    const hasFunctionColumn = this.query.columns.some((c) => c.type === 'function');
+    const hasPrimitiveColumn = this.query.columns.some((c) => ['number', 'string', 'boolean', 'null'].includes(c.type));
+    const hasExpressionColumn = this.query.columns.some((c) => c.type === 'binary_expression');
+    const hasSubSelect = this.query.columns.some((c) => c.type === 'select');
     if (this.rows.length === 0 && (hasFunctionColumn || hasExpressionColumn || hasPrimitiveColumn || hasSubSelect)) {
       this.rows = [{}];
     }
@@ -207,9 +204,8 @@ export class SelectProcessor {
               throw new ProcessorException('Subquery returns more than 1 row');
             }
           };
-          const value = c.type === 'select'
-            ? runSubQuery(c.query)
-            : this.evaluator.evaluateExpression(c, rawRow, group);
+          const value =
+            c.type === 'select' ? runSubQuery(c.query) : this.evaluator.evaluateExpression(c, rawRow, group);
           if (c.alias) {
             rawRowWithAliases = { ...rawRowWithAliases, [`::${c.alias}`]: value };
           }

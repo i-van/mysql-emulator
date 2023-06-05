@@ -17,7 +17,7 @@ describe('update query', () => {
         value: {
           type: 'string',
           value: 'John',
-        }
+        },
       },
     ]);
     expect(res.where).toEqual({
@@ -42,7 +42,7 @@ describe('update query', () => {
           type: 'function',
           name: 'current_timestamp',
           args: [],
-        }
+        },
       },
     ]);
   });

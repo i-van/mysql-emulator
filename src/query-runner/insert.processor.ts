@@ -12,10 +12,8 @@ export class InsertProcessor {
     const db = this.server.getDatabase(query.database);
     const table = db.getTable(query.table);
     const columnDefinitions = table.getColumns();
-    const columnDefinitionMap = new Map<string, Column>(
-      columnDefinitions.map((c) => [c.getName(), c])
-    );
-    const columns = query.columns || columnDefinitions.map(c => c.getName());
+    const columnDefinitionMap = new Map<string, Column>(columnDefinitions.map((c) => [c.getName(), c]));
+    const columns = query.columns || columnDefinitions.map((c) => c.getName());
     const getColumnDefinition = (column: string): Column => {
       const c = columnDefinitionMap.get(column);
       if (!c) {
@@ -23,7 +21,7 @@ export class InsertProcessor {
       }
       return c;
     };
-    const evaluateDefaultValue = (column: Column, row: Object): any | null => {
+    const evaluateDefaultValue = (column: Column, row: object): any | null => {
       if (column instanceof IntegerColumn && column.hasAutoIncrement()) {
         return column.getNextAutoIncrementValue();
       }
@@ -36,10 +34,13 @@ export class InsertProcessor {
 
     let insertId = 0;
     let affectedRows = 0;
-    const placeholder = columnDefinitions.reduce((res, c) => ({
-      ...res,
-      [`${query.table}::${c.getName()}`]: null,
-    }), {});
+    const placeholder = columnDefinitions.reduce(
+      (res, c) => ({
+        ...res,
+        [`${query.table}::${c.getName()}`]: null,
+      }),
+      {},
+    );
     query.values.forEach((values, rowIndex) => {
       if (values.length !== columns.length) {
         throw new ProcessorException(`Column count doesn't match value count at row ${rowIndex + 1}`);
@@ -51,9 +52,10 @@ export class InsertProcessor {
         }
         return {
           ...res,
-          [`${query.table}::${columnName}`]: expression.type === 'default'
-            ? evaluateDefaultValue(getColumnDefinition(columnName), res)
-            : this.evaluator.evaluateExpression(expression, res),
+          [`${query.table}::${columnName}`]:
+            expression.type === 'default'
+              ? evaluateDefaultValue(getColumnDefinition(columnName), res)
+              : this.evaluator.evaluateExpression(expression, res),
         };
       }, placeholder);
       const row = columnDefinitions.reduce((res, c) => {
@@ -73,7 +75,7 @@ export class InsertProcessor {
           return {
             ...res,
             [c.getName()]: c.cast(value),
-          }
+          };
         } catch (err: any) {
           if (['OUT_OF_RANGE_VALUE', 'INCORRECT_INTEGER_VALUE'].includes(err.code)) {
             throw new ProcessorException(`${err.message} at row ${rowIndex + 1}`);

@@ -10,14 +10,7 @@ import { UpdateQuery } from './update-query';
 import { SetQuery } from './set-query';
 import { ShowIndexesQuery } from './show-indexes-query';
 
-type Query =
-  | TransactionQuery
-  | SelectQuery
-  | InsertQuery
-  | DeleteQuery
-  | CreateTableQuery
-  | DropTableQuery
-  | SetQuery;
+type Query = TransactionQuery | SelectQuery | InsertQuery | DeleteQuery | CreateTableQuery | DropTableQuery | SetQuery;
 
 const injectParams = (s: string, params: any[]): string => {
   let i = 0;
@@ -50,13 +43,20 @@ export class Parser {
 
     try {
       switch (ast.type) {
-        case 'select': return SelectQuery.fromAst(ast, injectedSql);
-        case 'update': return UpdateQuery.fromAst(ast);
-        case 'insert': return InsertQuery.fromAst(ast);
-        case 'delete': return DeleteQuery.fromAst(ast);
-        case 'create': return CreateTableQuery.fromAst(ast);
-        case 'drop' as unknown: return DropTableQuery.fromAst(ast);
-        case 'set' as unknown: return SetQuery.fromAst(ast);
+        case 'select':
+          return SelectQuery.fromAst(ast, injectedSql);
+        case 'update':
+          return UpdateQuery.fromAst(ast);
+        case 'insert':
+          return InsertQuery.fromAst(ast);
+        case 'delete':
+          return DeleteQuery.fromAst(ast);
+        case 'create':
+          return CreateTableQuery.fromAst(ast);
+        case 'drop' as unknown:
+          return DropTableQuery.fromAst(ast);
+        case 'set' as unknown:
+          return SetQuery.fromAst(ast);
       }
     } catch (err: any) {
       throw new ParserException(`${err.message}: ${injectedSql}`);

@@ -1,11 +1,7 @@
 import { Expression } from '../parser';
 
 export class Column {
-  constructor(
-    protected name: string,
-    protected nullable: boolean,
-    protected defaultValue: Expression | null,
-  ) {}
+  constructor(protected name: string, protected nullable: boolean, protected defaultValue: Expression | null) {}
 
   cast(value: any): any {
     return value;

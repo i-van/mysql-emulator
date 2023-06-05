@@ -2,13 +2,32 @@ import { Create } from 'node-sql-parser';
 import { buildExpression, ColumnRef, Expression } from './expression';
 
 export type DataType =
-  | 'TINYINT' | 'SMALLINT' | 'MEDIUMINT' | 'INT' | 'INTEGER' | 'BIGINT'
-  | 'DECIMAL' | 'FLOAT' | 'DOUBLE'
-  | 'TINYTEXT' | 'TEXT' | 'MEDIUMTEXT' | 'LONGTEXT'
-  | 'CHAR' | 'VARCHAR'
-  | 'BINARY' | 'VARBINARY'
-  | 'TINYBLOB' | 'BLOB' | 'MEDIUMBLOB' | 'LONGBLOB'
-  | 'TIMESTAMP' | 'DATETIME' | 'DATE' | 'TIME' | 'YEAR'
+  | 'TINYINT'
+  | 'SMALLINT'
+  | 'MEDIUMINT'
+  | 'INT'
+  | 'INTEGER'
+  | 'BIGINT'
+  | 'DECIMAL'
+  | 'FLOAT'
+  | 'DOUBLE'
+  | 'TINYTEXT'
+  | 'TEXT'
+  | 'MEDIUMTEXT'
+  | 'LONGTEXT'
+  | 'CHAR'
+  | 'VARCHAR'
+  | 'BINARY'
+  | 'VARBINARY'
+  | 'TINYBLOB'
+  | 'BLOB'
+  | 'MEDIUMBLOB'
+  | 'LONGBLOB'
+  | 'TIMESTAMP'
+  | 'DATETIME'
+  | 'DATE'
+  | 'TIME'
+  | 'YEAR'
   | 'ENUM';
 export type CreateColumn = {
   name: string;
@@ -77,15 +96,11 @@ export class CreateTableQuery {
         columns.push({
           name: c.column.column,
           dataType: c.definition.dataType,
-          defaultValue: c.default_val?.value
-            ? buildExpression(c.default_val.value)
-            : null,
+          defaultValue: c.default_val?.value ? buildExpression(c.default_val.value) : null,
           nullable: !c.nullable,
           unsigned: c.definition.suffix ? c.definition.suffix.includes('UNSIGNED') : null,
           length: c.definition.length ? c.definition.length : null,
-          enumValues: c.definition.dataType === 'ENUM'
-            ? buildExpression(c.definition.expr)
-            : null,
+          enumValues: c.definition.dataType === 'ENUM' ? buildExpression(c.definition.expr) : null,
           autoIncrement: c.auto_increment ? true : null,
         });
       } else if (c.resource === 'constraint' && constraintTypeMap[c.constraint_type] === 'primary_key') {

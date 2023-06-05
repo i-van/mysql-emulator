@@ -6,7 +6,7 @@ export class Server {
   protected usedDatabase: string | null = null;
 
   constructor(databaseName = 'primary') {
-    const infoDb = this.createDatabase('INFORMATION_SCHEMA')
+    const infoDb = this.createDatabase('INFORMATION_SCHEMA');
     infoDb.createTable('TABLES');
     infoDb.createTable('COLUMNS');
     infoDb.createTable('KEY_COLUMN_USAGE');

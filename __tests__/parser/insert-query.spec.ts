@@ -12,11 +12,7 @@ describe('insert query', () => {
     expect(res.table).toBe('students');
     expect(res.columns).toEqual(['id', 'name', 'year']);
     expect(res.values).toEqual([
-      [
-        { type: 'number', value: 1 },
-        { type: 'string', value: 'John' },
-        { type: 'default' },
-      ],
+      [{ type: 'number', value: 1 }, { type: 'string', value: 'John' }, { type: 'default' }],
     ]);
   });
   it('should return null columns', () => {
@@ -28,11 +24,7 @@ describe('insert query', () => {
     expect(res.table).toBe('students');
     expect(res.columns).toEqual(null);
     expect(res.values).toEqual([
-      [
-        { type: 'number', value: 1 },
-        { type: 'string', value: 'John' },
-        { type: 'default' },
-      ],
+      [{ type: 'number', value: 1 }, { type: 'string', value: 'John' }, { type: 'default' }],
     ]);
   });
   it('should return expression on value', () => {

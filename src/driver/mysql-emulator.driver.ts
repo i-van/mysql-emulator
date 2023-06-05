@@ -7,10 +7,13 @@ export class MysqlEmulatorDriver {
 
   constructor(private queryRunner: QueryRunner) {}
 
+  // eslint-disable-next-line
   connect() {}
 
+  // eslint-disable-next-line
   disconnect() {}
 
+  // eslint-disable-next-line
   release() {}
 
   createPool() {
@@ -31,6 +34,7 @@ export class MysqlEmulatorDriver {
     handler(null, this);
   }
 
+  // eslint-disable-next-line
   on() {}
 
   once(event: string, handler: () => void) {
@@ -39,13 +43,14 @@ export class MysqlEmulatorDriver {
     }
   }
 
+  // eslint-disable-next-line
   removeListener() {}
 
   listeners() {
     return [];
   }
 
-  query(sql: string | { sql: string, values: any[] }, values: any[], callback?: Callback) {
+  query(sql: string | { sql: string; values: any[] }, values: any[], callback?: Callback) {
     if (!callback && typeof values === 'function') {
       callback = values;
       values = [];
@@ -55,15 +60,17 @@ export class MysqlEmulatorDriver {
       sql = sql.sql;
     }
 
-    const promise = this.queryRunner.query(sql, values || [])
-      .then(res => {
+    const promise = this.queryRunner
+      .query(sql, values || [])
+      .then((res) => {
         callback && setImmediate(callback, null, res);
       })
-      .catch(err => {
+      .catch((err) => {
         callback && setImmediate(callback, err, null);
       });
 
     const wrapPromise = (p) => {
+      // eslint-disable-next-line
       p.setMaxListeners = () => {};
       return p;
     };

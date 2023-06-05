@@ -13,9 +13,7 @@ export class UpdateProcessor {
     const table = this.server.getDatabase(query.database).getTable(query.table);
     const keyMapper = (key: string) => `${query.alias || query.table}::${key}`;
     const columnDefinitions = table.getColumns();
-    const columnDefinitionMap = new Map<string, Column>(
-      columnDefinitions.map((c) => [c.getName(), c])
-    );
+    const columnDefinitionMap = new Map<string, Column>(columnDefinitions.map((c) => [c.getName(), c]));
     const getColumnDefinition = (column: string): Column => {
       const c = columnDefinitionMap.get(column);
       if (!c) {
@@ -26,7 +24,7 @@ export class UpdateProcessor {
 
     let changedRows = 0;
     let affectedRows = 0;
-    const updatedRows = table.getRows().map(existingRow => {
+    const updatedRows = table.getRows().map((existingRow) => {
       const rawRow = mapKeys(existingRow, keyMapper);
       const needsUpdate = query.where === null || this.evaluator.evaluateExpression(query.where, rawRow);
       if (!needsUpdate) {
@@ -40,9 +38,7 @@ export class UpdateProcessor {
           const nextValue = column.cast(this.evaluator.evaluateExpression(a.value, rawRow));
           const currentValue = row[column.getName()];
 
-          return nextValue !== currentValue
-            ? { ...row, [column.getName()]: nextValue }
-            : row;
+          return nextValue !== currentValue ? { ...row, [column.getName()]: nextValue } : row;
         } catch (err: any) {
           if (['OUT_OF_RANGE_VALUE', 'INCORRECT_INTEGER_VALUE'].includes(err.code)) {
             throw new ProcessorException(`${err.message} at row ${affectedRows}`);

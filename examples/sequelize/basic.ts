@@ -40,7 +40,7 @@ async function sequelizeBasicExample() {
 
     // select
     const users = await User.findAll();
-    console.log(users.map(u => u.toJSON()));
+    console.log(users.map((u) => u.toJSON()));
   } finally {
     await sequelize.close();
   }
