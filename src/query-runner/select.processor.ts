@@ -1,5 +1,5 @@
 import { Server } from '../server';
-import { ColumnRef, Expression, isSubQuery, SelectQuery, WithAlias } from '../parser';
+import { ColumnRef, Expression, SelectQuery, WithAlias } from '../parser';
 import { mapKeys, md5, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
@@ -36,7 +36,7 @@ export class SelectProcessor {
     this.query.from.forEach((from, i) => {
       let rows: object[];
       let columns: string[];
-      if (isSubQuery(from)) {
+      if (from.type === 'select') {
         if (!from.alias) {
           throw new ProcessorException('Every derived table must have its own alias');
         }

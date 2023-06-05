@@ -109,7 +109,14 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.from).toEqual([
-        { database: null, table: 'users', alias: null, join: null, on: null },
+        {
+          type: 'from',
+          database: null,
+          table: 'users',
+          alias: null,
+          join: null,
+          on: null,
+        },
       ]);
     });
     it('should parse aliased FROM', () => {
@@ -118,7 +125,14 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.from).toEqual([
-        { database: null, table: 'users', alias: 'u', join: null, on: null },
+        {
+          type: 'from',
+          database: null,
+          table: 'users',
+          alias: 'u',
+          join: null,
+          on: null,
+        },
       ]);
     });
     it('should parse FROM with database', () => {
@@ -127,7 +141,14 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.from).toEqual([
-        { database: 'INFORMATION_SCHEMA', table: 'COLUMNS', alias: null, join: null, on: null },
+        {
+          type: 'from',
+          database: 'INFORMATION_SCHEMA',
+          table: 'COLUMNS',
+          alias: null,
+          join: null,
+          on: null,
+        },
       ]);
     });
     it('should parse INNER JOIN', () => {
@@ -137,6 +158,7 @@ describe('select query', () => {
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.from).toEqual([
         {
+          type: 'from',
           database: null,
           table: 'users',
           alias: 'u',
@@ -144,6 +166,7 @@ describe('select query', () => {
           on: null,
         },
         {
+          type: 'from',
           database: null,
           table: 'posts',
           alias: 'p',

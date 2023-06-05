@@ -10,6 +10,7 @@ import {
   NumberType,
   Star,
   StringType,
+  SubQuery,
 } from './expression';
 import { parseColumnNames } from './column-name-parser';
 import { ParserException } from './parser.exception';
@@ -18,17 +19,9 @@ type WithJoin<T> = T & {
   join: 'INNER JOIN' | 'LEFT JOIN' | 'RIGHT JOIN' | null;
   on: Expression | null;
 };
-export type SubQuery = {
-  type: 'select';
-  query: SelectQuery;
-};
 export type From =
-  | WithJoin<WithAlias<{ database: string | null; table: string }>>
+  | WithJoin<WithAlias<{ type: 'from'; database: string | null; table: string }>>
   | WithJoin<WithAlias<SubQuery>>;
-
-export const isSubQuery = (s: any): s is SubQuery => {
-  return s.query instanceof SelectQuery;
-};
 
 export type WithAlias<T> = T & { alias: string | null };
 type WithColumn<T> = T & { column: string };
@@ -70,6 +63,7 @@ export class SelectQuery {
         };
       }
       return {
+        type: 'from',
         database: f.db || null,
         table: f.table,
         alias: f.as || null,

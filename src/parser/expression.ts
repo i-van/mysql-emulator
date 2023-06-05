@@ -1,4 +1,5 @@
 import { ParserException } from './parser.exception';
+import { SelectQuery } from './select-query';
 
 export type Star = {
   type: 'star';
@@ -47,6 +48,10 @@ export type BinaryExpression = {
   left: Expression;
   right: Expression;
 }
+export type SubQuery = {
+  type: 'select';
+  query: SelectQuery;
+};
 export type Expression =
   | UnaryExpression
   | BinaryExpression
