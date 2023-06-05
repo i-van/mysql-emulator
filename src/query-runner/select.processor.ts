@@ -101,7 +101,10 @@ export class SelectProcessor {
     }
 
     try {
-      this.rows = this.rows.filter((row) => this.evaluator.evaluateExpression(where, row));
+      this.rows = this.rows.filter((row) => {
+        const evaluator = new Evaluator(this.server, { ...this.context, ...row });
+        return evaluator.evaluateExpression(where, row);
+      });
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
         throw new ProcessorException(`${err.message} in 'where clause'`);
@@ -200,7 +203,7 @@ export class SelectProcessor {
                 throw new ProcessorException('Operand should contain 1 column(s)');
               }
               return row[keys[0]];
-            } else if (rows.length > 1) {
+            } else {
               throw new ProcessorException('Subquery returns more than 1 row');
             }
           };

@@ -498,14 +498,14 @@ describe('select', () => {
         expect(err.message).toBe('Subquery returns more than 1 row');
       }
     });
-    it('should select from sub query at SELECT', async () => {
+    it('should select from sub query in SELECT', async () => {
       const res = await query(`SELECT (SELECT name FROM users LIMIT 1) t`);
 
       expect(res).toEqual([
         { t: 'name1' },
       ]);
     });
-    it('should select from sub query with where clause at SELECT', async () => {
+    it('should select from sub query with where clause in SELECT', async () => {
       const res = await query(`
         SELECT
           (SELECT u.name FROM users u WHERE u.id = p.user_id) name,
@@ -518,6 +518,51 @@ describe('select', () => {
         { name: 'name1', text: 'text' },
         { name: 'name1', text: 'another text' },
         { name: 'name2', text: 'another yet text' },
+      ]);
+    });
+    it('should filter by sub query in WHERE', async () => {
+      const res = await query(`
+        SELECT
+          *
+        FROM
+          users u
+        WHERE
+          u.id = (SELECT user_id FROM posts LIMIT 1)
+      `);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+      ]);
+    });
+    it('should filter by sub query in WHERE using IN operator', async () => {
+      const res = await query(`
+        SELECT
+          u.name
+        FROM
+          users u
+        WHERE
+          u.id IN (SELECT p.user_id FROM posts p)
+      `);
+
+      expect(res).toEqual([
+        { name: 'name1' },
+        { name: 'name2' },
+      ]);
+    });
+    it('should filter by sub query with where clause in WHERE', async () => {
+      const res = await query(`
+        SELECT
+          p1.name,
+          p1.post_count
+        FROM
+          profiles p1
+        WHERE
+          p1.post_count = (SELECT MAX(p2.post_count) FROM profiles p2 WHERE p1.name = p2.name)
+      `);
+
+      expect(res).toEqual([
+        { name: 'John', post_count: 10 },
+        { name: 'Jane', post_count: 1 },
       ]);
     });
   });

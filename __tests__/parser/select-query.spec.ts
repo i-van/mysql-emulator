@@ -1,5 +1,4 @@
 import { Parser, SelectQuery } from '../../src/parser';
-import { query } from '../../src';
 
 describe('select query', () => {
   const parser = new Parser();
@@ -330,7 +329,7 @@ describe('select query', () => {
   });
 
   describe('sub query', () => {
-    it('should parse sub query at FROM', () => {
+    it('should parse sub query in FROM', () => {
       const sql = `SELECT * FROM (SELECT 3 n) t`;
       const res = parser.parse(sql, []) as SelectQuery;
 
@@ -361,7 +360,7 @@ describe('select query', () => {
         },
       ]);
     });
-    it('should parse sub query at SELECT', () => {
+    it('should parse sub query in SELECT', () => {
       const sql = `SELECT (SELECT 'two')`;
       const res = parser.parse(sql, []) as SelectQuery;
 
@@ -390,6 +389,104 @@ describe('select query', () => {
           column: `(SELECT 'two')`,
         },
       ]);
+    });
+    it('should parse sub query in WHERE', () => {
+      const sql = `
+        SELECT *
+        FROM users
+        WHERE id = (SELECT user_id FROM posts LIMIT 1)
+      `;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.where).toEqual({
+        type: 'binary_expression',
+        operator: '=',
+        left: {
+          type: 'column_ref',
+          table: null,
+          column: 'id',
+        },
+        right: {
+          type: 'select',
+          query: new SelectQuery(
+            [
+              {
+                type: 'from',
+                database: null,
+                table: 'posts',
+                alias: null,
+                join: null,
+                on: null,
+              },
+            ],
+            [
+              {
+                type: 'column_ref',
+                table: null,
+                column: 'user_id',
+                alias: null,
+              },
+            ],
+            null,
+            [],
+            null,
+            [],
+            1,
+            0,
+          ),
+          isArray: false,
+        },
+      });
+    });
+    it('should parse sub query in WHERE using IN operator', () => {
+      const sql = `
+        SELECT *
+        FROM users
+        WHERE id IN (SELECT user_id FROM posts)
+      `;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.where).toEqual({
+        type: 'binary_expression',
+        operator: 'IN',
+        left: {
+          type: 'column_ref',
+          table: null,
+          column: 'id',
+        },
+        right: {
+          type: 'select',
+          query: new SelectQuery(
+            [
+              {
+                type: 'from',
+                database: null,
+                table: 'posts',
+                alias: null,
+                join: null,
+                on: null,
+              },
+            ],
+            [
+              {
+                type: 'column_ref',
+                table: null,
+                column: 'user_id',
+                alias: null,
+              },
+            ],
+            null,
+            [],
+            null,
+            [],
+            0,
+            0,
+          ),
+          isArray: true,
+        },
+      });
     });
   });
 });

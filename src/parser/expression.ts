@@ -1,3 +1,4 @@
+import { Parser as SqlParser } from 'node-sql-parser';
 import { ParserException } from './parser.exception';
 import { SelectQuery } from './select-query';
 
@@ -53,6 +54,7 @@ export type SubQuery = {
   query: SelectQuery;
 };
 export type Expression =
+  | (SubQuery & { isArray: boolean })
   | UnaryExpression
   | BinaryExpression
   | ColumnRef
@@ -131,14 +133,33 @@ export const buildExpression = (ast: any): Expression => {
       value: ast.value,
     };
   }
+  if (ast.type === 'null') {
+    return { type: 'null' };
+  }
+  // handle: id IN (...)
+  if (ast.type === 'expr_list' && ast.value[0]?.ast) {
+    const sqlParser = new SqlParser();
+    const subSql = sqlParser.sqlify(ast.value[0].ast, { database: 'MariaDB' });
+    return {
+      type: 'select',
+      query: SelectQuery.fromAst(ast.value[0].ast, subSql),
+      isArray: true,
+    };
+  }
   if (ast.type === 'expr_list') {
     return {
       type: 'array',
       value: ast.value.map(i => i.value),
     };
   }
-  if (ast.type === 'null') {
-    return { type: 'null' };
+  if (ast.ast) {
+    const sqlParser = new SqlParser();
+    const subSql = sqlParser.sqlify(ast.ast, { database: 'MariaDB' });
+    return {
+      type: 'select',
+      query: SelectQuery.fromAst(ast.ast, subSql),
+      isArray: false,
+    };
   }
   throw new ParserException(`Unknown "${ast.type}" expression type`);
 };

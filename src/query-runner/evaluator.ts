@@ -2,6 +2,7 @@ import { BinaryExpression, ColumnRef, Expression, FunctionType, Star } from '../
 import { extractColumn, extractTable, mapKeys } from '../utils';
 import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
+import { SelectProcessor } from './select.processor';
 
 export class Evaluator {
   constructor(
@@ -12,6 +13,28 @@ export class Evaluator {
   evaluateExpression(e: Expression, row: object, group: object[] = []): any {
     const rowWithContext = { ...row, ...this.context };
     switch (e.type) {
+      case 'select': {
+        const p = new SelectProcessor(this.server, e.query, this.context);
+        const rows = p.process();
+
+        const getFirstField = (row: object) => {
+          const keys = Object.keys(row);
+          if (keys.length !== 1) {
+            throw new EvaluatorException('Operand should contain 1 column(s)');
+          }
+          return row[keys[0]];
+        };
+        if (e.isArray) {
+          return rows.map(getFirstField);
+        }
+        if (rows.length === 0) {
+          return null;
+        } else if (rows.length === 1) {
+          return getFirstField(rows[0]);
+        } else {
+          throw new EvaluatorException('Subquery returns more than 1 row');
+        }
+      }
       // todo: handle 'unary_expression'
       case 'binary_expression': return this.evaluateBinaryExpression(e, rowWithContext);
       case 'function': return this.evaluateFunction(e, rowWithContext, group);
