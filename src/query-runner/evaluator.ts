@@ -1,4 +1,4 @@
-import { BinaryExpression, ColumnRef, Expression, FunctionType, Star } from '../parser';
+import { BinaryExpression, ColumnRef, Expression, FunctionType, Star, UnaryExpression } from '../parser';
 import { extractColumn, extractTable, mapKeys } from '../utils';
 import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
@@ -32,7 +32,8 @@ export class Evaluator {
           throw new EvaluatorException('Subquery returns more than 1 row');
         }
       }
-      // todo: handle 'unary_expression'
+      case 'unary_expression':
+        return this.evaluateUnaryExpression(e, rowWithContext);
       case 'binary_expression':
         return this.evaluateBinaryExpression(e, rowWithContext);
       case 'function':
@@ -58,6 +59,15 @@ export class Evaluator {
     return mapKeys(row, extractColumn, filter);
   }
 
+  protected evaluateUnaryExpression(ue: UnaryExpression, row: object): any {
+    const value = this.evaluateExpression(ue.expression, row);
+    switch (ue.operator) {
+      case 'NOT':
+        return Number(!value);
+    }
+    throw new EvaluatorException(`Unknown operator '${ue.operator}'`);
+  }
+
   protected evaluateBinaryExpression(be: BinaryExpression, row: object): any {
     const left = this.evaluateExpression(be.left, row);
     const right = this.evaluateExpression(be.right, row);
@@ -69,6 +79,11 @@ export class Evaluator {
         return Number(left != right);
       case 'IN':
         return Number(right.some((i) => i == left));
+      case 'BETWEEN':
+        return Number(left >= right[0] && left <= right[1]);
+      case 'LIKE':
+        const r = new RegExp('^' + right.replace(/_/g, '.').replace(/%/g, '.*') + '$');
+        return Number(r.test(left));
       case 'AND':
         return Number(left && right);
       case 'OR':

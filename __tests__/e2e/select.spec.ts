@@ -179,6 +179,31 @@ describe('select', () => {
 
       expect(res).toEqual([{ id: 1, name: 'name1' }]);
     });
+    it(`should filter by "NOT u.id = 1"`, async () => {
+      const res = await query(`SELECT * from users u where NOT u.id = 1`);
+
+      expect(res).toEqual([
+        { id: 2, name: 'name2' },
+        { id: 3, name: 'name3' },
+      ]);
+    });
+    it(`should filter by "u.id BETWEEN 1 AND 2"`, async () => {
+      const res = await query(`SELECT * from users u where u.id BETWEEN 1 AND 2`);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+        { id: 2, name: 'name2' },
+      ]);
+    });
+    it(`should filter by "u.name LIKE '%me_"`, async () => {
+      const res = await query(`SELECT * from users u where u.name LIKE '%me_'`);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+        { id: 2, name: 'name2' },
+        { id: 3, name: 'name3' },
+      ]);
+    });
     it('should filter by "u.id in (1, 2)"', async () => {
       const res = await query(`SELECT * from users u where u.id in (1, 2)`);
 
