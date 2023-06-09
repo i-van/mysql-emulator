@@ -4,7 +4,7 @@ describe('transaction query', () => {
   const parser = new Parser();
 
   it('should return START_TRANSACTION TransactionQuery', () => {
-    const res = parser.parse('START TRANSACTION', []) as TransactionQuery;
+    const res = parser.parse('START    TRANSACTION', []) as TransactionQuery;
 
     expect(res).toBeInstanceOf(TransactionQuery);
     expect(res.statement).toBe('start');

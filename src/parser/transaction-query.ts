@@ -5,7 +5,7 @@ type StatementItem = {
   regexp: RegExp;
 };
 const statements: StatementItem[] = [
-  { type: 'start', regexp: /start transaction/i },
+  { type: 'start', regexp: /start\s+transaction/i },
   { type: 'commit', regexp: /commit/i },
   { type: 'rollback', regexp: /rollback/i },
 ];
