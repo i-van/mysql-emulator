@@ -1,13 +1,13 @@
-export enum TransactionStatement {
-  START_TRANSACTION = 'START_TRANSACTION',
-  COMMIT = 'COMMIT',
-  ROLLBACK = 'ROLLBACK',
-}
+export type TransactionStatement = 'start' | 'commit' | 'rollback';
 
-const statements = [
-  { type: TransactionStatement.START_TRANSACTION, regexp: /start transaction/i },
-  { type: TransactionStatement.COMMIT, regexp: /commit/i },
-  { type: TransactionStatement.ROLLBACK, regexp: /rollback/i },
+type StatementItem = {
+  type: TransactionStatement;
+  regexp: RegExp;
+};
+const statements: StatementItem[] = [
+  { type: 'start', regexp: /start transaction/i },
+  { type: 'commit', regexp: /commit/i },
+  { type: 'rollback', regexp: /rollback/i },
 ];
 
 export class TransactionQuery {
