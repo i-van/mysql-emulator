@@ -1,6 +1,6 @@
 {
   "name": "mysql-emulator",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "MySQL emulator",
   "main": "dist/index.js",
   "scripts": {
