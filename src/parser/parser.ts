@@ -8,7 +8,7 @@ import { DropTableQuery } from './drop-table-query';
 import { DeleteQuery } from './delete-query';
 import { UpdateQuery } from './update-query';
 import { SetQuery } from './set-query';
-import { ShowIndexesQuery } from './show-indexes-query';
+import { ShowQuery } from './show-query';
 
 type Query = TransactionQuery | SelectQuery | InsertQuery | DeleteQuery | CreateTableQuery | DropTableQuery | SetQuery;
 
@@ -27,9 +27,9 @@ export class Parser {
     if (transactionQuery) {
       return transactionQuery;
     }
-    const showIndexesQuery = ShowIndexesQuery.fromSql(injectedSql);
-    if (showIndexesQuery) {
-      return showIndexesQuery;
+    const showQuery = ShowQuery.fromSql(injectedSql);
+    if (showQuery) {
+      return showQuery;
     }
 
     let ast = this.sqlParser.astify(injectedSql, { database: 'MariaDB' });

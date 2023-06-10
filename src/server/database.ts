@@ -41,6 +41,15 @@ export class Database {
     return table;
   }
 
+  getTableNames(): string[] {
+    const names: string[] = [];
+    this.tables.forEach((t) => {
+      names.push(t.getName());
+    });
+
+    return names;
+  }
+
   getName(): string {
     return this.name;
   }

@@ -8,6 +8,10 @@ export class Table {
 
   constructor(protected name: string) {}
 
+  getName(): string {
+    return this.name;
+  }
+
   addColumn(c: Column) {
     this.columns.push(c);
   }

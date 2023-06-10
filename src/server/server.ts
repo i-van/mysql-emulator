@@ -57,4 +57,13 @@ export class Server {
 
     return db;
   }
+
+  getDatabaseNames(): string[] {
+    const names: string[] = [];
+    this.databases.forEach((db) => {
+      names.push(db.getName());
+    });
+
+    return names;
+  }
 }

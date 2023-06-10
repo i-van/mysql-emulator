@@ -9,7 +9,7 @@ import {
   Parser,
   SelectQuery,
   SetQuery,
-  ShowIndexesQuery,
+  ShowQuery,
   TransactionQuery,
   UpdateQuery,
 } from '../parser';
@@ -17,6 +17,7 @@ import { InsertProcessor } from './insert.processor';
 import { DropTableProcessor } from './drop-table.processor';
 import { DeleteProcessor } from './delete.processor';
 import { UpdateProcessor } from './update.processor';
+import { ShowProcessor } from './show.processor';
 
 export class QueryRunner {
   protected parser = new Parser();
@@ -29,9 +30,9 @@ export class QueryRunner {
       // todo: handle it
       return;
     }
-    if (query instanceof ShowIndexesQuery) {
-      // todo: handle it
-      return [];
+    if (query instanceof ShowQuery) {
+      const p = new ShowProcessor(this.server);
+      return p.process(query);
     }
     if (query instanceof SelectQuery) {
       const p = new SelectProcessor(this.server, query);
