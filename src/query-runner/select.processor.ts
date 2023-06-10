@@ -1,13 +1,13 @@
 import { Server } from '../server';
 import { ColumnRef, Expression, SelectQuery, WithAlias } from '../parser';
-import { mapKeys, md5, sortBy, SortByKey } from '../utils';
+import { hashCode, mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
 import { EvaluatorException } from './evaluator.exception';
 
 export class SelectProcessor {
   protected rows: object[] = [];
-  protected groupedRows = new Map<string, object[]>();
+  protected groupedRows = new Map<number, object[]>();
   protected columns: string[] = [];
   protected evaluator = new Evaluator(this.server, this.context);
 
@@ -129,14 +129,14 @@ export class SelectProcessor {
         );
       }
 
-      this.groupedRows.set('1', this.rows);
+      this.groupedRows.set(1, this.rows);
       return;
     }
 
     try {
       this.rows.forEach((row) => {
         const mapper = (c: ColumnRef) => this.evaluator.evaluateExpression(c, row);
-        const hash = md5(this.query.groupBy.map(mapper).join('::'));
+        const hash = hashCode(this.query.groupBy.map(mapper).join('::'));
         this.groupedRows.set(hash, [...(this.groupedRows.get(hash) || []), row]);
       });
     } catch (err: any) {

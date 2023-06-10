@@ -1,5 +1,3 @@
-import { createHash } from 'crypto';
-
 export const mapKeys = (
   o: object,
   mapper: (key: string, value: any) => string,
@@ -47,6 +45,13 @@ export const sortBy =
     return 0;
   };
 
-export const md5 = (s: string): string => {
-  return createHash('md5').update(s).digest('hex');
-};
+// https://stackoverflow.com/questions/6122571/simple-non-secure-hash-function-for-javascript
+export const hashCode = (s: string): number => {
+  let hash = 0;
+  for (let i = 0, len = s.length; i < len; i++) {
+    let char = s.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+}
