@@ -48,10 +48,10 @@ export const sortBy =
 // https://stackoverflow.com/questions/6122571/simple-non-secure-hash-function-for-javascript
 export const hashCode = (s: string): number => {
   let hash = 0;
-  for (let i = 0, len = s.length; i < len; i++) {
-    let char = s.charCodeAt(i);
+  for (let i = 0, l = s.length; i < l; i++) {
+    const char = s.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
+    hash |= 0;
   }
   return hash;
-}
+};
