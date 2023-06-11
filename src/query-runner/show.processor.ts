@@ -8,9 +8,12 @@ export class ShowProcessor {
   process({ statement }: ShowQuery): any[] {
     switch (statement) {
       case 'databases':
-        return this.server.getDatabaseNames();
+        const databaseNames = this.server.getDatabaseNames();
+        return databaseNames.map((d) => ({ 'Database': d }));
       case 'tables':
-        return this.server.getDatabase(null).getTableNames();
+        const db = this.server.getDatabase(null);
+        const tableNames = db.getTableNames();
+        return tableNames.map((t) => ({ [`Tables_in_${db.getName()}`]: t }));
       case 'indexes':
         return [];
     }
