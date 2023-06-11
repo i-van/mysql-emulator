@@ -41,4 +41,19 @@ describe('create-table', () => {
       expect(err.message).toEqual(`Invalid default value for 'status'`);
     }
   });
+  it('should drop table if query fails', async () => {
+    expect.assertions(1);
+    try {
+      await query(`
+        CREATE TABLE \`companies\` (
+          \`status\` enum ('pending','rejected','approved') NOT NULL DEFAULT 'another_status'
+        )
+      `);
+    } catch (err: any) {
+      const [{ databaseName }] = await query(`SELECT database() databaseName`);
+      const tables = await query('SHOW TABLES');
+      const exists = tables.some((row) => row[`Tables_in_${databaseName}`] === 'companies')
+      expect(exists).toBe(false);
+    }
+  });
 });

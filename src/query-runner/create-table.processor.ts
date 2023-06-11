@@ -21,22 +21,22 @@ export class CreateTableProcessor {
 
   process(query: CreateTableQuery): void {
     const db = this.server.getDatabase(query.database);
-    let table: Table;
     try {
-      table = db.createTable(query.table);
+      const table = db.createTable(query.table);
+
+      for (const column of query.columns) {
+        table.addColumn(this.buildColumn(column));
+      }
+      for (const constraint of query.constraints) {
+        const name = `${query.table}.${constraint.name}`;
+        table.addConstraint(new UniqueConstraint(name, constraint.columns));
+      }
     } catch (err: any) {
       if (err.code === 'TABLE_EXISTS' && query.ifNotExists) {
         return;
       }
+      db.dropTable(query.table, true);
       throw err;
-    }
-
-    for (const column of query.columns) {
-      table.addColumn(this.buildColumn(column));
-    }
-    for (const constraint of query.constraints) {
-      const name = `${query.table}.${constraint.name}`;
-      table.addConstraint(new UniqueConstraint(name, constraint.columns));
     }
   }
 
