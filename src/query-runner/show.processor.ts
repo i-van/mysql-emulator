@@ -9,7 +9,7 @@ export class ShowProcessor {
     switch (statement) {
       case 'databases':
         const databaseNames = this.server.getDatabaseNames();
-        return databaseNames.map((d) => ({ 'Database': d }));
+        return databaseNames.map((d) => ({ Database: d }));
       case 'tables':
         const db = this.server.getDatabase(null);
         const tableNames = db.getTableNames();

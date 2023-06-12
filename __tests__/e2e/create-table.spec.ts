@@ -72,7 +72,7 @@ describe('create-table', () => {
     } catch (err: any) {
       const [{ databaseName }] = await query(`SELECT database() databaseName`);
       const tables = await query('SHOW TABLES');
-      const exists = tables.some((row) => row[`Tables_in_${databaseName}`] === 'companies')
+      const exists = tables.some((row) => row[`Tables_in_${databaseName}`] === 'companies');
       expect(exists).toBe(false);
     }
   });

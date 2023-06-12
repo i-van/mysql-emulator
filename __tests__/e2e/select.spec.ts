@@ -126,7 +126,7 @@ describe('select', () => {
           v19: null,
           v20: null,
           v21: null,
-          v22: "0.0000",
+          v22: '0.0000',
         },
       ]);
     });
