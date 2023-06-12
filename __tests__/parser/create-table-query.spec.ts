@@ -102,4 +102,50 @@ describe('create table query', () => {
       },
     ]);
   });
+  it('should parse nullable fields', () => {
+    const sql = `
+      CREATE TABLE companies (
+        nullable_field_1 INT,
+        nullable_field_2 INT NULL,
+        not_nullable_field INT NOT NULL
+      )
+    `;
+    const res = parser.parse(sql, []) as CreateTableQuery;
+
+    expect(res).toBeInstanceOf(CreateTableQuery);
+    expect(res.database).toBe(null);
+    expect(res.table).toBe('companies');
+    expect(res.columns).toEqual([
+      {
+        name: 'nullable_field_1',
+        dataType: 'INT',
+        nullable: true,
+        defaultValue: null,
+        unsigned: false,
+        length: null,
+        enumValues: null,
+        autoIncrement: null,
+      },
+      {
+        name: 'nullable_field_2',
+        dataType: 'INT',
+        nullable: true,
+        defaultValue: null,
+        unsigned: false,
+        length: null,
+        enumValues: null,
+        autoIncrement: null,
+      },
+      {
+        name: 'not_nullable_field',
+        dataType: 'INT',
+        nullable: false,
+        defaultValue: null,
+        unsigned: false,
+        length: null,
+        enumValues: null,
+        autoIncrement: null,
+      },
+    ]);
+  });
 });

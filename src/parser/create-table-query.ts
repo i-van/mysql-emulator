@@ -53,8 +53,8 @@ type ColumnDefinition = {
     expr?: object;
   };
   nullable?: {
-    type: 'not null';
-    value: 'not null';
+    type: 'not null' | 'null';
+    value: 'not null' | 'null';
   };
   auto_increment?: 'auto_increment';
   default_val?: {
@@ -97,7 +97,7 @@ export class CreateTableQuery {
           name: c.column.column,
           dataType: c.definition.dataType,
           defaultValue: c.default_val?.value ? buildExpression(c.default_val.value) : null,
-          nullable: !c.nullable,
+          nullable: c.nullable?.value !== 'not null',
           unsigned: c.definition.suffix ? c.definition.suffix.includes('UNSIGNED') : null,
           length: c.definition.length ? c.definition.length : null,
           enumValues: c.definition.dataType === 'ENUM' ? buildExpression(c.definition.expr) : null,
