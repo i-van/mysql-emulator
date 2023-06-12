@@ -79,6 +79,8 @@ export class Evaluator {
         return Number(left != right);
       case 'IN':
         return Number(right.some((i) => i == left));
+      case 'NOT IN':
+        return Number(right.every((i) => i != left));
       case 'BETWEEN':
         return Number(left >= right[0] && left <= right[1]);
       case 'LIKE':

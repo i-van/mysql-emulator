@@ -249,6 +249,14 @@ describe('select', () => {
         { id: 2, name: 'name2' },
       ]);
     });
+    it(`should filter by "u.id not in (3, 4)"`, async () => {
+      const res = await query(`SELECT * from users u where u.id not in (3, 4)`);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+        { id: 2, name: 'name2' },
+      ]);
+    });
     it('should filter by "u.id = 2 or u.id = 3"', async () => {
       const res = await query(`SELECT * from users u where u.id = 2 or u.id = 3`);
 
