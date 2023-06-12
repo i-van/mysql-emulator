@@ -41,6 +41,26 @@ describe('create-table', () => {
       expect(err.message).toEqual(`Invalid default value for 'status'`);
     }
   });
+  it('should allow to set default value to NULL', async () => {
+    await query(`
+      CREATE TABLE \`companies\` (
+        \`status\` enum ('pending','rejected','approved') DEFAULT NULL
+      )
+    `);
+    expect(1).toEqual(1);
+  });
+  it('should not allow to set default value to NULL to not nullable field', async () => {
+    expect.assertions(1);
+    try {
+      await query('CREATE TABLE companies (`name` varchar(30) NOT NULL DEFAULT NULL)');
+    } catch (err: any) {
+      expect(err.message).toEqual(`Invalid default value for 'name'`);
+    }
+  });
+  it('should allow to create not nullable field', async () => {
+    await query('CREATE TABLE companies (`name` varchar(30) NOT NULL)');
+    expect(1).toEqual(1);
+  });
   it('should drop table if query fails', async () => {
     expect.assertions(1);
     try {

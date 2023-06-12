@@ -41,6 +41,13 @@ export class CreateTableProcessor {
   }
 
   private buildColumn(c: CreateColumn): Column {
+    if (c.defaultValue) {
+      const defaultValue = this.evaluator.evaluateExpression(c.defaultValue, {});
+      if (defaultValue === null && !c.nullable) {
+        throw new ProcessorException(`Invalid default value for '${c.name}'`);
+      }
+    }
+
     switch (c.dataType) {
       case 'TINYINT':
         return new IntegerColumn(c.name, c.nullable, c.defaultValue, c.unsigned!, c.autoIncrement!, 8);
@@ -82,6 +89,7 @@ export class CreateTableProcessor {
         return new DateColumn(c.name, c.nullable, c.defaultValue);
       case 'ENUM':
         if (c.defaultValue) {
+          const defaultValue = this.evaluator.evaluateExpression(c.defaultValue, {});
           const included = this.evaluator.evaluateExpression(
             {
               type: 'binary_expression',
@@ -91,7 +99,7 @@ export class CreateTableProcessor {
             },
             {},
           );
-          if (!included) {
+          if (!included && defaultValue !== null) {
             throw new ProcessorException(`Invalid default value for '${c.name}'`);
           }
         }
