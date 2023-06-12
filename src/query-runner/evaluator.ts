@@ -1,8 +1,9 @@
 import { BinaryExpression, ColumnRef, Expression, FunctionType, Star, UnaryExpression } from '../parser';
-import { extractColumn, extractTable, mapKeys, toNumber } from '../utils';
+import { extractColumn, extractTable, mapKeys } from '../utils';
 import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
 import { SelectProcessor } from './select.processor';
+import { binaryOperators } from './binary-operators';
 
 export class Evaluator {
   constructor(protected server: Server, protected context: object = {}) {}
@@ -69,57 +70,14 @@ export class Evaluator {
   }
 
   protected evaluateBinaryExpression(be: BinaryExpression, row: object): any {
+    const handler = binaryOperators[be.operator];
+    if (!handler) {
+      throw new EvaluatorException(`Unknown operator '${be.operator}'`);
+    }
+
     const left = this.evaluateExpression(be.left, row);
     const right = this.evaluateExpression(be.right, row);
-    switch (be.operator) {
-      case '=':
-        return Number(left == right);
-      case '<>':
-      case '!=':
-        return Number(left != right);
-      case 'IN':
-        return Number(right.some((i) => i == left));
-      case 'NOT IN':
-        return Number(right.every((i) => i != left));
-      case 'BETWEEN':
-        return Number(left >= right[0] && left <= right[1]);
-      case 'LIKE':
-        const r = new RegExp('^' + right.replace(/_/g, '.').replace(/%/g, '.*') + '$');
-        return Number(r.test(left));
-      case 'AND':
-        return Number(left && right);
-      case 'OR':
-        return Number(left || right);
-      case 'IS':
-        return Number(left == right);
-      case 'IS NOT':
-        return Number(left != right);
-      case '>':
-        return Number(left > right);
-      case '>=':
-        return Number(left >= right);
-      case '<':
-        return Number(left < right);
-      case '<=':
-        return Number(left <= right);
-      case '+':
-        return toNumber(left) + toNumber(right);
-      case '-':
-        return toNumber(left) - toNumber(right);
-      case '*':
-        return toNumber(left) * toNumber(right);
-      case '/':
-        const convertedLeft = toNumber(left);
-        const convertedRight = toNumber(right);
-        if (convertedRight === 0) {
-          return null;
-        }
-        if (convertedLeft === 0 && left !== convertedLeft) {
-          return 0;
-        }
-        return (convertedLeft / convertedRight).toFixed(4);
-    }
-    throw new EvaluatorException(`Unknown operator '${be.operator}'`);
+    return handler(left, right);
   }
 
   protected evaluateColumnReference(c: ColumnRef, row: object): any {
