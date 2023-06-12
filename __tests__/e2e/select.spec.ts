@@ -136,6 +136,18 @@ describe('select', () => {
 
       expect(res).toEqual([{ count: 3, sum: '16', min: 1, max: 10, avg: '5.3333' }]);
     });
+    it('should return null if nothing to sum', async () => {
+      const res = await query(`
+        SELECT
+          SUM(p.post_count) sum
+        FROM
+          profiles p
+        WHERE
+          p.id > 10
+      `);
+
+      expect(res).toEqual([{ sum: null }]);
+    });
   });
 
   describe('from clause', () => {

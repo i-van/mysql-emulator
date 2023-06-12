@@ -146,6 +146,9 @@ export class Evaluator {
           return value !== null && value !== undefined;
         }).length;
       case 'sum':
+        if (group.length === 0) {
+          return null;
+        }
         return group
           .reduce((res, row) => {
             return res + this.evaluateExpression(getArgument(), row);
