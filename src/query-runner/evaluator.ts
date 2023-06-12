@@ -1,5 +1,5 @@
 import { BinaryExpression, ColumnRef, Expression, FunctionType, Star, UnaryExpression } from '../parser';
-import { extractColumn, extractTable, mapKeys } from '../utils';
+import { extractColumn, extractTable, mapKeys, toNumber } from '../utils';
 import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
 import { SelectProcessor } from './select.processor';
@@ -101,13 +101,21 @@ export class Evaluator {
       case '<=':
         return Number(left <= right);
       case '+':
-        return left + right;
+        return toNumber(left) + toNumber(right);
       case '-':
-        return left - right;
+        return toNumber(left) - toNumber(right);
       case '*':
-        return left * right;
+        return toNumber(left) * toNumber(right);
       case '/':
-        return (left / right).toFixed(4);
+        const convertedLeft = toNumber(left);
+        const convertedRight = toNumber(right);
+        if (convertedRight === 0) {
+          return null;
+        }
+        if (convertedLeft === 0 && left !== convertedLeft) {
+          return 0;
+        }
+        return (convertedLeft / convertedRight).toFixed(4);
     }
     throw new EvaluatorException(`Unknown operator '${be.operator}'`);
   }

@@ -55,3 +55,11 @@ export const hashCode = (s: string): number => {
   }
   return hash;
 };
+
+export const toNumber = (n: any): number => {
+  const converted = Number(n);
+  if (isNaN(converted)) {
+    return 0;
+  }
+  return converted;
+};

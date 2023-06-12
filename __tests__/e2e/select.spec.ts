@@ -79,20 +79,28 @@ describe('select', () => {
     it('should select expressions', async () => {
       const res = await query(`
         SELECT
-          1 != 2        v1,
-          1 <> 1        v2,
-          1 > 2         v3,
-          2 >= 1        v4,
-          2 < 1         v5,
-          1 <= 2        v6,
-          1 + 1         v7,
-          2 - 1         v8,
-          2 * 1         v9,
-          2 / 2         v10,
-          1 AND 0       v11,
-          1 OR 0        v12,
-          null is null  v13,
-          1 is not null v14
+          1 != 2                      v1,
+          1 <> 1                      v2,
+          1 > 2                       v3,
+          2 >= 1                      v4,
+          2 < 1                       v5,
+          1 <= 2                      v6,
+          1 + 1                       v7,
+          2 - 1                       v8,
+          2 * 1                       v9,
+          2 / 2                       v10,
+          1 AND 0                     v11,
+          1 OR 0                      v12,
+          null is null                v13,
+          1 is not null               v14,
+          'string' + 'another string' v15,
+          1.5 * 'string'              v16,
+          'string' - 1                v17,
+          'string' / 1.5              v18,
+          'string' / 'another string' v19,
+          1.5 / 'string'              v20,
+          5 / 0                       v21,
+          0 / 5                       v22
       `);
 
       expect(res).toEqual([
@@ -111,6 +119,14 @@ describe('select', () => {
           v12: 1,
           v13: 1,
           v14: 1,
+          v15: 0,
+          v16: 0,
+          v17: -1,
+          v18: 0,
+          v19: null,
+          v20: null,
+          v21: null,
+          v22: "0.0000",
         },
       ]);
     });
