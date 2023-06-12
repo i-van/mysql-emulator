@@ -113,7 +113,7 @@ export class SelectProcessor {
   protected applyGroupBy(): void {
     if (this.query.groupBy.length === 0) {
       const hasAggregateFunction = this.query.columns.some((c) => {
-        return c.type === 'function' && ['count', 'min', 'max', 'avg'].includes(c.name);
+        return c.type === 'function' && ['count', 'sum', 'min', 'max', 'avg'].includes(c.name);
       });
       if (!hasAggregateFunction) {
         return;

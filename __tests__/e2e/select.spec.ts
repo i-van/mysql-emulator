@@ -126,6 +126,7 @@ describe('select', () => {
       const res = await query(`
         SELECT
           COUNT(p.name) count,
+          SUM(p.post_count) sum,
           MAX(p.post_count) max,
           MIN(p.post_count) min,
           AVG(p.post_count) avg
@@ -133,7 +134,7 @@ describe('select', () => {
           profiles p
       `);
 
-      expect(res).toEqual([{ count: 3, min: 1, max: 10, avg: '5.3333' }]);
+      expect(res).toEqual([{ count: 3, sum: '16', min: 1, max: 10, avg: '5.3333' }]);
     });
   });
 
@@ -410,6 +411,7 @@ describe('select', () => {
         SELECT
           p.name,
           COUNT(p.name) count,
+          SUM(p.post_count) sum,
           MAX(p.post_count) max,
           MIN(p.post_count) min,
           AVG(p.post_count) avg
@@ -420,8 +422,8 @@ describe('select', () => {
       `);
 
       expect(res).toEqual([
-        { name: 'John', count: 2, min: 5, max: 10, avg: '7.5000' },
-        { name: 'Jane', count: 1, min: 1, max: 1, avg: '1.0000' },
+        { name: 'John', count: 2, sum: '15', min: 5, max: 10, avg: '7.5000' },
+        { name: 'Jane', count: 1, sum: '1', min: 1, max: 1, avg: '1.0000' },
       ]);
     });
   });
