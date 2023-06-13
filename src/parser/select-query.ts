@@ -16,7 +16,7 @@ import { parseColumnNames } from './column-name-parser';
 import { ParserException } from './parser.exception';
 
 type WithJoin<T> = T & {
-  join: 'INNER JOIN' | 'LEFT JOIN' | 'RIGHT JOIN' | null;
+  join: 'INNER JOIN' | 'LEFT JOIN' | 'RIGHT JOIN' | 'CROSS JOIN' | null;
   on: Expression | null;
 };
 export type From =

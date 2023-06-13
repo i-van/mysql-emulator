@@ -420,6 +420,26 @@ describe('select', () => {
         { name: 'name3', text: null },
       ]);
     });
+    it('should CROSS JOIN posts', async () => {
+      const res = await query(`
+        SELECT u.name, p.text
+        FROM users u
+        CROSS JOIN posts p
+        ORDER BY u.id, p.id
+      `);
+
+      expect(res).toEqual([
+        { name: 'name1', text: 'text' },
+        { name: 'name1', text: 'another text' },
+        { name: 'name1', text: 'another yet text' },
+        { name: 'name2', text: 'text' },
+        { name: 'name2', text: 'another text' },
+        { name: 'name2', text: 'another yet text' },
+        { name: 'name3', text: 'text' },
+        { name: 'name3', text: 'another text' },
+        { name: 'name3', text: 'another yet text' }
+      ]);
+    });
     it('should COUNT(u.name) over LEFT JOINED posts', async () => {
       const res = await query(`
         SELECT u.name, COUNT(p.id) count

@@ -53,6 +53,8 @@ export class SelectProcessor {
       } else if (from.join === null) {
         // f.e. FROM table1, table2
         this.rows = this.joinRows(this.rows, rows, null);
+      } else if (from.join === 'CROSS JOIN') {
+        this.rows = this.joinRows(this.rows, rows, from.on);
       } else if (from.join === 'INNER JOIN') {
         this.rows = this.joinRows(this.rows, rows, from.on);
       } else if (from.join === 'LEFT JOIN') {
