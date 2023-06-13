@@ -371,6 +371,7 @@ describe('select query', () => {
             0,
             0,
           ),
+          isArray: false,
           alias: null,
           column: `(SELECT 'two')`,
         },

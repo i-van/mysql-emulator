@@ -1,9 +1,10 @@
-import { BinaryExpression, ColumnRef, Expression, FunctionType, Star, UnaryExpression } from '../parser';
+import { BinaryExpression, ColumnRef, Expression, FunctionType, Star, SubQuery, UnaryExpression } from '../parser';
 import { extractColumn, extractTable, mapKeys } from '../utils';
 import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
 import { SelectProcessor } from './select.processor';
 import { binaryOperators } from './binary-operators';
+import { SubQueryException } from './sub-query.exception';
 
 export class Evaluator {
   constructor(protected server: Server, protected context: object = {}) {}
@@ -11,28 +12,8 @@ export class Evaluator {
   evaluateExpression(e: Expression, row: object, group: object[] = []): any {
     const rowWithContext = { ...row, ...this.context };
     switch (e.type) {
-      case 'select': {
-        const p = new SelectProcessor(this.server, e.query, this.context);
-        const rows = p.process();
-
-        const getFirstField = (row: object) => {
-          const keys = Object.keys(row);
-          if (keys.length !== 1) {
-            throw new EvaluatorException('Operand should contain 1 column(s)');
-          }
-          return row[keys[0]];
-        };
-        if (e.isArray) {
-          return rows.map(getFirstField);
-        }
-        if (rows.length === 0) {
-          return null;
-        } else if (rows.length === 1) {
-          return getFirstField(rows[0]);
-        } else {
-          throw new EvaluatorException('Subquery returns more than 1 row');
-        }
-      }
+      case 'select':
+        return this.evaluateSelectExpression(e, rowWithContext);
       case 'unary_expression':
         return this.evaluateUnaryExpression(e, rowWithContext);
       case 'binary_expression':
@@ -58,6 +39,29 @@ export class Evaluator {
   evaluateStar(s: Star, row: object): object {
     const filter = (key) => (s.table ? s.table === extractTable(key) : true);
     return mapKeys(row, extractColumn, filter);
+  }
+
+  protected evaluateSelectExpression(e: SubQuery & { isArray: boolean }, row: object): any {
+    const p = new SelectProcessor(this.server, e.query, row);
+    const rows = p.process();
+
+    const getFirstField = (row: object) => {
+      const keys = Object.keys(row);
+      if (keys.length !== 1) {
+        throw new SubQueryException('Operand should contain 1 column(s)');
+      }
+      return row[keys[0]];
+    };
+    if (e.isArray) {
+      return rows.map(getFirstField);
+    }
+    if (rows.length === 0) {
+      return null;
+    } else if (rows.length === 1) {
+      return getFirstField(rows[0]);
+    } else {
+      throw new SubQueryException('Subquery returns more than 1 row');
+    }
   }
 
   protected evaluateUnaryExpression(ue: UnaryExpression, row: object): any {

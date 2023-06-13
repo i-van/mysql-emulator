@@ -1,9 +1,10 @@
 import { Server } from '../server';
-import { ColumnRef, Expression, SelectQuery, WithAlias } from '../parser';
+import { ColumnRef, Expression, SelectColumn, SelectQuery, WithAlias } from '../parser';
 import { hashCode, mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
 import { EvaluatorException } from './evaluator.exception';
+import { SubQueryException } from './sub-query.exception';
 
 export class SelectProcessor {
   protected rows: object[] = [];
@@ -34,7 +35,7 @@ export class SelectProcessor {
       let columns: string[];
       if (from.type === 'select') {
         if (!from.alias) {
-          throw new ProcessorException('Every derived table must have its own alias');
+          throw new SubQueryException('Every derived table must have its own alias');
         }
         const p = new SelectProcessor(this.server, from.query);
         rows = p.process().map((r) => mapKeys(r, (key) => `${from.alias}::${key}`));
@@ -98,10 +99,7 @@ export class SelectProcessor {
     }
 
     try {
-      this.rows = this.rows.filter((row) => {
-        const evaluator = new Evaluator(this.server, { ...this.context, ...row });
-        return evaluator.evaluateExpression(where, row);
-      });
+      this.rows = this.rows.filter((row) => this.evaluator.evaluateExpression(where, row));
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
         throw new ProcessorException(`${err.message} in 'where clause'`);
@@ -187,25 +185,7 @@ export class SelectProcessor {
           if (c.type === 'star') {
             return { ...res, ...this.evaluator.evaluateStar(c, rawRow) };
           }
-          const runSubQuery = (query: SelectQuery) => {
-            const p = new SelectProcessor(this.server, query, rawRow);
-            const rows = p.process();
-
-            if (rows.length === 0) {
-              return null;
-            } else if (rows.length === 1) {
-              const [row] = rows;
-              const keys = Object.keys(row);
-              if (keys.length !== 1) {
-                throw new ProcessorException('Operand should contain 1 column(s)');
-              }
-              return row[keys[0]];
-            } else {
-              throw new ProcessorException('Subquery returns more than 1 row');
-            }
-          };
-          const value =
-            c.type === 'select' ? runSubQuery(c.query) : this.evaluator.evaluateExpression(c, rawRow, group);
+          const value = this.evaluator.evaluateExpression(c, rawRow, group);
           if (c.alias) {
             rawRowWithAliases = { ...rawRowWithAliases, [`::${c.alias}`]: value };
           }

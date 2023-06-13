@@ -33,7 +33,7 @@ export type SelectColumn =
   | WithAlias<WithColumn<NumberType>>
   | WithAlias<WithColumn<BooleanType>>
   | WithAlias<WithColumn<NullType>>
-  | WithAlias<WithColumn<SubQuery>>
+  | WithAlias<WithColumn<SubQuery & { isArray: false }>>
   | Star;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
 
@@ -102,6 +102,7 @@ export class SelectQuery {
         return {
           type: 'select',
           query: SelectQuery.fromAst(c.expr.ast, subSql),
+          isArray: false,
           alias: c.as,
           column: subSql,
         };
