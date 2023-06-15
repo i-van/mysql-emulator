@@ -19,6 +19,14 @@ export const binaryOperators: Record<string, (left, right) => any> = {
   '>=': (left, right) => Number(left >= right),
   '<': (left, right) => Number(left < right),
   '<=': (left, right) => Number(left <= right),
+  '%': (left, right) => {
+    const convertedLeft = toNumber(left);
+    const convertedRight = toNumber(right);
+    if (convertedRight === 0) {
+      return null;
+    }
+    return convertedLeft % convertedRight;
+  },
   '+': (left, right) => toNumber(left) + toNumber(right),
   '-': (left, right) => toNumber(left) - toNumber(right),
   '*': (left, right) => toNumber(left) * toNumber(right),

@@ -79,28 +79,32 @@ describe('select', () => {
     it('should select expressions', async () => {
       const res = await query(`
         SELECT
-          1 != 2                      v1,
-          1 <> 1                      v2,
-          1 > 2                       v3,
-          2 >= 1                      v4,
-          2 < 1                       v5,
-          1 <= 2                      v6,
-          1 + 1                       v7,
-          2 - 1                       v8,
-          2 * 1                       v9,
-          2 / 2                       v10,
-          1 AND 0                     v11,
-          1 OR 0                      v12,
-          null is null                v13,
-          1 is not null               v14,
-          'string' + 'another string' v15,
-          1.5 * 'string'              v16,
-          'string' - 1                v17,
-          'string' / 1.5              v18,
-          'string' / 'another string' v19,
-          1.5 / 'string'              v20,
-          5 / 0                       v21,
-          0 / 5                       v22
+          1 != 2         v1,
+          1 <> 1         v2,
+          1 > 2          v3,
+          2 >= 1         v4,
+          2 < 1          v5,
+          1 <= 2         v6,
+          1 + 1          v7,
+          2 - 1          v8,
+          2 * 1          v9,
+          2 / 2          v10,
+          1 AND 0        v11,
+          1 OR 0         v12,
+          null is null   v13,
+          1 is not null  v14,
+          'one' + 'two'  v15,
+          1.5 * 'two'    v16,
+          'one' - 1      v17,
+          'one' / 1.5    v18,
+          'one' / 'two'  v19,
+          1.5 / 'one'    v20,
+          5 / 0          v21,
+          0 / 5          v22,
+          5 % 3          v23,
+          5 % 0          v24,
+          5 % 'one'      v25,
+          'five' % 1     v26
       `);
 
       expect(res).toEqual([
@@ -127,6 +131,10 @@ describe('select', () => {
           v20: null,
           v21: null,
           v22: '0.0000',
+          v23: 2,
+          v24: null,
+          v25: null,
+          v26: 0,
         },
       ]);
     });
@@ -145,7 +153,18 @@ describe('select', () => {
           char_length('mysql-emulator')                         v10,
           length('mysql-emulator')                              v11,
           lower('MYSQL-EMULATOR')                               v12,
-          upper('mysql-emulator')                               v13
+          upper('mysql-emulator')                               v13,
+          mod(5, 3)                                             v14,
+          greatest(4, 3, 2, 1)                                  v15,
+          greatest(4, '33', 2, 1)                               v16,
+          greatest(4, '33', 2, 1, null)                         v17,
+          ceil(25.25)                                           v18,
+          ceiling(25.25)                                        v19,
+          floor(25.75)                                          v20,
+          round(25.57, 1)                                       v21,
+          round(25.52, 1)                                       v22,
+          round(25.25)                                          v23,
+          round(25.75)                                          v24
       `);
 
       expect(res).toEqual([
@@ -163,6 +182,17 @@ describe('select', () => {
           v11: 14,
           v12: 'mysql-emulator',
           v13: 'MYSQL-EMULATOR',
+          v14: 2,
+          v15: 4,
+          v16: '4',
+          v17: null,
+          v18: 26,
+          v19: 26,
+          v20: 25,
+          v21: '25.6',
+          v22: '25.5',
+          v23: '25',
+          v24: '26',
         }
       ]);
     });

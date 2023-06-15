@@ -1,6 +1,8 @@
 import { Expression, FunctionType } from '../parser';
 import { EvaluatorException } from './evaluator.exception';
 import { Evaluator } from './evaluator';
+import { binaryOperators } from './binary-operators';
+import { toNumber } from '../utils';
 
 type FunctionHandler = (e: Evaluator, f: FunctionType, row: object, group: object[]) => any;
 
@@ -135,6 +137,59 @@ export const functions: Record<string, FunctionHandler> = {
     }
     return e.evaluateExpression(getArgument(f), row).toUpperCase();
   },
+  mod: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'mod'`);
+    }
+    const [left, right] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    return binaryOperators['%'](left, right);
+  },
+  greatest: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length < 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'greatest'`);
+    }
+    const array = f.args.map((arg) => e.evaluateExpression(arg, row));
+    const hasNull = array.some((v) => v === null);
+    if (hasNull) {
+      return null;
+    }
+    const hasString = array.some((v) => typeof v === 'string');
+    if (hasString) {
+      const sorted = array.map(String).sort((a, b) => b.localeCompare(a));
+      return sorted[0];
+    }
+    return Math.max(...array);
+  },
+  ceiling: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const value = e.evaluateExpression(getArgument(f), row);
+    if (value === null) {
+      return null;
+    }
+    return Math.ceil(toNumber(value));
+  },
+  floor: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const value = e.evaluateExpression(getArgument(f), row);
+    if (value === null) {
+      return null;
+    }
+    return Math.floor(toNumber(value));
+  },
+  round: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 1 && f.args?.length !== 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const [value, digits] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    if (value === null) {
+      return null;
+    }
+    return toNumber(value).toFixed(digits || 0);
+  },
   now: () => new Date(),
   current_timestamp: () => new Date(),
   current_date: () => {
@@ -170,3 +225,9 @@ export const functions: Record<string, FunctionHandler> = {
     ].join(':');
   },
 };
+const aliases: [string, string][] = [
+  ['ceiling', 'ceil'],
+];
+aliases.forEach(([name, alias]) => {
+  functions[alias] = functions[name];
+});
