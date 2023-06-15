@@ -64,29 +64,20 @@ export const functions: Record<string, FunctionHandler> = {
   },
   concat: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length === 0) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'concat'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     return f.args.map((arg) => e.evaluateExpression(arg, row)).join('');
   },
   concat_ws: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length < 2) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'concat_ws'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     const [separator, ...array] = f.args.map((arg) => e.evaluateExpression(arg, row));
     return array.join(separator);
   },
   substring: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length !== 2 && f.args?.length !== 3) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'substring'`);
-    }
-    const [string, start, length] = f.args.map((arg) => e.evaluateExpression(arg, row));
-    return length
-      ? string.substring(start - 1, start + length - 1)
-      : string.substring(start - 1);
-  },
-  substr: (e: Evaluator, f: FunctionType, row: object) => {
-    if (f.args?.length !== 2 && f.args?.length !== 3) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'substr'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     const [string, start, length] = f.args.map((arg) => e.evaluateExpression(arg, row));
     return length
@@ -95,58 +86,46 @@ export const functions: Record<string, FunctionHandler> = {
   },
   substring_index: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length !== 3) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'substring_index'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     const [string, delimiter, occurrence] = f.args.map((arg) => e.evaluateExpression(arg, row));
     return string.split(delimiter).slice(0, occurrence).join(delimiter);
   },
   field: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length < 2) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'field'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     const [value, ...array] = f.args.map((arg) => e.evaluateExpression(arg, row));
     return array.indexOf(value) + 1;
   },
   character_length: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'character_length'`);
-    }
-    return e.evaluateExpression(getArgument(f), row).length;
-  },
-  char_length: (e: Evaluator, f: FunctionType, row: object) => {
-    if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'char_length'`);
-    }
-    return e.evaluateExpression(getArgument(f), row).length;
-  },
-  length: (e: Evaluator, f: FunctionType, row: object) => {
-    if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'length'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     return e.evaluateExpression(getArgument(f), row).length;
   },
   lower: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'lower'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     return e.evaluateExpression(getArgument(f), row).toLowerCase();
   },
   upper: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'upper'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     return e.evaluateExpression(getArgument(f), row).toUpperCase();
   },
   mod: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length !== 2) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'mod'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     const [left, right] = f.args.map((arg) => e.evaluateExpression(arg, row));
     return binaryOperators['%'](left, right);
   },
   greatest: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length < 2) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'greatest'`);
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     const array = f.args.map((arg) => e.evaluateExpression(arg, row));
     const hasNull = array.some((v) => v === null);
@@ -200,23 +179,7 @@ export const functions: Record<string, FunctionHandler> = {
     d.setMilliseconds(0);
     return d;
   },
-  curdate: () => {
-    const d = new Date();
-    d.setHours(0);
-    d.setMinutes(0);
-    d.setSeconds(0);
-    d.setMilliseconds(0);
-    return d;
-  },
   current_time: () => {
-    const d = new Date();
-    return [
-      d.getHours().toString().padStart(2, '0'),
-      d.getMinutes().toString().padStart(2, '0'),
-      d.getSeconds().toString().padStart(2, '0'),
-    ].join(':');
-  },
-  curtime: () => {
     const d = new Date();
     return [
       d.getHours().toString().padStart(2, '0'),
@@ -226,7 +189,12 @@ export const functions: Record<string, FunctionHandler> = {
   },
 };
 const aliases: [string, string][] = [
+  ['substring', 'substr'],
+  ['character_length', 'char_length'],
+  ['character_length', 'length'],
   ['ceiling', 'ceil'],
+  ['current_date', 'curdate'],
+  ['current_time', 'curtime'],
 ];
 aliases.forEach(([name, alias]) => {
   functions[alias] = functions[name];
