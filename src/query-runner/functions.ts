@@ -60,6 +60,81 @@ export const functions: Record<string, FunctionHandler> = {
     const sum = group.reduce((res, row) => res + e.evaluateExpression(getArgument(f), row), 0);
     return (sum / group.length).toFixed(4);
   },
+  concat: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length === 0) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'concat'`);
+    }
+    return f.args.map((arg) => e.evaluateExpression(arg, row)).join('');
+  },
+  concat_ws: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length < 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'concat_ws'`);
+    }
+    const [separator, ...array] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    return array.join(separator);
+  },
+  substring: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 2 && f.args?.length !== 3) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'substring'`);
+    }
+    const [string, start, length] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    return length
+      ? string.substring(start - 1, start + length - 1)
+      : string.substring(start - 1);
+  },
+  substr: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 2 && f.args?.length !== 3) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'substr'`);
+    }
+    const [string, start, length] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    return length
+      ? string.substring(start - 1, start + length - 1)
+      : string.substring(start - 1);
+  },
+  substring_index: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 3) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'substring_index'`);
+    }
+    const [string, delimiter, occurrence] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    return string.split(delimiter).slice(0, occurrence).join(delimiter);
+  },
+  field: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length < 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'field'`);
+    }
+    const [value, ...array] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    return array.indexOf(value) + 1;
+  },
+  character_length: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'character_length'`);
+    }
+    return e.evaluateExpression(getArgument(f), row).length;
+  },
+  char_length: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'char_length'`);
+    }
+    return e.evaluateExpression(getArgument(f), row).length;
+  },
+  length: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'length'`);
+    }
+    return e.evaluateExpression(getArgument(f), row).length;
+  },
+  lower: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'lower'`);
+    }
+    return e.evaluateExpression(getArgument(f), row).toLowerCase();
+  },
+  upper: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function 'upper'`);
+    }
+    return e.evaluateExpression(getArgument(f), row).toUpperCase();
+  },
   now: () => new Date(),
   current_timestamp: () => new Date(),
 };

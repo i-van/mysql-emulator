@@ -130,6 +130,42 @@ describe('select', () => {
         },
       ]);
     });
+    it('should select function expressions', async () => {
+      const res = await query(`
+        SELECT
+          concat('one', 'two', 'three')                         v1,
+          concat_ws('-', 'one', 'two', 'three')                 v2,
+          substring('mysql emulator', 1, 5)                     v3,
+          substring('mysql emulator', 7)                        v4,
+          substr('mysql emulator', 1, 5)                        v5,
+          substr('mysql emulator', 7)                           v6,
+          substring_index('mysql-emulator-playground', '-', 2)  v7,
+          field('c', 'a', 'b', 'c', 'd')                        v8,
+          character_length('mysql-emulator')                    v9,
+          char_length('mysql-emulator')                         v10,
+          length('mysql-emulator')                              v11,
+          lower('MYSQL-EMULATOR')                               v12,
+          upper('mysql-emulator')                               v13
+      `);
+
+      expect(res).toEqual([
+        {
+          v1: 'onetwothree',
+          v2: 'one-two-three',
+          v3: 'mysql',
+          v4: 'emulator',
+          v5: 'mysql',
+          v6: 'emulator',
+          v7: 'mysql-emulator',
+          v8: 3,
+          v9: 14,
+          v10: 14,
+          v11: 14,
+          v12: 'mysql-emulator',
+          v13: 'MYSQL-EMULATOR',
+        }
+      ]);
+    });
     it('should throw an error if column is unknown', async () => {
       expect.assertions(1);
       try {
