@@ -137,4 +137,36 @@ export const functions: Record<string, FunctionHandler> = {
   },
   now: () => new Date(),
   current_timestamp: () => new Date(),
+  current_date: () => {
+    const d = new Date();
+    d.setHours(0);
+    d.setMinutes(0);
+    d.setSeconds(0);
+    d.setMilliseconds(0);
+    return d;
+  },
+  curdate: () => {
+    const d = new Date();
+    d.setHours(0);
+    d.setMinutes(0);
+    d.setSeconds(0);
+    d.setMilliseconds(0);
+    return d;
+  },
+  current_time: () => {
+    const d = new Date();
+    return [
+      d.getHours().toString().padStart(2, '0'),
+      d.getMinutes().toString().padStart(2, '0'),
+      d.getSeconds().toString().padStart(2, '0'),
+    ].join(':');
+  },
+  curtime: () => {
+    const d = new Date();
+    return [
+      d.getHours().toString().padStart(2, '0'),
+      d.getMinutes().toString().padStart(2, '0'),
+      d.getSeconds().toString().padStart(2, '0'),
+    ].join(':');
+  },
 };
