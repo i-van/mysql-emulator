@@ -197,7 +197,8 @@ export const functions: Record<string, FunctionHandler> = {
       throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     const [condition, value1, value2] = f.args.map((arg) => e.evaluateExpression(arg, row));
-    return condition ? value1 : value2;
+    const value = condition ? value1 : value2;
+    return isString(value1) || isString(value2) ? String(value) : value;
   },
   coalesce: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length < 1) {

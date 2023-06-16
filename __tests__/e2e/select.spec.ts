@@ -166,6 +166,8 @@ describe('select', () => {
       [`SELECT if(5, 'yes', 'no') v`, [{ v: 'yes' }]],
       [`SELECT if(-5, 'yes', 'no') v`, [{ v: 'yes' }]],
       [`SELECT if('', 'yes', 'no') v`, [{ v: 'no' }]],
+      [`SELECT if(true, 1, 'two') v`, [{ v: '1' }]],
+      [`SELECT if(false, 1, 2) v`, [{ v: 2 }]],
       [`SELECT coalesce(null, null, '', 'mysql', null) v`, [{ v: '' }]],
       ['SELECT coalesce(null) v', [{ v: null }]],
     ];
