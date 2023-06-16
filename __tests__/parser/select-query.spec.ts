@@ -52,6 +52,34 @@ describe('select query', () => {
         },
       ]);
     });
+    it('should parse column names w/o aliases', () => {
+      const sql = 'SELECT u.id, COUNT(u.id), SUM(u.id) FROM users u GROUP BY u.id';
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.columns).toEqual([
+        {
+          type: 'column_ref',
+          table: 'u',
+          column: 'id',
+          alias: null,
+        },
+        {
+          type: 'function',
+          name: 'count',
+          column: 'COUNT(u.id)',
+          args: [{ type: 'column_ref', table: 'u', column: 'id' }],
+          alias: null,
+        },
+        {
+          type: 'function',
+          name: 'sum',
+          column: 'SUM(u.id)',
+          args: [{ type: 'column_ref', table: 'u', column: 'id' }],
+          alias: null,
+        },
+      ]);
+    });
     it('should parse star column', () => {
       const sql = 'SELECT * FROM users';
       const res = parser.parse(sql, []) as SelectQuery;

@@ -76,6 +76,7 @@ export class SelectQuery {
     const functions = ['aggr_func', 'function'];
     const primitives = ['bool', 'number', 'string', 'single_quote_string', 'null'];
     const columns = [...ast.columns].map((c): SelectColumn => {
+      const columnName = columnNames.shift()!;
       if (c === '*') {
         return buildExpression({ type: 'star', value: c }) as Star;
       } else if (c.expr?.type === 'column_ref' && c.expr.column === '*') {
@@ -94,17 +95,16 @@ export class SelectQuery {
             | NumberType
             | BooleanType
             | NullType),
-          column: columnNames.shift()!,
+          column: columnName,
           alias: c.as,
         };
       } else if (c.expr?.ast) {
-        const subSql = columnNames.shift()!;
         return {
           type: 'select',
-          query: SelectQuery.fromAst(c.expr.ast, subSql),
+          query: SelectQuery.fromAst(c.expr.ast, columnName),
           isArray: false,
           alias: c.as,
-          column: subSql,
+          column: columnName,
         };
       }
       throw new ParserException('Could not map columns');
