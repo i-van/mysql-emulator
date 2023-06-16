@@ -71,6 +71,20 @@ describe('insert', () => {
       { id: 2, name: 'Jane', year: 3 },
     ]);
   });
+  it('should insert incremented id after inserting specific id', async () => {
+    const res1 = await query(`INSERT INTO students VALUES (10, 'John', 3)`);
+    const res2 = await query(`INSERT INTO students VALUES (default, 'Jane', 3)`);
+    const rows = await query(`SELECT * from students`);
+
+    expect(res1.insertId).toEqual(10);
+    expect(res1.affectedRows).toEqual(1);
+    expect(res2.insertId).toEqual(11);
+    expect(res2.affectedRows).toEqual(1);
+    expect(rows).toEqual([
+      { id: 10, name: 'John', year: 3 },
+      { id: 11, name: 'Jane', year: 3 },
+    ]);
+  });
   it('should insert expression on field', async () => {
     const res = await query(`INSERT INTO students VALUES (1, 'John', id * 2)`);
     const rows = await query(`SELECT * from students`);

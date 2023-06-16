@@ -45,7 +45,11 @@ export class IntegerColumn extends Column {
     return this.autoIncrement;
   }
 
-  getNextAutoIncrementValue() {
-    return ++this.autoIncrementCursor;
+  getAutoIncrementCursor() {
+    return this.autoIncrementCursor;
+  }
+
+  setAutoIncrementCursor(n: number) {
+    this.autoIncrementCursor = n;
   }
 }

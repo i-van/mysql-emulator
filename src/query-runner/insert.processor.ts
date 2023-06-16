@@ -23,7 +23,7 @@ export class InsertProcessor {
     };
     const evaluateDefaultValue = (column: Column, row: object): any | null => {
       if (column instanceof IntegerColumn && column.hasAutoIncrement()) {
-        return column.getNextAutoIncrementValue();
+        return column.getAutoIncrementCursor() + 1;
       }
       const defaultValue = column.getDefaultValueExpression();
       if (defaultValue) {
@@ -69,6 +69,10 @@ export class InsertProcessor {
           throw new ProcessorException(`Field '${c.getName()}' doesn't have a default value`);
         }
         if (c instanceof IntegerColumn && c.hasAutoIncrement()) {
+          const cursor = c.getAutoIncrementCursor();
+          if (value > cursor) {
+            c.setAutoIncrementCursor(value);
+          }
           insertId = value;
         }
         try {

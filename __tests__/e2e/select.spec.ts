@@ -193,7 +193,7 @@ describe('select', () => {
           v22: '25.5',
           v23: '25',
           v24: '26',
-        }
+        },
       ]);
     });
     it('should throw an error if column is unknown', async () => {
@@ -503,7 +503,7 @@ describe('select', () => {
         { name: 'name2', text: 'another yet text' },
         { name: 'name3', text: 'text' },
         { name: 'name3', text: 'another text' },
-        { name: 'name3', text: 'another yet text' }
+        { name: 'name3', text: 'another yet text' },
       ]);
     });
     it('should COUNT(u.name) over LEFT JOINED posts', async () => {
