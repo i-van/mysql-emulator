@@ -51,187 +51,6 @@ describe('select', () => {
 
       expect(res).toEqual([{ fullName: 'name1' }, { fullName: 'name2' }, { fullName: 'name3' }]);
     });
-    it('should select database', async () => {
-      const res = await query(`SELECT database()`);
-
-      expect(res).toEqual([{ 'database()': expect.any(String) }]);
-    });
-    it('should select alias to database', async () => {
-      const res = await query(`SELECT database() as name`);
-
-      expect(res).toEqual([{ name: expect.any(String) }]);
-    });
-    it('should select version', async () => {
-      const res = await query(`SELECT version()`);
-
-      expect(res).toEqual([{ 'version()': expect.any(String) }]);
-    });
-    it('should select alias to version', async () => {
-      const res = await query(`SELECT version() as v`);
-
-      expect(res).toEqual([{ v: expect.any(String) }]);
-    });
-    it('should select primitives', async () => {
-      const res = await query(`SELECT true, false, 10, 'two', null`);
-
-      expect(res).toEqual([{ true: 1, false: 0, '10': 10, two: 'two', NULL: null }]);
-    });
-    it('should select expressions', async () => {
-      const res = await query(`
-        SELECT
-          1 != 2         v1,
-          1 <> 1         v2,
-          1 > 2          v3,
-          2 >= 1         v4,
-          2 < 1          v5,
-          1 <= 2         v6,
-          1 + 1          v7,
-          2 - 1          v8,
-          2 * 1          v9,
-          2 / 2          v10,
-          1 AND 0        v11,
-          1 OR 0         v12,
-          null is null   v13,
-          1 is not null  v14,
-          'one' + 'two'  v15,
-          1.5 * 'two'    v16,
-          'one' - 1      v17,
-          'one' / 1.5    v18,
-          'one' / 'two'  v19,
-          1.5 / 'one'    v20,
-          5 / 0          v21,
-          0 / 5          v22,
-          5 % 3          v23,
-          5 % 0          v24,
-          5 % 'one'      v25,
-          'five' % 1     v26
-      `);
-
-      expect(res).toEqual([
-        {
-          v1: 1,
-          v2: 0,
-          v3: 0,
-          v4: 1,
-          v5: 0,
-          v6: 1,
-          v7: 2,
-          v8: 1,
-          v9: 2,
-          v10: '1.0000',
-          v11: 0,
-          v12: 1,
-          v13: 1,
-          v14: 1,
-          v15: 0,
-          v16: 0,
-          v17: -1,
-          v18: 0,
-          v19: null,
-          v20: null,
-          v21: null,
-          v22: '0.0000',
-          v23: 2,
-          v24: null,
-          v25: null,
-          v26: 0,
-        },
-      ]);
-    });
-    it('should select function expressions', async () => {
-      const res = await query(`
-        SELECT
-          concat('one', 'two', 'three')                         v1,
-          concat_ws('-', 'one', 'two', 'three')                 v2,
-          substring('mysql emulator', 1, 5)                     v3,
-          substring('mysql emulator', 7)                        v4,
-          substr('mysql emulator', 1, 5)                        v5,
-          substr('mysql emulator', 7)                           v6,
-          substring_index('mysql-emulator-playground', '-', 2)  v7,
-          field('c', 'a', 'b', 'c', 'd')                        v8,
-          character_length('mysql-emulator')                    v9,
-          char_length('mysql-emulator')                         v10,
-          length('mysql-emulator')                              v11,
-          lower('MYSQL-EMULATOR')                               v12,
-          upper('mysql-emulator')                               v13,
-          mod(5, 3)                                             v14,
-          greatest(4, 3, 2, 1)                                  v15,
-          greatest(4, '33', 2, 1)                               v16,
-          greatest(4, '33', 2, 1, null)                         v17,
-          ceil(25.25)                                           v18,
-          ceiling(25.25)                                        v19,
-          floor(25.75)                                          v20,
-          round(25.57, 1)                                       v21,
-          round(25.52, 1)                                       v22,
-          round(25.25)                                          v23,
-          round(25.75)                                          v24,
-          isnull(null)                                          v25,
-          isnull('')                                            v26,
-          isnull(123)                                           v27,
-          ifnull(null, 'one')                                   v28,
-          ifnull('', 'two')                                     v29,
-          ifnull(123, 3)                                        v30,
-          ifnull(123, 'three')                                  v31,
-          nullif('one', 'one')                                  v32,
-          nullif('1', 1)                                        v33,
-          nullif(1, '1')                                        v34,
-          nullif(1, '2')                                        v35,
-          nullif('1', 2)                                        v36,
-          if(null, 'yes', 'no')                                 v37,
-          if(5, 'yes', 'no')                                    v38,
-          if(-5, 'yes', 'no')                                   v39,
-          if('', 'yes', 'no')                                   v40,
-          coalesce(null, null, '', 'mysql', null)               v41,
-          coalesce(null)                                        v42
-      `);
-
-      expect(res).toEqual([
-        {
-          v1: 'onetwothree',
-          v2: 'one-two-three',
-          v3: 'mysql',
-          v4: 'emulator',
-          v5: 'mysql',
-          v6: 'emulator',
-          v7: 'mysql-emulator',
-          v8: 3,
-          v9: 14,
-          v10: 14,
-          v11: 14,
-          v12: 'mysql-emulator',
-          v13: 'MYSQL-EMULATOR',
-          v14: 2,
-          v15: 4,
-          v16: '4',
-          v17: null,
-          v18: 26,
-          v19: 26,
-          v20: 25,
-          v21: '25.6',
-          v22: '25.5',
-          v23: '25',
-          v24: '26',
-          v25: 1,
-          v26: 0,
-          v27: 0,
-          v28: 'one',
-          v29: '',
-          v30: 123,
-          v31: '123',
-          v32: null,
-          v33: null,
-          v34: null,
-          v35: 1,
-          v36: '1',
-          v37: 'no',
-          v38: 'yes',
-          v39: 'yes',
-          v40: 'no',
-          v41: '',
-          v42: null,
-        },
-      ]);
-    });
     it('should throw an error if column is unknown', async () => {
       expect.assertions(1);
       try {
@@ -267,6 +86,97 @@ describe('select', () => {
       expect(res).toEqual([{ sum: null }]);
     });
   });
+
+  describe('expressions', () => {
+    const cases: [string, object[]][] = [
+      ['SELECT database()', [{ 'database()': expect.any(String) }]],
+      ['SELECT database() as name', [{ name: expect.any(String) }]],
+      ['SELECT version() v', [{ v: expect.any(String) }]],
+
+      ['SELECT true', [{ true: 1 }]],
+      ['SELECT false', [{ false: 0 }]],
+      ['SELECT 10', [{ '10': 10 }]],
+      [`SELECT 'two'`, [{ 'two': 'two' }]],
+      ['SELECT null', [{ NULL: null }]],
+
+      ['SELECT 1 != 2 v', [{ v: 1 }]],
+      ['SELECT 1 <> 1 v', [{ v: 0 }]],
+      ['SELECT 1 > 2 v', [{ v: 0 }]],
+      ['SELECT 2 >= 1 v', [{ v: 1 }]],
+      ['SELECT 2 < 1 v', [{ v: 0 }]],
+      ['SELECT 1 <= 2 v', [{ v: 1 }]],
+      ['SELECT 1 + 1 v', [{ v: 2 }]],
+      ['SELECT 2 - 1 v', [{ v: 1 }]],
+      ['SELECT 2 * 1 v', [{ v: 2 }]],
+      ['SELECT 2 / 2 v', [{ v: '1.0000' }]],
+      ['SELECT 1 AND 0 v', [{ v: 0 }]],
+      ['SELECT 1 OR 0 v', [{ v: 1 }]],
+      ['SELECT null is null v', [{ v: 1 }]],
+      ['SELECT 1 is not null v', [{ v: 1 }]],
+      [`SELECT 'one' + 'two' v`, [{ v: 0 }]],
+      [`SELECT 1.5 * 'two' v`, [{ v: 0 }]],
+      [`SELECT 'one' - 1 v`, [{ v: -1 }]],
+      [`SELECT 'one' / 1.5 v`, [{ v: 0 }]],
+      [`SELECT 'one' / 'two' v`, [{ v: null }]],
+      [`SELECT 1.5 / 'one' v`, [{ v: null }]],
+      ['SELECT 5 / 0 v', [{ v: null }]],
+      ['SELECT 0 / 5 v', [{ v: '0.0000' }]],
+      ['SELECT 5 % 3 v', [{ v: 2 }]],
+      ['SELECT 5 % 0 v', [{ v: null }]],
+      [`SELECT 5 % 'one' v`, [{ v: null }]],
+      [`SELECT 'five' % 1 v`, [{ v: 0 }]],
+
+      [`SELECT concat('one', 'two', 'three') v`, [{ v: 'onetwothree' }]],
+      [`SELECT concat_ws('-', 'one', 'two', 'three') v`, [{ v: 'one-two-three' }]],
+      [`SELECT substring('mysql emulator', 1, 5) v`, [{ v:  'mysql' }]],
+      [`SELECT substring('mysql emulator', 7) v`, [{ v: 'emulator' }]],
+      [`SELECT substr('mysql emulator', 1, 5) v`, [{ v: 'mysql' }]],
+      [`SELECT substr('mysql emulator', 7) v`, [{ v: 'emulator' }]],
+      [`SELECT substring_index('mysql-emulator-playground', '-', 2) v`, [{ v: 'mysql-emulator' }]],
+      [`SELECT field('c', 'a', 'b', 'c', 'd') v`, [{ v: 3 }]],
+      [`SELECT character_length('mysql-emulator') v`, [{ v: 14 }]],
+      [`SELECT char_length('mysql-emulator') v`, [{ v: 14 }]],
+      [`SELECT length('mysql-emulator') v`, [{ v: 14 }]],
+      [`SELECT lower('MYSQL-EMULATOR') v`, [{ v: 'mysql-emulator' }]],
+      [`SELECT upper('mysql-emulator') v`, [{ v: 'MYSQL-EMULATOR' }]],
+      ['SELECT mod(5, 3) v', [{ v: 2 }]],
+      ['SELECT greatest(4, 3, 2, 1) v', [{ v: 4 }]],
+      [`SELECT greatest(4, '33', 2, 1) v`, [{ v: '4' }]],
+      [`SELECT greatest(4, '33', 2, 1, null) v`, [{ v: null }]],
+      ['SELECT ceil(25.25) v', [{ v: 26 }]],
+      ['SELECT ceiling(25.25) v', [{ v: 26 }]],
+      ['SELECT floor(25.75) v', [{ v: 25 }]],
+      ['SELECT round(25.57, 1) v', [{ v: '25.6' }]],
+      ['SELECT round(25.52, 1) v', [{ v: '25.5' }]],
+      ['SELECT round(25.25) v', [{ v: '25' }]],
+      ['SELECT round(25.75) v', [{ v: '26' }]],
+      ['SELECT isnull(null) v', [{ v: 1 }]],
+      [`SELECT isnull('') v`, [{ v: 0 }]],
+      ['SELECT isnull(123) v', [{ v: 0 }]],
+      [`SELECT ifnull(null, 'one') v`, [{ v: 'one' }]],
+      [`SELECT ifnull('', 'two') v`, [{ v: '' }]],
+      ['SELECT ifnull(123, 3) v', [{ v: 123 }]],
+      [`SELECT ifnull(123, 'three') v`, [{ v: '123' }]],
+      [`SELECT nullif('one', 'one') v`, [{ v: null }]],
+      [`SELECT nullif('1', 1) v`, [{ v: null }]],
+      [`SELECT nullif(1, '1') v`, [{ v: null }]],
+      [`SELECT nullif(1, '2') v`, [{ v: 1 }]],
+      [`SELECT nullif('1', 2) v`, [{ v: '1' }]],
+      [`SELECT if(null, 'yes', 'no') v`, [{ v: 'no' }]],
+      [`SELECT if(5, 'yes', 'no') v`, [{ v: 'yes' }]],
+      [`SELECT if(-5, 'yes', 'no') v`, [{ v: 'yes' }]],
+      [`SELECT if('', 'yes', 'no') v`, [{ v: 'no' }]],
+      [`SELECT coalesce(null, null, '', 'mysql', null) v`, [{ v: '' }]],
+      ['SELECT coalesce(null) v', [{ v: null }]],
+    ];
+
+    test.each(cases)(
+      'should run %s',
+      async (sql, expected) => {
+        expect(await query(sql)).toEqual(expected);
+      },
+    );
+  })
 
   describe('from clause', () => {
     it('should select from aliased table', async () => {
