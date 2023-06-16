@@ -63,3 +63,11 @@ export const toNumber = (n: any): number => {
   }
   return converted;
 };
+
+export const isObject = (o: any): o is object => {
+  return o !== null && typeof o === 'object' && !Array.isArray(o);
+};
+
+export const isString = (s: any): s is string => {
+  return typeof s === 'string' || s instanceof String;
+};

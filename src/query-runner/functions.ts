@@ -2,7 +2,7 @@ import { Expression, FunctionType } from '../parser';
 import { EvaluatorException } from './evaluator.exception';
 import { Evaluator } from './evaluator';
 import { binaryOperators } from './binary-operators';
-import { toNumber } from '../utils';
+import { isString, toNumber } from '../utils';
 
 type FunctionHandler = (e: Evaluator, f: FunctionType, row: object, group: object[]) => any;
 
@@ -132,7 +132,7 @@ export const functions: Record<string, FunctionHandler> = {
     if (hasNull) {
       return null;
     }
-    const hasString = array.some((v) => typeof v === 'string');
+    const hasString = array.some(isString);
     if (hasString) {
       const sorted = array.map(String).sort((a, b) => b.localeCompare(a));
       return sorted[0];
@@ -168,6 +168,43 @@ export const functions: Record<string, FunctionHandler> = {
       return null;
     }
     return toNumber(value).toFixed(digits || 0);
+  },
+  isnull: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    return Number(e.evaluateExpression(getArgument(f), row) === null);
+  },
+  ifnull: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const [value, alternative] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    if (value === null) {
+      return alternative;
+    }
+    return isString(alternative) ? String(value) : value;
+  },
+  nullif: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const [value1, value2] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    return value1 == value2 ? null : value1;
+  },
+  if: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 3) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const [condition, value1, value2] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    return condition ? value1 : value2;
+  },
+  coalesce: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length < 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const array = f.args.map((arg) => e.evaluateExpression(arg, row));
+    return array.find((v) => v !== null) ?? null;
   },
   now: () => new Date(),
   current_timestamp: () => new Date(),
