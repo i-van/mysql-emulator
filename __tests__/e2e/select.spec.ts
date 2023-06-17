@@ -170,6 +170,10 @@ describe('select', () => {
       [`SELECT if(false, 1, 2) v`, [{ v: 2 }]],
       [`SELECT coalesce(null, null, '', 'mysql', null) v`, [{ v: '' }]],
       ['SELECT coalesce(null) v', [{ v: null }]],
+      [`SELECT CASE WHEN true THEN 'one' END v`, [{ v: 'one' }]],
+      [`SELECT CASE WHEN false THEN 'one' WHEN true THEN 'two' END v`, [{ v: 'two' }]],
+      [`SELECT CASE WHEN false THEN 'one' ELSE 'two' END v`, [{ v: 'two' }]],
+      [`SELECT CASE WHEN false THEN 'one' END v`, [{ v: null }]],
     ];
 
     test.each(cases)(

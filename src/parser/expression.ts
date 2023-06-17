@@ -48,12 +48,21 @@ export type BinaryExpression = {
   left: Expression;
   right: Expression;
 };
+export type CaseType = {
+  type: 'case';
+  when: {
+    condition: Expression;
+    value: Expression;
+  }[];
+  else: Expression | null;
+};
 export type SubQuery = {
   type: 'select';
   query: SelectQuery;
 };
 export type Expression =
   | (SubQuery & { isArray: boolean })
+  | CaseType
   | UnaryExpression
   | BinaryExpression
   | ColumnRef
@@ -152,6 +161,16 @@ export const buildExpression = (ast: any): Expression => {
       value: ast.value.map((i) => i.value),
     };
   }
+  if (ast.type === 'case') {
+    const when = ast.args.filter((a) => a.type === 'when')
+      .map((a) => ({ condition: buildExpression(a.cond), value: buildExpression(a.result) }));
+    const elseExpression = ast.args.find((a) => a.type === 'else');
+    return {
+      type: 'case',
+      when,
+      else: elseExpression ? buildExpression(elseExpression.result) : null,
+    };
+  }
   if (ast.ast) {
     return {
       type: 'select',
@@ -159,5 +178,5 @@ export const buildExpression = (ast: any): Expression => {
       isArray: false,
     };
   }
-  throw new ParserException(`Unknown "${ast.type}" expression type`);
+  throw new ParserException(`Unknown expression type '${ast.type}'`);
 };

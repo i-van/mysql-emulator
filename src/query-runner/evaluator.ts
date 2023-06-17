@@ -1,4 +1,13 @@
-import { BinaryExpression, ColumnRef, Expression, FunctionType, Star, SubQuery, UnaryExpression } from '../parser';
+import {
+  BinaryExpression,
+  CaseType,
+  ColumnRef,
+  Expression,
+  FunctionType,
+  Star,
+  SubQuery,
+  UnaryExpression,
+} from '../parser';
 import { extractColumn, extractTable, mapKeys } from '../utils';
 import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
@@ -23,6 +32,8 @@ export class Evaluator {
         return this.evaluateUnaryExpression(e, rowWithContext);
       case 'binary_expression':
         return this.evaluateBinaryExpression(e, rowWithContext);
+      case 'case':
+        return this.evaluateCaseExpression(e, rowWithContext);
       case 'function':
         return this.evaluateFunction(e, rowWithContext, group);
       case 'column_ref':
@@ -87,6 +98,15 @@ export class Evaluator {
     const left = this.evaluateExpression(be.left, row);
     const right = this.evaluateExpression(be.right, row);
     return handler(left, right);
+  }
+
+  protected evaluateCaseExpression(c: CaseType, row: object): any {
+    for (const { condition, value } of c.when) {
+      if (this.evaluateExpression(condition, row)) {
+        return this.evaluateExpression(value, row);
+      }
+    }
+    return c.else ? this.evaluateExpression(c.else, row) : null;
   }
 
   protected evaluateColumnReference(c: ColumnRef, row: object): any {

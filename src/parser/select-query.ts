@@ -3,6 +3,7 @@ import {
   BinaryExpression,
   BooleanType,
   buildExpression,
+  CaseType,
   ColumnRef,
   Expression,
   FunctionType,
@@ -32,6 +33,7 @@ export type SelectColumn =
   | WithAlias<WithColumn<NumberType>>
   | WithAlias<WithColumn<BooleanType>>
   | WithAlias<WithColumn<NullType>>
+  | WithAlias<WithColumn<CaseType>>
   | WithAlias<WithColumn<SubQuery & { isArray: false }>>
   | Star;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
@@ -91,9 +93,10 @@ export class SelectQuery {
           ...(buildExpression(c.expr) as ColumnRef),
           alias: c.as,
         };
-      } else if (['binary_expr', ...functions, ...primitives].includes(c.expr?.type)) {
+      } else if (['case', 'binary_expr', ...functions, ...primitives].includes(c.expr?.type)) {
         return {
           ...(buildExpression(c.expr) as
+            | CaseType
             | FunctionType
             | BinaryExpression
             | StringType

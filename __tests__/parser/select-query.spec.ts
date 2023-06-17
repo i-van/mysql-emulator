@@ -123,6 +123,42 @@ describe('select query', () => {
         { type: 'null', column: 'NULL', alias: null },
       ]);
     });
+    it('should parse WHEN expression', () => {
+      const sql = `
+        SELECT
+          CASE
+            WHEN TRUE THEN 'one'
+            WHEN 1 = 1 THEN 'two'
+            ELSE 'other'
+          END
+      `;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.columns).toEqual([
+        {
+          type: 'case',
+          when: [
+            {
+              condition: { type: 'boolean', value: true },
+              value: { type: 'string', value: 'one' },
+            },
+            {
+              condition: {
+                type: 'binary_expression',
+                operator: '=',
+                left: { type: 'number', value: 1 },
+                right: { type: 'number', value: 1 },
+              },
+              value: { type: 'string', value: 'two' },
+            }
+          ],
+          else: { type: 'string', value: 'other' },
+          column: `CASE WHEN TRUE THEN 'one' WHEN 1 = 1 THEN 'two' ELSE 'other' END`,
+          alias: null,
+        },
+      ]);
+    });
   });
 
   describe('from', () => {
