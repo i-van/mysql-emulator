@@ -46,7 +46,7 @@ describe('select query', () => {
         {
           type: 'function',
           name: 'count',
-          column: 'count(u.id)',
+          column: 'COUNT(`u`.`id`)',
           args: [{ type: 'column_ref', table: 'u', column: 'id' }],
           alias: null,
         },
@@ -67,14 +67,14 @@ describe('select query', () => {
         {
           type: 'function',
           name: 'count',
-          column: 'COUNT(u.id)',
+          column: 'COUNT(`u`.`id`)',
           args: [{ type: 'column_ref', table: 'u', column: 'id' }],
           alias: null,
         },
         {
           type: 'function',
           name: 'sum',
-          column: 'SUM(u.id)',
+          column: 'SUM(`u`.`id`)',
           args: [{ type: 'column_ref', table: 'u', column: 'id' }],
           alias: null,
         },
@@ -111,13 +111,13 @@ describe('select query', () => {
       ]);
     });
     it('should parse primitives', () => {
-      const sql = `SELECT true, false, 1, 'two', null`;
+      const sql = `SELECT TRUE, FALSE, 1, 'two', null`;
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.columns).toEqual([
-        { type: 'boolean', value: true, column: 'true', alias: null },
-        { type: 'boolean', value: false, column: 'false', alias: null },
+        { type: 'boolean', value: true, column: 'TRUE', alias: null },
+        { type: 'boolean', value: false, column: 'FALSE', alias: null },
         { type: 'number', value: 1, column: '1', alias: null },
         { type: 'string', value: 'two', column: 'two', alias: null },
         { type: 'null', column: 'NULL', alias: null },

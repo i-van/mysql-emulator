@@ -1,4 +1,3 @@
-import { Parser as SqlParser } from 'node-sql-parser';
 import { ParserException } from './parser.exception';
 import { SelectQuery } from './select-query';
 
@@ -141,11 +140,9 @@ export const buildExpression = (ast: any): Expression => {
   }
   // handle: id IN (...)
   if (ast.type === 'expr_list' && ast.value[0]?.ast) {
-    const sqlParser = new SqlParser();
-    const subSql = sqlParser.sqlify(ast.value[0].ast, { database: 'MariaDB' });
     return {
       type: 'select',
-      query: SelectQuery.fromAst(ast.value[0].ast, subSql),
+      query: SelectQuery.fromAst(ast.value[0].ast),
       isArray: true,
     };
   }
@@ -156,11 +153,9 @@ export const buildExpression = (ast: any): Expression => {
     };
   }
   if (ast.ast) {
-    const sqlParser = new SqlParser();
-    const subSql = sqlParser.sqlify(ast.ast, { database: 'MariaDB' });
     return {
       type: 'select',
-      query: SelectQuery.fromAst(ast.ast, subSql),
+      query: SelectQuery.fromAst(ast.ast),
       isArray: false,
     };
   }

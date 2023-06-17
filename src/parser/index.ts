@@ -1,5 +1,4 @@
 export * from './parser';
-export * from './column-name-parser';
 export * from './transaction-query';
 export * from './create-table-query';
 export * from './drop-table-query';

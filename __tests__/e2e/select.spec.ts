@@ -93,8 +93,8 @@ describe('select', () => {
       ['SELECT database() as name', [{ name: expect.any(String) }]],
       ['SELECT version() v', [{ v: expect.any(String) }]],
 
-      ['SELECT true', [{ true: 1 }]],
-      ['SELECT false', [{ false: 0 }]],
+      ['SELECT TRUE', [{ TRUE: 1 }]],
+      ['SELECT FALSE', [{ FALSE: 0 }]],
       ['SELECT 10', [{ '10': 10 }]],
       [`SELECT 'two'`, [{ 'two': 'two' }]],
       ['SELECT null', [{ NULL: null }]],

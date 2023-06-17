@@ -12,7 +12,6 @@ import {
   StringType,
   SubQuery,
 } from './expression';
-import { parseColumnNames } from './column-name-parser';
 import { ParserException } from './parser.exception';
 
 type WithJoin<T> = T & {
@@ -37,6 +36,16 @@ export type SelectColumn =
   | Star;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
 
+const sqlParser = new SqlParser();
+const toSql = (expr: any): string => {
+  if (expr.type === 'single_quote_string' || expr.type === 'string') {
+    return expr.value;
+  } else if (expr.type === 'select') {
+    return `(${sqlParser.sqlify(expr, { database: 'MariaDB' })})`;
+  }
+  return sqlParser.exprToSQL(expr, { database: 'MariaDB' });
+};
+
 export class SelectQuery {
   constructor(
     public from: From[],
@@ -49,14 +58,12 @@ export class SelectQuery {
     public offset: number,
   ) {}
 
-  static fromAst(ast: Select, sql: string): SelectQuery {
-    const sqlParser = new SqlParser();
+  static fromAst(ast: Select): SelectQuery {
     const from = (ast.from || []).map((f): From => {
       if (f.expr?.ast) {
-        const subSql = sqlParser.sqlify(f.expr.ast, { database: 'MariaDB' });
         return {
           type: 'select',
-          query: SelectQuery.fromAst(f.expr.ast, subSql),
+          query: SelectQuery.fromAst(f.expr.ast),
           alias: f.as,
           join: f.join || null,
           on: f.on ? buildExpression(f.on) : null,
@@ -72,11 +79,9 @@ export class SelectQuery {
       };
     });
 
-    const columnNames = parseColumnNames(sql);
     const functions = ['aggr_func', 'function'];
     const primitives = ['bool', 'number', 'string', 'single_quote_string', 'null'];
     const columns = [...ast.columns].map((c): SelectColumn => {
-      const columnName = columnNames.shift()!;
       if (c === '*') {
         return buildExpression({ type: 'star', value: c }) as Star;
       } else if (c.expr?.type === 'column_ref' && c.expr.column === '*') {
@@ -95,16 +100,14 @@ export class SelectQuery {
             | NumberType
             | BooleanType
             | NullType),
-          column: columnName,
+          column: toSql(c.expr),
           alias: c.as,
         };
       } else if (c.expr?.ast) {
         return {
-          type: 'select',
-          query: SelectQuery.fromAst(c.expr.ast, columnName),
-          isArray: false,
+          ...buildExpression(c.expr) as SubQuery & { isArray: false },
+          column: toSql(c.expr.ast),
           alias: c.as,
-          column: columnName,
         };
       }
       throw new ParserException('Could not map columns');
