@@ -1,11 +1,11 @@
-import { QueryRunner } from '../query-runner';
+import { Processor } from '../processor';
 
 type Callback = (err: Error | null, res: any) => void;
 
 export class MysqlEmulatorDriver {
   stream = {};
 
-  constructor(private queryRunner: QueryRunner) {}
+  constructor(private processor: Processor) {}
 
   // eslint-disable-next-line
   connect() {}
@@ -60,8 +60,8 @@ export class MysqlEmulatorDriver {
       sql = sql.sql;
     }
 
-    const promise = this.queryRunner
-      .query(sql, values || [])
+    const promise = this.processor
+      .process(sql, values || [])
       .then((res) => {
         callback && setImmediate(callback, null, res);
       })

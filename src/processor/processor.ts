@@ -19,12 +19,12 @@ import { DeleteProcessor } from './delete.processor';
 import { UpdateProcessor } from './update.processor';
 import { ShowProcessor } from './show.processor';
 
-export class QueryRunner {
+export class Processor {
   protected parser = new Parser();
 
   constructor(protected server: Server) {}
 
-  async query(sql: string, params: any[]): Promise<any> {
+  async process(sql: string, params: any[]): Promise<any> {
     const query = this.parser.parse(sql, params);
     if (query instanceof TransactionQuery) {
       // todo: handle it
