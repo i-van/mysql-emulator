@@ -42,8 +42,6 @@ const sqlParser = new SqlParser();
 const toSql = (expr: any): string => {
   if (expr.type === 'single_quote_string' || expr.type === 'string') {
     return expr.value;
-  } else if (expr.type === 'select') {
-    return `(${sqlParser.sqlify(expr, { database: 'MariaDB' })})`;
   }
   return sqlParser.exprToSQL(expr, { database: 'MariaDB' });
 };
@@ -109,7 +107,7 @@ export class SelectQuery {
       } else if (c.expr?.ast) {
         return {
           ...buildExpression(c.expr) as SubQuery & { isArray: false },
-          column: toSql(c.expr.ast),
+          column: toSql(c.expr),
           alias: c.as,
         };
       }
