@@ -14,13 +14,6 @@ export class InsertProcessor {
     const columnDefinitions = table.getColumns();
     const columnDefinitionMap = new Map<string, Column>(columnDefinitions.map((c) => [c.getName(), c]));
     const columns = query.columns || columnDefinitions.map((c) => c.getName());
-    const getColumnDefinition = (column: string): Column => {
-      const c = columnDefinitionMap.get(column);
-      if (!c) {
-        throw new ProcessorException(`Unknown column '${column}' in 'field list'`);
-      }
-      return c;
-    };
     const evaluateDefaultValue = (column: Column, row: object): any | null => {
       if (column instanceof IntegerColumn && column.hasAutoIncrement()) {
         return column.getAutoIncrementCursor() + 1;
@@ -47,14 +40,15 @@ export class InsertProcessor {
       }
       const rawRow = values.reduce((res, expression, valueIndex) => {
         const columnName = columns[valueIndex];
-        if (!columnDefinitionMap.has(columnName)) {
+        const column = columnDefinitionMap.get(columnName);
+        if (!column) {
           throw new ProcessorException(`Unknown column '${columnName}' in 'field list'`);
         }
         return {
           ...res,
           [`${query.table}::${columnName}`]:
             expression.type === 'default'
-              ? evaluateDefaultValue(getColumnDefinition(columnName), res)
+              ? evaluateDefaultValue(column, res)
               : this.evaluator.evaluateExpression(expression, res),
         };
       }, placeholder);
