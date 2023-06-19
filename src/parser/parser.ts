@@ -32,7 +32,15 @@ export class Parser {
       return showQuery;
     }
 
-    let ast = this.sqlParser.astify(injectedSql, { database: 'MariaDB' });
+    let ast;
+    try {
+      ast = this.sqlParser.astify(injectedSql, { database: 'MariaDB' });
+    } catch (err: any) {
+      if (err.location) {
+        throw new ParserException(`Unexpected token '${err.found}' at line ${err.location.start?.line}`);
+      }
+      throw err;
+    }
     if (Array.isArray(ast)) {
       if (ast.length === 1) {
         ast = ast[0];
@@ -61,6 +69,6 @@ export class Parser {
     } catch (err: any) {
       throw new ParserException(`${err.message}: ${injectedSql}`);
     }
-    throw new ParserException(`Could not parse sql: ${injectedSql}`);
+    throw new ParserException(`Unknown query type '${ast.type}'`);
   }
 }
