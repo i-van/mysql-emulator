@@ -10,7 +10,7 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.columns).toEqual([
-        { type: 'function', name: 'database', column: 'database()', args: [], alias: null },
+        { type: 'function', name: 'database', args: [], options: {}, column: 'database()', alias: null },
       ]);
     });
     it('should parse aliased function column', () => {
@@ -19,7 +19,7 @@ describe('select query', () => {
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.columns).toEqual([
-        { type: 'function', name: 'database', column: 'database()', args: [], alias: 'name' },
+        { type: 'function', name: 'database', args: [], options: {}, column: 'database()', alias: 'name' },
       ]);
     });
     it('should parse COUNT(*) function', () => {
@@ -31,8 +31,9 @@ describe('select query', () => {
         {
           type: 'function',
           name: 'count',
-          column: 'COUNT(*)',
           args: [{ type: 'star', table: null }],
+          options: {},
+          column: 'COUNT(*)',
           alias: null,
         },
       ]);
@@ -46,8 +47,27 @@ describe('select query', () => {
         {
           type: 'function',
           name: 'count',
-          column: 'COUNT(`u`.`id`)',
           args: [{ type: 'column_ref', table: 'u', column: 'id' }],
+          options: {},
+          column: 'COUNT(`u`.`id`)',
+          alias: null,
+        },
+      ]);
+    });
+    it('should parse COUNT(DISTINCT u.id) function', () => {
+      const sql = 'SELECT count(distinct u.id) FROM users u GROUP BY u.id';
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.columns).toEqual([
+        {
+          type: 'function',
+          name: 'count',
+          args: [{ type: 'column_ref', table: 'u', column: 'id' }],
+          options: {
+            distinct: true,
+          },
+          column: 'COUNT(DISTINCT `u`.`id`)',
           alias: null,
         },
       ]);
@@ -67,15 +87,17 @@ describe('select query', () => {
         {
           type: 'function',
           name: 'count',
-          column: 'COUNT(`u`.`id`)',
           args: [{ type: 'column_ref', table: 'u', column: 'id' }],
+          options: {},
+          column: 'COUNT(`u`.`id`)',
           alias: null,
         },
         {
           type: 'function',
           name: 'sum',
-          column: 'SUM(`u`.`id`)',
           args: [{ type: 'column_ref', table: 'u', column: 'id' }],
+          options: {},
+          column: 'SUM(`u`.`id`)',
           alias: null,
         },
       ]);
@@ -151,7 +173,7 @@ describe('select query', () => {
                 right: { type: 'number', value: 1 },
               },
               value: { type: 'string', value: 'two' },
-            }
+            },
           ],
           else: { type: 'string', value: 'other' },
           column: `CASE WHEN TRUE THEN 'one' WHEN 1 = 1 THEN 'two' ELSE 'other' END`,

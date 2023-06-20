@@ -42,6 +42,7 @@ describe('update query', () => {
           type: 'function',
           name: 'current_timestamp',
           args: [],
+          options: {},
         },
       },
     ]);

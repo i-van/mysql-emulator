@@ -73,6 +73,16 @@ describe('select', () => {
 
       expect(res).toEqual([{ count: 3, sum: '16', min: 1, max: 10, avg: '5.3333' }]);
     });
+    it('should COUNT DISTINCT user_id', async () => {
+      const res = await query(`
+        SELECT
+          COUNT(DISTINCT user_id) count
+        FROM
+          posts
+      `);
+
+      expect(res).toEqual([{ count: 2 }]);
+    });
     it('should return null if nothing to sum', async () => {
       const res = await query(`
         SELECT

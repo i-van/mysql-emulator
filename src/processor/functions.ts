@@ -18,16 +18,22 @@ export const functions: Record<string, FunctionHandler> = {
   database: (e) => e.getServer().getDatabase(null).getName(),
   version: () => '8.0.0',
   count: (e: Evaluator, f: FunctionType, row: object, group: object[]) => {
-    return group.filter((row) => {
-      const arg = getArgument(f);
-      // count every row when COUNT(*)
-      if (arg.type === 'star') {
-        return true;
-      }
+    const arg = getArgument(f);
+    // count every row when COUNT(*)
+    if (arg.type === 'star') {
+      return group.length;
+    }
+    const uniqueValues = new Set<unknown>();
+    const values: unknown[] = [];
+    group.forEach((row) => {
       // count only not nullable fields when COUNT(t.id)
       const value = e.evaluateExpression(arg, row);
-      return value !== null && value !== undefined;
-    }).length;
+      if (value !== null) {
+        uniqueValues.add(value);
+        values.push(value);
+      }
+    });
+    return f.options.distinct ? uniqueValues.size : values.length;
   },
   sum: (e: Evaluator, f: FunctionType, row: object, group: object[]) => {
     if (group.length === 0) {

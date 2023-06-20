@@ -14,6 +14,9 @@ export type FunctionType = {
   type: 'function';
   name: string;
   args: Expression[];
+  options: {
+    distinct?: boolean;
+  };
 };
 export type NumberType = {
   type: 'number';
@@ -114,6 +117,7 @@ export const buildExpression = (ast: any): Expression => {
     };
   }
   if (ast.type === 'function' || ast.type === 'aggr_func') {
+    const options = ast.args?.distinct ? { distinct: true } : {};
     const args =
       ast.args?.type === 'expr_list'
         ? ast.args.value.map(buildExpression)
@@ -124,6 +128,7 @@ export const buildExpression = (ast: any): Expression => {
       type: 'function',
       name: ast.name.toLowerCase(),
       args,
+      options,
     };
   }
   if (ast.type === 'number') {
