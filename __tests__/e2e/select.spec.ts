@@ -14,12 +14,19 @@ describe('select', () => {
     await query(`INSERT INTO profiles (id, name, post_count) VALUES (1, 'John', 5)`);
     await query(`INSERT INTO profiles (id, name, post_count) VALUES (2, 'John', 10)`);
     await query(`INSERT INTO profiles (id, name, post_count) VALUES (3, 'Jane', 1)`);
+
+    await query('CREATE TABLE relations (`from` int, `to` int)');
+    await query(`INSERT INTO relations VALUES (1, 2)`);
+    await query(`INSERT INTO relations VALUES (1, 2)`);
+    await query(`INSERT INTO relations VALUES (2, 1)`);
+    await query(`INSERT INTO relations VALUES (3, 1)`);
   });
 
   afterAll(async () => {
     await query(`DROP TABLE users`);
     await query(`DROP TABLE posts`);
     await query(`DROP TABLE profiles`);
+    await query(`DROP TABLE relations`);
   });
 
   describe('columns', () => {
@@ -30,6 +37,15 @@ describe('select', () => {
         { id: 1, name: 'name1' },
         { id: 2, name: 'name2' },
         { id: 3, name: 'name3' },
+      ]);
+    });
+    it('should select distinct *', async () => {
+      const res = await query(`SELECT DISTINCT * FROM relations`);
+
+      expect(res).toEqual([
+        { from: 1, to: 2 },
+        { from: 2, to: 1 },
+        { from: 3, to: 1 },
       ]);
     });
     it('should select ids', async () => {

@@ -238,6 +238,18 @@ export class SelectProcessor {
         }
       });
     }
+    if (this.query.distinct && this.rows.length > 0) {
+      const index = new Set<string>();
+      const keys = Object.keys(this.rows[0]);
+      this.rows = this.rows.filter((row) => {
+        const value = keys.map((key) => row[key]).join('-');
+        if (index.has(value)) {
+          return false;
+        }
+        index.add(value);
+        return true;
+      });
+    }
   }
 
   protected applyLimit() {

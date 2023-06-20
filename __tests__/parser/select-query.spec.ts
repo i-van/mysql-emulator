@@ -4,6 +4,14 @@ describe('select query', () => {
   const parser = new Parser();
 
   describe('columns', () => {
+    it('should parse DISTINCT', () => {
+      const sql = 'SELECT DISTINCT * FROM users';
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.distinct).toBe(true);
+      expect(res.columns).toEqual([{ type: 'star', table: null }]);
+    });
     it('should parse function column', () => {
       const sql = 'SELECT database()';
       const res = parser.parse(sql, []) as SelectQuery;
@@ -145,7 +153,7 @@ describe('select query', () => {
         { type: 'null', column: 'NULL', alias: null },
       ]);
     });
-    it('should parse WHEN expression', () => {
+    it('should parse CASE expression', () => {
       const sql = `
         SELECT
           CASE
@@ -411,6 +419,7 @@ describe('select query', () => {
           type: 'select',
           query: new SelectQuery(
             [],
+            false,
             [
               {
                 type: 'number',
@@ -442,6 +451,7 @@ describe('select query', () => {
           type: 'select',
           query: new SelectQuery(
             [],
+            false,
             [
               {
                 type: 'string',
@@ -493,6 +503,7 @@ describe('select query', () => {
                 on: null,
               },
             ],
+            false,
             [
               {
                 type: 'column_ref',
@@ -542,6 +553,7 @@ describe('select query', () => {
                 on: null,
               },
             ],
+            false,
             [
               {
                 type: 'column_ref',

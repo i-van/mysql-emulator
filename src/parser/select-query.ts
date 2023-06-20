@@ -49,6 +49,7 @@ const toSql = (expr: any): string => {
 export class SelectQuery {
   constructor(
     public from: From[],
+    public distinct: boolean,
     public columns: SelectColumn[],
     public where: Expression | null,
     public groupBy: ColumnRef[],
@@ -130,6 +131,7 @@ export class SelectQuery {
 
     return new SelectQuery(
       from,
+      Boolean(ast.distinct),
       columns,
       ast.where ? buildExpression(ast.where) : null,
       groupBy,
