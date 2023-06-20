@@ -4,16 +4,16 @@ export const binaryOperators: Record<string, (left, right) => any> = {
   '=': (left, right) => Number(left == right),
   '!=': (left, right) => Number(left != right),
   '<>': (left, right) => Number(left != right),
-  'IN': (left, right) => Number(right.some((i) => i == left)),
+  IN: (left, right) => Number(right.some((i) => i == left)),
   'NOT IN': (left, right) => Number(right.every((i) => i != left)),
-  'BETWEEN': (left, right) => Number(left >= right[0] && left <= right[1]),
-  'LIKE': (left, right) => {
+  BETWEEN: (left, right) => Number(left >= right[0] && left <= right[1]),
+  LIKE: (left, right) => {
     const r = new RegExp('^' + right.replace(/_/g, '.').replace(/%/g, '.*') + '$');
     return Number(r.test(left));
   },
-  'AND': (left, right) => Number(left && right),
-  'OR': (left, right) => Number(left || right),
-  'IS': (left, right) => Number(left == right),
+  AND: (left, right) => Number(left && right),
+  OR: (left, right) => Number(left || right),
+  IS: (left, right) => Number(left == right),
   'IS NOT': (left, right) => Number(left != right),
   '>': (left, right) => Number(left > right),
   '>=': (left, right) => Number(left >= right),

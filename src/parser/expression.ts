@@ -167,7 +167,8 @@ export const buildExpression = (ast: any): Expression => {
     };
   }
   if (ast.type === 'case') {
-    const when = ast.args.filter((a) => a.type === 'when')
+    const when = ast.args
+      .filter((a) => a.type === 'when')
       .map((a) => ({ condition: buildExpression(a.cond), value: buildExpression(a.result) }));
     const elseExpression = ast.args.find((a) => a.type === 'else');
     return {

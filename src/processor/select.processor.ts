@@ -172,7 +172,10 @@ export class SelectProcessor {
     const hasExpressionColumn = this.query.columns.some((c) => c.type === 'binary_expression');
     const hasCase = this.query.columns.some((c) => c.type === 'case');
     const hasSubSelect = this.query.columns.some((c) => c.type === 'select');
-    if (this.rows.length === 0 && (hasFunctionColumn || hasExpressionColumn || hasPrimitiveColumn || hasCase || hasSubSelect)) {
+    if (
+      this.rows.length === 0 &&
+      (hasFunctionColumn || hasExpressionColumn || hasPrimitiveColumn || hasCase || hasSubSelect)
+    ) {
       this.rows = [{}];
     }
 

@@ -106,7 +106,7 @@ describe('select', () => {
       ['SELECT TRUE', [{ TRUE: 1 }]],
       ['SELECT FALSE', [{ FALSE: 0 }]],
       ['SELECT 10', [{ '10': 10 }]],
-      [`SELECT 'two'`, [{ 'two': 'two' }]],
+      [`SELECT 'two'`, [{ two: 'two' }]],
       ['SELECT null', [{ NULL: null }]],
 
       ['SELECT 1 != 2 v', [{ v: 1 }]],
@@ -138,7 +138,7 @@ describe('select', () => {
 
       [`SELECT concat('one', 'two', 'three') v`, [{ v: 'onetwothree' }]],
       [`SELECT concat_ws('-', 'one', 'two', 'three') v`, [{ v: 'one-two-three' }]],
-      [`SELECT substring('mysql emulator', 1, 5) v`, [{ v:  'mysql' }]],
+      [`SELECT substring('mysql emulator', 1, 5) v`, [{ v: 'mysql' }]],
       [`SELECT substring('mysql emulator', 7) v`, [{ v: 'emulator' }]],
       [`SELECT substr('mysql emulator', 1, 5) v`, [{ v: 'mysql' }]],
       [`SELECT substr('mysql emulator', 7) v`, [{ v: 'emulator' }]],
@@ -186,13 +186,10 @@ describe('select', () => {
       [`SELECT CASE WHEN false THEN 'one' END v`, [{ v: null }]],
     ];
 
-    test.each(cases)(
-      'should run %s',
-      async (sql, expected) => {
-        expect(await query(sql)).toEqual(expected);
-      },
-    );
-  })
+    test.each(cases)('should run %s', async (sql, expected) => {
+      expect(await query(sql)).toEqual(expected);
+    });
+  });
 
   describe('from clause', () => {
     it('should select from aliased table', async () => {

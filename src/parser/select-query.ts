@@ -106,7 +106,7 @@ export class SelectQuery {
         };
       } else if (c.expr?.ast) {
         return {
-          ...buildExpression(c.expr) as SubQuery & { isArray: false },
+          ...(buildExpression(c.expr) as SubQuery & { isArray: false }),
           column: toSql(c.expr),
           alias: c.as,
         };

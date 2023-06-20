@@ -39,9 +39,7 @@ export const functions: Record<string, FunctionHandler> = {
     if (group.length === 0) {
       return null;
     }
-    return group
-      .reduce((res, row) => res + e.evaluateExpression(getArgument(f), row), 0)
-      .toString();
+    return group.reduce((res, row) => res + e.evaluateExpression(getArgument(f), row), 0).toString();
   },
   max: (e: Evaluator, f: FunctionType, row: object, group: object[]) => {
     if (group.length === 0) {
@@ -86,9 +84,7 @@ export const functions: Record<string, FunctionHandler> = {
       throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
     const [string, start, length] = f.args.map((arg) => e.evaluateExpression(arg, row));
-    return length
-      ? string.substring(start - 1, start + length - 1)
-      : string.substring(start - 1);
+    return length ? string.substring(start - 1, start + length - 1) : string.substring(start - 1);
   },
   substring_index: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length !== 3) {
