@@ -111,6 +111,29 @@ describe('select', () => {
 
       expect(res).toEqual([{ sum: null }]);
     });
+    it('should run EXISTS function', async () => {
+      const res = await query(`
+        SELECT
+          EXISTS(SELECT * FROM users) v
+      `);
+
+      expect(res).toEqual([{ v: 1 }]);
+    });
+    it('should run EXISTS function at WHERE clause', async () => {
+      const res = await query(`
+        SELECT
+          u.*
+        FROM
+          users u
+        WHERE
+          EXISTS(SELECT p.id FROM posts p WHERE p.user_id = u.id)
+      `);
+
+      expect(res).toEqual([
+        { id: 1, name: 'name1' },
+        { id: 2, name: 'name2' },
+      ]);
+    });
   });
 
   describe('expressions', () => {

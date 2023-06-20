@@ -2,7 +2,8 @@ import { Expression, FunctionType } from '../parser';
 import { EvaluatorException } from './evaluator.exception';
 import { Evaluator } from './evaluator';
 import { binaryOperators } from './binary-operators';
-import { isString, toNumber } from '../utils';
+import { isString, mapKeys, toNumber } from '../utils';
+import { SelectProcessor } from './select.processor';
 
 type FunctionHandler = (e: Evaluator, f: FunctionType, row: object, group: object[]) => any;
 
@@ -17,6 +18,16 @@ const getArgument = (f: FunctionType): Expression => {
 export const functions: Record<string, FunctionHandler> = {
   database: (e) => e.getServer().getDatabase(null).getName(),
   version: () => '8.0.0',
+  exists: (e: Evaluator, f: FunctionType, row: object) => {
+    const arg = getArgument(f);
+    if (arg.type !== 'select') {
+      throw new EvaluatorException(`Could not evaluate function '${f.name}'`);
+    }
+
+    const p = new SelectProcessor(e.getServer(), arg.query, row);
+    const rows = p.process();
+    return Number(rows.length > 0);
+  },
   count: (e: Evaluator, f: FunctionType, row: object, group: object[]) => {
     const arg = getArgument(f);
     // count every row when COUNT(*)
