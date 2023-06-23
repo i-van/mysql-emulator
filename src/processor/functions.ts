@@ -215,6 +215,18 @@ export const functions: Record<string, FunctionHandler> = {
       d.getSeconds().toString().padStart(2, '0'),
     ].join(':');
   },
+  last_day: (e: Evaluator, f: FunctionType, row: object) => {
+    const value = e.evaluateExpression(getArgument(f), row);
+    const d = toDate(value);
+    if (d === null) {
+      return null;
+    }
+    d.setHours(0, 0, 0, 0);
+    d.setDate(1);
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(0);
+    return d;
+  },
   day: (e: Evaluator, f: FunctionType, row: object) => {
     const value = e.evaluateExpression(getArgument(f), row);
     const d = toDate(value);
@@ -231,6 +243,25 @@ export const functions: Record<string, FunctionHandler> = {
     }
     d.setHours(0, 0, 0, 0);
     return d;
+  },
+  weekday: (e: Evaluator, f: FunctionType, row: object) => {
+    const value = e.evaluateExpression(getArgument(f), row);
+    const d = toDate(value);
+    if (d === null) {
+      return null;
+    }
+    const day = d.getDay();
+    return day === 0 ? 6 : day - 1;
+  },
+  datediff: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const [date1, date2] = f.args.map((arg) => toDate(e.evaluateExpression(arg, row)));
+    if (date1 === null || date2 === null) {
+      return null;
+    }
+    return Math.ceil((date1.getTime() - date2.getTime()) / 86400000);
   },
   date_format: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length !== 2) {
