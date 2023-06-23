@@ -71,3 +71,38 @@ export const isObject = (o: any): o is object => {
 export const isString = (s: any): s is string => {
   return typeof s === 'string' || s instanceof String;
 };
+
+export const toDate = (value: any): Date | null => {
+  if (!value) {
+    return null;
+  }
+  const date = (() => {
+    if (value instanceof Date) {
+      return new Date(value);
+    }
+    if (isString(value)) {
+      let match = value.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+      if (match) {
+        return new Date(
+          Number(match[1]),
+          Number(match[2]) - 1,
+          Number(match[3]),
+          Number(match[4]),
+          Number(match[5]),
+          Number(match[6]),
+        );
+      }
+      match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (match) {
+        return new Date(
+          Number(match[1]),
+          Number(match[2]) - 1,
+          Number(match[3]),
+        );
+      }
+    }
+    return new Date(value);
+  })();
+
+  return isNaN(date.getTime()) ? null : date;
+}

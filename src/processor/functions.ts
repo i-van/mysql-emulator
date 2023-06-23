@@ -2,17 +2,16 @@ import { Expression, FunctionType } from '../parser';
 import { EvaluatorException } from './evaluator.exception';
 import { Evaluator } from './evaluator';
 import { binaryOperators } from './binary-operators';
-import { isString, mapKeys, toNumber } from '../utils';
+import { isString, toDate, toNumber } from '../utils';
 import { SelectProcessor } from './select.processor';
 
 type FunctionHandler = (e: Evaluator, f: FunctionType, row: object, group: object[]) => any;
 
 const getArgument = (f: FunctionType): Expression => {
-  const [arg] = f.args;
-  if (!arg) {
-    throw new EvaluatorException(`Could not evaluate function '${f.name}'`);
+  if (f.args?.length !== 1) {
+    throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
   }
-  return arg;
+  return f.args[0];
 };
 
 export const functions: Record<string, FunctionHandler> = {
@@ -112,21 +111,12 @@ export const functions: Record<string, FunctionHandler> = {
     return array.indexOf(value) + 1;
   },
   character_length: (e: Evaluator, f: FunctionType, row: object) => {
-    if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
-    }
     return e.evaluateExpression(getArgument(f), row).length;
   },
   lower: (e: Evaluator, f: FunctionType, row: object) => {
-    if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
-    }
     return e.evaluateExpression(getArgument(f), row).toLowerCase();
   },
   upper: (e: Evaluator, f: FunctionType, row: object) => {
-    if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
-    }
     return e.evaluateExpression(getArgument(f), row).toUpperCase();
   },
   mod: (e: Evaluator, f: FunctionType, row: object) => {
@@ -153,9 +143,6 @@ export const functions: Record<string, FunctionHandler> = {
     return Math.max(...array);
   },
   ceiling: (e: Evaluator, f: FunctionType, row: object) => {
-    if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
-    }
     const value = e.evaluateExpression(getArgument(f), row);
     if (value === null) {
       return null;
@@ -163,9 +150,6 @@ export const functions: Record<string, FunctionHandler> = {
     return Math.ceil(toNumber(value));
   },
   floor: (e: Evaluator, f: FunctionType, row: object) => {
-    if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
-    }
     const value = e.evaluateExpression(getArgument(f), row);
     if (value === null) {
       return null;
@@ -183,9 +167,6 @@ export const functions: Record<string, FunctionHandler> = {
     return toNumber(value).toFixed(digits || 0);
   },
   isnull: (e: Evaluator, f: FunctionType, row: object) => {
-    if (f.args?.length !== 1) {
-      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
-    }
     return Number(e.evaluateExpression(getArgument(f), row) === null);
   },
   ifnull: (e: Evaluator, f: FunctionType, row: object) => {
@@ -221,13 +202,9 @@ export const functions: Record<string, FunctionHandler> = {
     return array.find((v) => v !== null) ?? null;
   },
   now: () => new Date(),
-  current_timestamp: () => new Date(),
   current_date: () => {
     const d = new Date();
-    d.setHours(0);
-    d.setMinutes(0);
-    d.setSeconds(0);
-    d.setMilliseconds(0);
+    d.setHours(0, 0, 0, 0);
     return d;
   },
   current_time: () => {
@@ -238,14 +215,95 @@ export const functions: Record<string, FunctionHandler> = {
       d.getSeconds().toString().padStart(2, '0'),
     ].join(':');
   },
+  day: (e: Evaluator, f: FunctionType, row: object) => {
+    const value = e.evaluateExpression(getArgument(f), row);
+    const d = toDate(value);
+    if (d === null) {
+      return null;
+    }
+    return d.getDate();
+  },
+  date: (e: Evaluator, f: FunctionType, row: object) => {
+    const value = e.evaluateExpression(getArgument(f), row);
+    const d = toDate(value);
+    if (d === null) {
+      return null;
+    }
+    d.setHours(0, 0, 0, 0);
+    return d;
+  },
+  date_format: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const [value, format] = f.args.map((arg) => e.evaluateExpression(arg, row));
+    const d = toDate(value);
+    if (d === null) {
+      return null;
+    }
+
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const date = d.getDate();
+    const hours = d.getHours();
+    const standardHours = hours === 0 ? 12 : hours % 12;
+    const minutes = d.getMinutes();
+    const seconds = d.getSeconds();
+    const milliseconds= d.getMilliseconds();
+    const meridiem = hours < 13 ? 'AM' : 'PM';
+    return Object.entries({
+      Y: year,
+      y: year.toString().substring(2),
+
+      M: d.toLocaleString('default', { month: 'long' }),
+      b: d.toLocaleString('default', { month: 'short' }),
+      c: month,
+      m: month.toString().padStart(2, '0'),
+
+      D: [1, 21, 31].includes(date) ? `${date}st`
+        : [2, 22].includes(date) ? `${date}nd`
+          : [3, 23].includes(date) ? `${date}rd`
+            : `${date}th`,
+      d: date.toString().padStart(2, '0'),
+      e: date,
+
+      H: hours.toString().padStart(2, '0'),
+      h: standardHours.toString().padStart(2, '0'),
+      I: standardHours.toString().padStart(2, '0'),
+      k: hours,
+      l: standardHours,
+      p: meridiem,
+
+      i: minutes.toString().padStart(2, '0'),
+
+      S: seconds.toString().padStart(2, '0'),
+      s: seconds.toString().padStart(2, '0'),
+
+      f: milliseconds.toString().padStart(3, '0') + '000',
+
+      r: [standardHours, minutes, seconds]
+        .map((n) => n.toString().padStart(2, '0'))
+        .join(':') + ' ' + meridiem,
+      T: [hours, minutes, seconds]
+        .map((n) => n.toString().padStart(2, '0'))
+        .join(':'),
+
+      w: d.getDay(),
+      W: d.toLocaleDateString('default', { weekday: 'long' }),
+      a: d.toLocaleDateString('default', { weekday: 'short' }),
+      j: Math.floor((d.getTime() - new Date(year, 0, 0).getTime()) / 864e5).toString().padStart(3, '0'),
+    }).reduce((res, [key, value]) => res.replace('%' + key, value), format);
+  },
 };
 const aliases: [string, string][] = [
   ['substring', 'substr'],
   ['character_length', 'char_length'],
   ['character_length', 'length'],
   ['ceiling', 'ceil'],
+  ['now', 'current_timestamp'],
   ['current_date', 'curdate'],
   ['current_time', 'curtime'],
+  ['day', 'dayofmonth'],
 ];
 aliases.forEach(([name, alias]) => {
   functions[alias] = functions[name];

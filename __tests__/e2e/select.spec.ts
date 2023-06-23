@@ -188,6 +188,7 @@ describe('select', () => {
       [`SELECT length('mysql-emulator') v`, [{ v: 14 }]],
       [`SELECT lower('MYSQL-EMULATOR') v`, [{ v: 'mysql-emulator' }]],
       [`SELECT upper('mysql-emulator') v`, [{ v: 'MYSQL-EMULATOR' }]],
+
       ['SELECT mod(5, 3) v', [{ v: 2 }]],
       ['SELECT greatest(4, 3, 2, 1) v', [{ v: 4 }]],
       [`SELECT greatest(4, '33', 2, 1) v`, [{ v: '4' }]],
@@ -199,6 +200,7 @@ describe('select', () => {
       ['SELECT round(25.52, 1) v', [{ v: '25.5' }]],
       ['SELECT round(25.25) v', [{ v: '25' }]],
       ['SELECT round(25.75) v', [{ v: '26' }]],
+
       ['SELECT isnull(null) v', [{ v: 1 }]],
       [`SELECT isnull('') v`, [{ v: 0 }]],
       ['SELECT isnull(123) v', [{ v: 0 }]],
@@ -227,6 +229,29 @@ describe('select', () => {
 
     test.each(cases)('should run %s', async (sql, expected) => {
       expect(await query(sql)).toEqual(expected);
+    });
+
+    test.each([
+      [`DAY('2017-06-15')`, 15],
+      [`DAY('2017-06-15 00:00:00')`, 15],
+      [`DAYOFMONTH('2017-06-15')`, 15],
+      [`DATE('2023-01-02 03:04:05')`, new Date('2023-01-02 00:00:00')],
+      [`DATE_FORMAT('2023-01-02 03:04:05', '%Y %y')`, '2023 23'],
+      [`DATE_FORMAT('2023-01-02 03:04:05', '%M %b %c %m')`, 'January Jan 1 01'],
+      [`DATE_FORMAT('2023-01-02 03:04:05', '%D %d %e')`, '2nd 02 2'],
+      [`DATE_FORMAT('2023-01-02 03:04:05', '%H %h %I %k %l %p')`, '03 03 03 3 3 AM'],
+      [`DATE_FORMAT('2023-01-02 13:04:05', '%H %h %I %k %l %p')`, '13 01 01 13 1 PM'],
+      [`DATE_FORMAT('2023-01-02 03:04:05', '%i')`, '04'],
+      [`DATE_FORMAT('2023-01-02 03:04:05', '%S %s')`, '05 05'],
+      [`DATE_FORMAT('2023-01-02 03:04:05', '%f')`, '000000'],
+      [`DATE_FORMAT('2023-01-02 03:04:05', '%r %T')`, '03:04:05 AM 03:04:05'],
+      [`DATE_FORMAT('2023-01-02 13:04:05', '%r %T')`, '01:04:05 PM 13:04:05'],
+      [`DATE_FORMAT('2023-01-02 13:04:05', '%w %W %a %j')`, '1 Monday Mon 002'],
+      [`DATE_FORMAT('2023-01-02', '%r %T')`, '12:00:00 AM 00:00:00'],
+      [`DATE_FORMAT('2023-01-02', '%H %h %I %k %l %p')`, '00 12 12 0 12 AM'],
+      [`DATE_FORMAT(null, '%T')`, null],
+    ])('should run date function %s', async (expression, expected) => {
+      expect(await query(`SELECT ${expression} v`)).toEqual([{ v: expected }]);
     });
   });
 
