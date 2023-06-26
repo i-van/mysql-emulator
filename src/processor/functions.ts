@@ -1,8 +1,8 @@
-import { Expression, FunctionType } from '../parser';
+import { Expression, FunctionType, Interval } from '../parser';
 import { EvaluatorException } from './evaluator.exception';
 import { Evaluator } from './evaluator';
 import { binaryOperators } from './binary-operators';
-import { isString, toDate, toNumber } from '../utils';
+import { isString, toDate, toDateString, toNumber } from '../utils';
 import { SelectProcessor } from './select.processor';
 
 type FunctionHandler = (e: Evaluator, f: FunctionType, row: object, group: object[]) => any;
@@ -12,6 +12,26 @@ const getArgument = (f: FunctionType): Expression => {
     throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
   }
   return f.args[0];
+};
+
+const applyInterval = (d: Date, i: Interval, k: 1 | -1): void => {
+  if (i.unit === 'second') {
+    d.setSeconds(d.getSeconds() + k * i.value);
+  } else if (i.unit === 'minute') {
+    d.setMinutes(d.getMinutes() + k * i.value);
+  } else if (i.unit === 'hour') {
+    d.setHours(d.getHours() + k * i.value);
+  } else if (i.unit === 'day') {
+    d.setDate(d.getDate() + k * i.value);
+  } else if (i.unit === 'week') {
+    d.setDate(d.getDate() + k * i.value * 7);
+  } else if (i.unit === 'month') {
+    d.setMonth(d.getMonth() + k * i.value);
+  } else if (i.unit === 'year') {
+    d.setFullYear(d.getFullYear() + k * i.value);
+  } else {
+    throw new EvaluatorException(`Unknown interval unit '${i.unit}'`);
+  }
 };
 
 export const functions: Record<string, FunctionHandler> = {
@@ -262,6 +282,36 @@ export const functions: Record<string, FunctionHandler> = {
       return null;
     }
     return Math.ceil((date1.getTime() - date2.getTime()) / 86400000);
+  },
+  date_add: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const [valueArg, interval] = f.args;
+    if (interval.type !== 'interval') {
+      throw new EvaluatorException(`Could not evaluate function '${f.name}'`);
+    }
+    const d = toDate(e.evaluateExpression(valueArg, row));
+    if (d === null) {
+      return null;
+    }
+    applyInterval(d, interval, 1);
+    return toDateString(d);
+  },
+  date_sub: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 2) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const [valueArg, interval] = f.args;
+    if (interval.type !== 'interval') {
+      throw new EvaluatorException(`Could not evaluate function '${f.name}'`);
+    }
+    const d = toDate(e.evaluateExpression(valueArg, row));
+    if (d === null) {
+      return null;
+    }
+    applyInterval(d, interval, -1);
+    return toDateString(d);
   },
   date_format: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length !== 2) {

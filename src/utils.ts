@@ -72,6 +72,20 @@ export const isString = (s: any): s is string => {
   return typeof s === 'string' || s instanceof String;
 };
 
+export const toDateString = (d: Date): string => {
+  const date = [
+    d.getFullYear(),
+    (d.getMonth() + 1).toString().padStart(2, '0'),
+    d.getDate().toString().padStart(2, '0'),
+  ].join('-');
+  const time = [
+    d.getHours().toString().padStart(2, '0'),
+    d.getMinutes().toString().padStart(2, '0'),
+    d.getSeconds().toString().padStart(2, '0'),
+  ].join(':');
+  return `${date} ${time}`;
+};
+
 export const toDate = (value: any): Date | null => {
   if (!value) {
     return null;

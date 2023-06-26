@@ -153,6 +153,25 @@ describe('select query', () => {
         { type: 'null', column: 'NULL', alias: null },
       ]);
     });
+    it('should parse interval', () => {
+      const sql = `SELECT DATE_ADD('2023-01-02', INTERVAL 10 DAY)`;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.columns).toEqual([
+        {
+          type: 'function',
+          name: 'date_add',
+          args: [
+            { type: 'string', value: '2023-01-02' },
+            { type: 'interval', unit: 'day', value: 10 },
+          ],
+          options: {},
+          column: `DATE_ADD('2023-01-02', INTERVAL 10 DAY)`,
+          alias: null,
+        },
+      ]);
+    });
     it('should parse CASE expression', () => {
       const sql = `
         SELECT

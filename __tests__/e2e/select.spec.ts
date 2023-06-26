@@ -254,6 +254,20 @@ describe('select', () => {
       [`DATE_FORMAT('2023-01-02', '%r %T')`, '12:00:00 AM 00:00:00'],
       [`DATE_FORMAT('2023-01-02', '%H %h %I %k %l %p')`, '00 12 12 0 12 AM'],
       [`DATE_FORMAT(null, '%T')`, null],
+      [`DATE_ADD('2023-01-02 00:00:00', INTERVAL 1 SECOND)`, '2023-01-02 00:00:01'],
+      [`DATE_ADD('2023-01-02 00:00:00', INTERVAL 1 MINUTE)`, '2023-01-02 00:01:00'],
+      [`DATE_ADD('2023-01-02 00:00:00', INTERVAL 1 HOUR)`, '2023-01-02 01:00:00'],
+      [`DATE_ADD('2023-01-02 00:00:00', INTERVAL 1 DAY)`, '2023-01-03 00:00:00'],
+      [`DATE_ADD('2023-01-02 00:00:00', INTERVAL 1 WEEK)`, '2023-01-09 00:00:00'],
+      [`DATE_ADD('2023-01-02 00:00:00', INTERVAL 1 MONTH)`, '2023-02-02 00:00:00'],
+      [`DATE_ADD('2023-01-02 00:00:00', INTERVAL 1 YEAR)`, '2024-01-02 00:00:00'],
+      [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 SECOND)`, '2023-01-01 23:59:59'],
+      [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 MINUTE)`, '2023-01-01 23:59:00'],
+      [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 HOUR)`, '2023-01-01 23:00:00'],
+      [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 DAY)`, '2023-01-01 00:00:00'],
+      [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 WEEK)`, '2022-12-26 00:00:00'],
+      [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 MONTH)`, '2022-12-02 00:00:00'],
+      [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 YEAR)`, '2022-01-02 00:00:00'],
     ])('should run date function %s', async (expression, expected) => {
       expect(await query(`SELECT ${expression} v`)).toEqual([{ v: expected }]);
     });

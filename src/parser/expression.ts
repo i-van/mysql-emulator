@@ -18,6 +18,11 @@ export type FunctionType = {
     distinct?: boolean;
   };
 };
+export type Interval = {
+  type: 'interval',
+  unit: 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year',
+  value: number,
+};
 export type NumberType = {
   type: 'number';
   value: number;
@@ -70,6 +75,7 @@ export type Expression =
   | BinaryExpression
   | ColumnRef
   | FunctionType
+  | Interval
   | NumberType
   | StringType
   | BooleanType
@@ -129,6 +135,13 @@ export const buildExpression = (ast: any): Expression => {
       name: ast.name.toLowerCase(),
       args,
       options,
+    };
+  }
+  if (ast.type === 'interval') {
+    return {
+      type: 'interval',
+      unit: ast.unit,
+      value: ast.expr.value,
     };
   }
   if (ast.type === 'number') {
