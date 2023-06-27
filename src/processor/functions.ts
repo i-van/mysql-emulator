@@ -96,6 +96,12 @@ export const functions: Record<string, FunctionHandler> = {
     const sum = group.reduce((res, row) => res + e.evaluateExpression(getArgument(f), row), 0);
     return (sum / group.length).toFixed(4);
   },
+  group_concat: (e: Evaluator, f: FunctionType, row: object, group: object[]) => {
+    if (group.length === 0) {
+      return null;
+    }
+    return group.map((row) => e.evaluateExpression(getArgument(f), row)).join(f.options.separator ?? ',');
+  },
   concat: (e: Evaluator, f: FunctionType, row: object) => {
     if (f.args?.length === 0) {
       throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);

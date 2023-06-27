@@ -16,6 +16,7 @@ export type FunctionType = {
   args: Expression[];
   options: {
     distinct?: boolean;
+    separator?: string;
   };
 };
 export type Interval = {
@@ -123,7 +124,10 @@ export const buildExpression = (ast: any): Expression => {
     };
   }
   if (ast.type === 'function' || ast.type === 'aggr_func') {
-    const options = ast.args?.distinct ? { distinct: true } : {};
+    const options = {
+      ...(ast.args?.distinct && { distinct: true }),
+      ...(ast.args?.separator && { separator: ast.args?.separator.value.value }),
+    };
     const args =
       ast.args?.type === 'expr_list'
         ? ast.args.value.map(buildExpression)

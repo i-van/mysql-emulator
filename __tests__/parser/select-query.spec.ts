@@ -80,6 +80,31 @@ describe('select query', () => {
         },
       ]);
     });
+    it('should parse GROUP_CONCAT function', () => {
+      const sql = `
+        SELECT
+          GROUP_CONCAT(u.name separator ';') names
+        FROM
+          users u
+        GROUP BY
+          u.id
+      `;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.columns).toEqual([
+        {
+          type: 'function',
+          name: 'group_concat',
+          args: [{ type: 'column_ref', table: 'u', column: 'name' }],
+          options: {
+            separator: ';',
+          },
+          column: `GROUP_CONCAT(\`u\`.\`name\` SEPARATOR ';')`,
+          alias: 'names',
+        },
+      ]);
+    });
     it('should parse column names w/o aliases', () => {
       const sql = 'SELECT u.id, COUNT(u.id), SUM(u.id) FROM users u GROUP BY u.id';
       const res = parser.parse(sql, []) as SelectQuery;

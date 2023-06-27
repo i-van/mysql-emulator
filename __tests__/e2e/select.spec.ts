@@ -506,6 +506,23 @@ describe('select', () => {
         { name: 'Jane', count: '1' },
       ]);
     });
+    it('should run GROUP_CONCAT', async () => {
+      const res = await query(`
+        SELECT
+          p.user_id,
+          GROUP_CONCAT(p.id) ids,
+          GROUP_CONCAT(p.text separator ';') text
+        FROM
+          posts p
+        GROUP BY
+          p.user_id
+      `);
+
+      expect(res).toEqual([
+        { user_id: 1, ids: '1,2', text: 'text;another text' },
+        { user_id: 2, ids: '3', text: 'another yet text' },
+      ]);
+    });
     it('should throw an error if column is unknown', async () => {
       expect.assertions(1);
       try {
