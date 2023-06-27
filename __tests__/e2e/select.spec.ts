@@ -411,6 +411,16 @@ describe('select', () => {
 
       expect(res).toEqual([{ user_id: 1, count: 2 }]);
     });
+    it('should filter by "COUNT(p.user_id)"', async () => {
+      const res = await query(`
+        SELECT p.user_id
+        FROM posts p
+        GROUP BY p.user_id
+        HAVING COUNT(*) > 1
+      `);
+
+      expect(res).toEqual([{ user_id: 1 }]);
+    });
     it('should filter by "p.user_id = 1"', async () => {
       const res = await query(`
         SELECT p.user_id, COUNT(p.user_id) count

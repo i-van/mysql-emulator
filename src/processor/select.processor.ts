@@ -206,12 +206,12 @@ export class SelectProcessor {
         throw err;
       }
     };
-    const checkIfKeep = (row: object): boolean => {
+    const checkIfKeep = (row: object, group: object[]): boolean => {
       if (this.query.having === null) {
         return true;
       }
       try {
-        return this.evaluator.evaluateExpression(this.query.having, row);
+        return this.evaluator.evaluateExpression(this.query.having, row, group);
       } catch (err: any) {
         if (err instanceof EvaluatorException) {
           throw new ProcessorException(`${err.message} in 'having clause'`);
@@ -224,7 +224,7 @@ export class SelectProcessor {
       this.rows = [];
       existingRows.forEach((rawRow) => {
         const [mappedRow, rawRowWithAliases] = mapRow(rawRow, []);
-        if (checkIfKeep(rawRowWithAliases)) {
+        if (checkIfKeep(rawRowWithAliases, [])) {
           this.rows.push(mappedRow);
         }
       });
@@ -233,7 +233,7 @@ export class SelectProcessor {
       this.groupedRows.forEach((group) => {
         const [firstRawRow] = group;
         const [mappedRow, rawRowWithAliases] = mapRow(firstRawRow, group);
-        if (checkIfKeep(rawRowWithAliases)) {
+        if (checkIfKeep(rawRowWithAliases, group)) {
           this.rows.push(mappedRow);
         }
       });

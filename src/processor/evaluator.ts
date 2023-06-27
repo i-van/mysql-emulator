@@ -29,11 +29,11 @@ export class Evaluator {
       case 'select':
         return this.evaluateSelectExpression(e, rowWithContext);
       case 'unary_expression':
-        return this.evaluateUnaryExpression(e, rowWithContext);
+        return this.evaluateUnaryExpression(e, rowWithContext, group);
       case 'binary_expression':
-        return this.evaluateBinaryExpression(e, rowWithContext);
+        return this.evaluateBinaryExpression(e, rowWithContext, group);
       case 'case':
-        return this.evaluateCaseExpression(e, rowWithContext);
+        return this.evaluateCaseExpression(e, rowWithContext, group);
       case 'function':
         return this.evaluateFunction(e, rowWithContext, group);
       case 'column_ref':
@@ -80,8 +80,8 @@ export class Evaluator {
     }
   }
 
-  protected evaluateUnaryExpression(ue: UnaryExpression, row: object): any {
-    const value = this.evaluateExpression(ue.expression, row);
+  protected evaluateUnaryExpression(ue: UnaryExpression, row: object, group: object[]): any {
+    const value = this.evaluateExpression(ue.expression, row, group);
     switch (ue.operator) {
       case 'NOT':
         return Number(!value);
@@ -89,24 +89,24 @@ export class Evaluator {
     throw new EvaluatorException(`Unknown operator '${ue.operator}'`);
   }
 
-  protected evaluateBinaryExpression(be: BinaryExpression, row: object): any {
+  protected evaluateBinaryExpression(be: BinaryExpression, row: object, group: object[]): any {
     const handler = binaryOperators[be.operator];
     if (!handler) {
       throw new EvaluatorException(`Unknown operator '${be.operator}'`);
     }
 
-    const left = this.evaluateExpression(be.left, row);
-    const right = this.evaluateExpression(be.right, row);
+    const left = this.evaluateExpression(be.left, row, group);
+    const right = this.evaluateExpression(be.right, row, group);
     return handler(left, right);
   }
 
-  protected evaluateCaseExpression(c: CaseType, row: object): any {
+  protected evaluateCaseExpression(c: CaseType, row: object, group: object[]): any {
     for (const { condition, value } of c.when) {
-      if (this.evaluateExpression(condition, row)) {
-        return this.evaluateExpression(value, row);
+      if (this.evaluateExpression(condition, row, group)) {
+        return this.evaluateExpression(value, row, group);
       }
     }
-    return c.else ? this.evaluateExpression(c.else, row) : null;
+    return c.else ? this.evaluateExpression(c.else, row, group) : null;
   }
 
   protected evaluateColumnReference(c: ColumnRef, row: object): any {
