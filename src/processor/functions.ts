@@ -239,18 +239,24 @@ export const functions: Record<string, FunctionHandler> = {
     if (f.args?.length !== 0 && f.args?.length !== 1) {
       throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
     }
-    const d = f.args.length === 0
-      ? new Date()
-      : toDate(e.evaluateExpression(getArgument(f), row));
+    const d = f.args.length === 0 ? new Date() : toDate(e.evaluateExpression(getArgument(f), row));
     if (d === null) {
       return null;
     }
-    return (d.getTime() / 1000 | 0) - d.getTimezoneOffset() * 60;
+    return ((d.getTime() / 1000) | 0) - d.getTimezoneOffset() * 60;
   },
   from_unixtime: (e: Evaluator, f: FunctionType, row: object) => {
     const value = e.evaluateExpression(getArgument(f), row);
     const d = new Date(value * 1000);
-    return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds());
+    return new Date(
+      d.getUTCFullYear(),
+      d.getUTCMonth(),
+      d.getUTCDate(),
+      d.getUTCHours(),
+      d.getUTCMinutes(),
+      d.getUTCSeconds(),
+      d.getUTCMilliseconds(),
+    );
   },
   last_day: (e: Evaluator, f: FunctionType, row: object) => {
     const value = e.evaluateExpression(getArgument(f), row);
@@ -347,7 +353,7 @@ export const functions: Record<string, FunctionHandler> = {
     const standardHours = hours === 0 ? 12 : hours % 12;
     const minutes = d.getMinutes();
     const seconds = d.getSeconds();
-    const milliseconds= d.getMilliseconds();
+    const milliseconds = d.getMilliseconds();
     const meridiem = hours < 13 ? 'AM' : 'PM';
     return Object.entries({
       Y: year,
@@ -358,10 +364,13 @@ export const functions: Record<string, FunctionHandler> = {
       c: month,
       m: month.toString().padStart(2, '0'),
 
-      D: [1, 21, 31].includes(date) ? `${date}st`
-        : [2, 22].includes(date) ? `${date}nd`
-          : [3, 23].includes(date) ? `${date}rd`
-            : `${date}th`,
+      D: [1, 21, 31].includes(date)
+        ? `${date}st`
+        : [2, 22].includes(date)
+        ? `${date}nd`
+        : [3, 23].includes(date)
+        ? `${date}rd`
+        : `${date}th`,
       d: date.toString().padStart(2, '0'),
       e: date,
 
@@ -379,17 +388,15 @@ export const functions: Record<string, FunctionHandler> = {
 
       f: milliseconds.toString().padStart(3, '0') + '000',
 
-      r: [standardHours, minutes, seconds]
-        .map((n) => n.toString().padStart(2, '0'))
-        .join(':') + ' ' + meridiem,
-      T: [hours, minutes, seconds]
-        .map((n) => n.toString().padStart(2, '0'))
-        .join(':'),
+      r: [standardHours, minutes, seconds].map((n) => n.toString().padStart(2, '0')).join(':') + ' ' + meridiem,
+      T: [hours, minutes, seconds].map((n) => n.toString().padStart(2, '0')).join(':'),
 
       w: d.getDay(),
       W: d.toLocaleDateString('default', { weekday: 'long' }),
       a: d.toLocaleDateString('default', { weekday: 'short' }),
-      j: Math.floor((d.getTime() - new Date(year, 0, 0).getTime()) / 864e5).toString().padStart(3, '0'),
+      j: Math.floor((d.getTime() - new Date(year, 0, 0).getTime()) / 864e5)
+        .toString()
+        .padStart(3, '0'),
     }).reduce((res, [key, value]) => res.replace('%' + key, value), format);
   },
 };

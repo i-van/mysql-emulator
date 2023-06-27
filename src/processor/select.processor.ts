@@ -1,5 +1,5 @@
 import { Server } from '../server';
-import { ColumnRef, Expression, SelectColumn, SelectQuery, WithAlias } from '../parser';
+import { ColumnRef, Expression, SelectQuery, WithAlias } from '../parser';
 import { hashCode, mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';

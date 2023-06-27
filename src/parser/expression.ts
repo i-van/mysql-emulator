@@ -19,9 +19,9 @@ export type FunctionType = {
   };
 };
 export type Interval = {
-  type: 'interval',
-  unit: 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year',
-  value: number,
+  type: 'interval';
+  unit: 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year';
+  value: number;
 };
 export type NumberType = {
   type: 'number';

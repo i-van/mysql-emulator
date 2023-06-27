@@ -7,7 +7,6 @@ import {
   IntegerColumn,
   Server,
   StringColumn,
-  Table,
 } from '../server';
 import { CreateColumn, CreateTableQuery } from '../parser';
 import { Evaluator } from './evaluator';
