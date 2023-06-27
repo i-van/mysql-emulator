@@ -3,6 +3,7 @@ import { ServerException } from './server.exception';
 
 export class Database {
   protected tables = new Map<string, Table>();
+  protected snapshots = new Map<string, object[]>();
 
   constructor(protected name: string) {}
 
@@ -52,5 +53,26 @@ export class Database {
 
   getName(): string {
     return this.name;
+  }
+
+  snapshot(): void {
+    this.tables.forEach((t) => {
+      this.snapshots.set(t.getName(), [...t.getRows()]);
+    });
+  }
+
+  hasSnapshot(): boolean {
+    return this.snapshots.size > 0;
+  }
+
+  restoreSnapshot(): void {
+    this.snapshots.forEach((rows, tableName) => {
+      this.getTable(tableName).setRows(rows);
+    });
+    this.deleteSnapshot();
+  }
+
+  deleteSnapshot(): void {
+    this.snapshots = new Map<string, object[]>();
   }
 }

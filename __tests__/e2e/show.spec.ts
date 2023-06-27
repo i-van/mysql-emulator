@@ -1,6 +1,6 @@
 import { query } from '../../src';
 
-describe('select', () => {
+describe('show', () => {
   let databaseName: string;
 
   beforeAll(async () => {

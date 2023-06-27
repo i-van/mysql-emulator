@@ -24,10 +24,6 @@ export class Table {
     this.constraints.push(c);
   }
 
-  getConstraints() {
-    return this.constraints;
-  }
-
   insertRow(row: object) {
     for (const constraint of this.constraints) {
       const indexValue = constraint
