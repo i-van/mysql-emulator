@@ -235,6 +235,23 @@ export const functions: Record<string, FunctionHandler> = {
       d.getSeconds().toString().padStart(2, '0'),
     ].join(':');
   },
+  unix_timestamp: (e: Evaluator, f: FunctionType, row: object) => {
+    if (f.args?.length !== 0 && f.args?.length !== 1) {
+      throw new EvaluatorException(`Incorrect parameter count in the call to native function '${f.name}'`);
+    }
+    const d = f.args.length === 0
+      ? new Date()
+      : toDate(e.evaluateExpression(getArgument(f), row));
+    if (d === null) {
+      return null;
+    }
+    return (d.getTime() / 1000 | 0) - d.getTimezoneOffset() * 60;
+  },
+  from_unixtime: (e: Evaluator, f: FunctionType, row: object) => {
+    const value = e.evaluateExpression(getArgument(f), row);
+    const d = new Date(value * 1000);
+    return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds());
+  },
   last_day: (e: Evaluator, f: FunctionType, row: object) => {
     const value = e.evaluateExpression(getArgument(f), row);
     const d = toDate(value);

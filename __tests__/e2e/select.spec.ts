@@ -268,6 +268,10 @@ describe('select', () => {
       [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 WEEK)`, '2022-12-26 00:00:00'],
       [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 MONTH)`, '2022-12-02 00:00:00'],
       [`DATE_SUB('2023-01-02 00:00:00', INTERVAL 1 YEAR)`, '2022-01-02 00:00:00'],
+      [`UNIX_TIMESTAMP('2023-01-02 00:00:00')`, 1672617600],
+      [`UNIX_TIMESTAMP()`, expect.any(Number)],
+      [`FROM_UNIXTIME(1672617600)`, new Date('2023-01-02 00:00:00')],
+      [`FROM_UNIXTIME(UNIX_TIMESTAMP('2023-01-02 00:00:00'))`, new Date('2023-01-02 00:00:00')],
     ])('should run date function %s', async (expression, expected) => {
       expect(await query(`SELECT ${expression} v`)).toEqual([{ v: expected }]);
     });
