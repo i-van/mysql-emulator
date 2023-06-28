@@ -26,6 +26,7 @@ describe('create table query', () => {
         length: null,
         enumValues: null,
         autoIncrement: true,
+        onUpdateCurrentTimestamp: null,
       },
       {
         name: 'name',
@@ -36,6 +37,7 @@ describe('create table query', () => {
         length: 255,
         enumValues: null,
         autoIncrement: null,
+        onUpdateCurrentTimestamp: null,
       },
     ]);
   });
@@ -69,6 +71,7 @@ describe('create table query', () => {
         length: null,
         enumValues: { type: 'array', value: ['pending', 'rejected', 'approved'] },
         autoIncrement: null,
+        onUpdateCurrentTimestamp: null,
       },
     ]);
   });
@@ -125,6 +128,7 @@ describe('create table query', () => {
         length: null,
         enumValues: null,
         autoIncrement: null,
+        onUpdateCurrentTimestamp: null,
       },
       {
         name: 'nullable_field_2',
@@ -135,6 +139,7 @@ describe('create table query', () => {
         length: null,
         enumValues: null,
         autoIncrement: null,
+        onUpdateCurrentTimestamp: null,
       },
       {
         name: 'not_nullable_field',
@@ -145,6 +150,49 @@ describe('create table query', () => {
         length: null,
         enumValues: null,
         autoIncrement: null,
+        onUpdateCurrentTimestamp: null,
+      },
+    ]);
+  });
+  it('should parse ON UPDATE', () => {
+    const sql = `
+      CREATE TABLE companies (
+        ts TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        dt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `;
+    const res = parser.parse(sql, []) as CreateTableQuery;
+
+    expect(res).toBeInstanceOf(CreateTableQuery);
+    expect(res.database).toBe(null);
+    expect(res.table).toBe('companies');
+    expect(res.columns).toEqual([
+      {
+        name: 'ts',
+        dataType: 'TIMESTAMP',
+        nullable: true,
+        defaultValue: null,
+        unsigned: null,
+        length: null,
+        enumValues: null,
+        autoIncrement: null,
+        onUpdateCurrentTimestamp: true,
+      },
+      {
+        name: 'dt',
+        dataType: 'DATETIME',
+        nullable: true,
+        defaultValue: {
+          type: 'function',
+          name: 'current_timestamp',
+          args: [],
+          options: {},
+        },
+        unsigned: null,
+        length: null,
+        enumValues: null,
+        autoIncrement: null,
+        onUpdateCurrentTimestamp: true,
       },
     ]);
   });

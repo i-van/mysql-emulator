@@ -38,6 +38,7 @@ export type CreateColumn = {
   length: number | null;
   enumValues: Expression | null;
   autoIncrement: boolean | null;
+  onUpdateCurrentTimestamp: boolean | null;
 };
 export type CreateConstraint = {
   name: string;
@@ -59,9 +60,15 @@ type ColumnDefinition = {
   auto_increment?: 'auto_increment';
   default_val?: {
     type: 'default';
-    value: object;
+    value: {
+      [k: string]: any;
+      over?: { type: 'on update'; keyword: 'CURRENT_TIMESTAMP' };
+    };
   };
   resource: 'column';
+  reference_definition?: {
+    on_action: { type: 'on update'; value: 'current_timestamp' }[];
+  };
 };
 type ConstraintDefinition = {
   definition: ColumnRef[];
@@ -102,6 +109,11 @@ export class CreateTableQuery {
           length: c.definition.length ? c.definition.length : null,
           enumValues: c.definition.dataType === 'ENUM' ? buildExpression(c.definition.expr) : null,
           autoIncrement: c.auto_increment ? true : null,
+          onUpdateCurrentTimestamp:
+            c.default_val?.value?.over?.type === 'on update' ||
+            c.reference_definition?.on_action[0]?.type === 'on update'
+              ? true
+              : null,
         });
       } else if (c.resource === 'constraint' && constraintTypeMap[c.constraint_type] === 'primary_key') {
         constraints.push({

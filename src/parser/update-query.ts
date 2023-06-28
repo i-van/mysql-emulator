@@ -1,7 +1,7 @@
 import { From, Update } from 'node-sql-parser';
 import { buildExpression, Expression } from './expression';
 
-type Assignment = {
+export type Assignment = {
   table: string | null;
   column: string;
   value: Expression;

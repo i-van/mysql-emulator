@@ -1,5 +1,5 @@
-import { Column, Server } from '../server';
-import { UpdateQuery } from '../parser';
+import { Column, DateColumn, Server } from '../server';
+import { Assignment, UpdateQuery } from '../parser';
 import { mapKeys } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
@@ -21,6 +21,7 @@ export class UpdateProcessor {
       }
       return c;
     };
+    const assignmentMap = new Map<string, Assignment>(query.assignments.map((a) => [a.column, a]));
 
     let changedRows = 0;
     let affectedRows = 0;
@@ -47,11 +48,16 @@ export class UpdateProcessor {
         }
       }, existingRow);
 
-      if (existingRow !== updatedRow) {
-        changedRows++;
+      if (existingRow === updatedRow) {
+        return existingRow;
       }
 
-      return updatedRow;
+      changedRows++;
+      return columnDefinitions.reduce((row, c) => {
+        return c instanceof DateColumn && c.hasOnUpdateCurrentTimestamp() && !assignmentMap.has(c.getName())
+          ? { ...row, [c.getName()]: new Date() }
+          : row;
+      }, updatedRow);
     });
     table.setRows(updatedRows);
 

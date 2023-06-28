@@ -85,7 +85,7 @@ export class CreateTableProcessor {
       case 'DATE':
       case 'TIME':
       case 'YEAR':
-        return new DateColumn(c.name, c.nullable, c.defaultValue);
+        return new DateColumn(c.name, c.nullable, c.defaultValue, Boolean(c.onUpdateCurrentTimestamp));
       case 'ENUM':
         if (c.defaultValue) {
           const defaultValue = this.evaluator.evaluateExpression(c.defaultValue, {});
