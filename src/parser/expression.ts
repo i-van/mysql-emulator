@@ -113,7 +113,7 @@ export const buildExpression = (ast: any): Expression => {
       table: ast.table,
     };
   }
-  if (ast.type === 'column_ref' && ast.column.toLowerCase() === 'default') {
+  if (ast.type === 'column_ref' && ast.column.toLowerCase() === '__default__') {
     return { type: 'default' };
   }
   if (ast.type === 'column_ref') {

@@ -43,7 +43,7 @@ const toSql = (expr: any): string => {
   if (expr.type === 'single_quote_string' || expr.type === 'string') {
     return expr.value;
   }
-  return sqlParser.exprToSQL(expr, { database: 'MariaDB' });
+  return sqlParser.exprToSQL(expr, { database: 'MySQL' });
 };
 
 export class SelectQuery {

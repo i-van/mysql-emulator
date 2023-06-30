@@ -21,20 +21,26 @@ export class Parser {
   private sqlParser = new SqlParser();
 
   parse(sql: string, params: any[]): Query {
-    const injectedSql = injectParams(sql, params);
+    const sqlWithParams = injectParams(sql, params).trim();
 
-    const transactionQuery = TransactionQuery.fromSql(injectedSql);
+    const transactionQuery = TransactionQuery.fromSql(sqlWithParams);
     if (transactionQuery) {
       return transactionQuery;
     }
-    const showQuery = ShowQuery.fromSql(injectedSql);
+    const showQuery = ShowQuery.fromSql(sqlWithParams);
     if (showQuery) {
       return showQuery;
     }
 
     let ast;
     try {
-      ast = this.sqlParser.astify(injectedSql, { database: 'MariaDB' });
+      // replace DEFAULT to __default__ on INSERT query as
+      // node-sql-parser reserves DEFAULT keyword for CREATE TABLE query
+      // and cannot be used anywhere else
+      const sql = /^insert/i.test(sqlWithParams)
+        ? sqlWithParams.replace(/default/ig, '__default__')
+        : sqlWithParams;
+      ast = this.sqlParser.astify(sql, { database: 'MySQL' });
     } catch (err: any) {
       if (err.location) {
         throw new ParserException(`Unexpected token '${err.found}' at line ${err.location.start?.line}`);
@@ -45,7 +51,7 @@ export class Parser {
       if (ast.length === 1) {
         ast = ast[0];
       } else {
-        throw new ParserException(`Multi query: ${injectedSql}`);
+        throw new ParserException(`Multi query: ${sqlWithParams}`);
       }
     }
 
@@ -67,7 +73,7 @@ export class Parser {
           return SetQuery.fromAst(ast);
       }
     } catch (err: any) {
-      throw new ParserException(`${err.message}: ${injectedSql}`);
+      throw new ParserException(`${err.message}: ${sqlWithParams}`);
     }
     throw new ParserException(`Unknown query type '${ast.type}'`);
   }
