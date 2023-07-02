@@ -21,15 +21,21 @@ export class UpdateProcessor {
       }
       return c;
     };
-    const assignmentMap = new Map<string, Assignment>(query.assignments.map((a) => [a.column, a]));
+    const updatingColumns = new Set<string>(query.assignments.map((a) => a.column));
+    const applyCurrentTimestamp = (row: object) =>
+      columnDefinitions.reduce((row, c) => {
+        const hasOnUpdate = c instanceof DateColumn && c.hasOnUpdateCurrentTimestamp();
+        const updated = updatingColumns.has(c.getName());
+        return hasOnUpdate && !updated ? { ...row, [c.getName()]: new Date() } : row;
+      }, row);
 
     let changedRows = 0;
     let affectedRows = 0;
-    const updatedRows = table.getRows().map((existingRow) => {
+    table.getRows().forEach((existingRow, id) => {
       const rawRow = mapKeys(existingRow, keyMapper);
       const needsUpdate = query.where === null || this.evaluator.evaluateExpression(query.where, rawRow);
       if (!needsUpdate) {
-        return existingRow;
+        return;
       }
 
       affectedRows++;
@@ -49,17 +55,12 @@ export class UpdateProcessor {
       }, existingRow);
 
       if (existingRow === updatedRow) {
-        return existingRow;
+        return;
       }
 
       changedRows++;
-      return columnDefinitions.reduce((row, c) => {
-        return c instanceof DateColumn && c.hasOnUpdateCurrentTimestamp() && !assignmentMap.has(c.getName())
-          ? { ...row, [c.getName()]: new Date() }
-          : row;
-      }, updatedRow);
+      table.updateRow(id, applyCurrentTimestamp(updatedRow));
     });
-    table.setRows(updatedRows);
 
     return { affectedRows, changedRows };
   }

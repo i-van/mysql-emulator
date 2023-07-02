@@ -13,15 +13,14 @@ export class DeleteProcessor {
     const keyMapper = (key: string) => `${query.alias || query.table}::${key}`;
 
     let affectedRows = 0;
-    const updatedRows = table.getRows().filter((r) => {
+    table.getRows().forEach((r, id) => {
       const row = mapKeys(r, keyMapper);
       const needsRemove = query.where === null || this.evaluator.evaluateExpression(query.where, row);
       if (needsRemove) {
         affectedRows++;
+        table.deleteRow(id);
       }
-      return !needsRemove;
     });
-    table.setRows(updatedRows);
 
     return { affectedRows };
   }

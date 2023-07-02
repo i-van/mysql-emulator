@@ -57,7 +57,7 @@ export class Database {
 
   snapshot(): void {
     this.tables.forEach((t) => {
-      this.snapshots.set(t.getName(), [...t.getRows()]);
+      this.snapshots.set(t.getName(), [...t.getRows().values()]);
     });
   }
 

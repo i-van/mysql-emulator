@@ -43,7 +43,7 @@ export class SelectProcessor {
       } else {
         const table = this.server.getDatabase(from.database).getTable(from.table);
         const keyMapper = (key: string) => `${from.alias || from.table}::${key}`;
-        rows = table.getRows().map((r) => mapKeys(r, keyMapper));
+        rows = [...table.getRows()].map(([k, r]) => mapKeys(r, keyMapper));
         columns = table.getColumns().map((c) => keyMapper(c.getName()));
       }
 
