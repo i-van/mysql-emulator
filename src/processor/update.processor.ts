@@ -1,8 +1,8 @@
-import { Column, DateColumn, Server } from '../server';
-import { Assignment, UpdateQuery } from '../parser';
+import { Server } from '../server';
+import { UpdateQuery } from '../parser';
 import { mapKeys } from '../utils';
 import { Evaluator } from './evaluator';
-import { ProcessorException } from './processor.exception';
+import { castValue, createColumnDefinitionGetter, createCurrentTimestampApplier } from './helpers';
 
 export class UpdateProcessor {
   protected evaluator = new Evaluator(this.server);
@@ -13,21 +13,8 @@ export class UpdateProcessor {
     const table = this.server.getDatabase(query.database).getTable(query.table);
     const keyMapper = (key: string) => `${query.alias || query.table}::${key}`;
     const columnDefinitions = table.getColumns();
-    const columnDefinitionMap = new Map<string, Column>(columnDefinitions.map((c) => [c.getName(), c]));
-    const getColumnDefinition = (column: string): Column => {
-      const c = columnDefinitionMap.get(column);
-      if (!c) {
-        throw new ProcessorException(`Unknown column '${column}' in 'field list'`);
-      }
-      return c;
-    };
-    const updatingColumns = new Set<string>(query.assignments.map((a) => a.column));
-    const applyCurrentTimestamp = (row: object) =>
-      columnDefinitions.reduce((row, c) => {
-        const hasOnUpdate = c instanceof DateColumn && c.hasOnUpdateCurrentTimestamp();
-        const updated = updatingColumns.has(c.getName());
-        return hasOnUpdate && !updated ? { ...row, [c.getName()]: new Date() } : row;
-      }, row);
+    const getColumnDefinition = createColumnDefinitionGetter(columnDefinitions);
+    const applyCurrentTimestamp = createCurrentTimestampApplier(columnDefinitions, query.assignments)
 
     let changedRows = 0;
     let affectedRows = 0;
@@ -40,18 +27,12 @@ export class UpdateProcessor {
 
       affectedRows++;
       const updatedRow = query.assignments.reduce((row, a) => {
-        try {
-          const column = getColumnDefinition(a.column);
-          const nextValue = column.cast(this.evaluator.evaluateExpression(a.value, rawRow));
-          const currentValue = row[column.getName()];
+        const column = getColumnDefinition(a.column);
+        const rawValue = this.evaluator.evaluateExpression(a.value, rawRow);
+        const nextValue = castValue(column, rawValue, affectedRows);
+        const currentValue = row[column.getName()];
 
-          return nextValue !== currentValue ? { ...row, [column.getName()]: nextValue } : row;
-        } catch (err: any) {
-          if (['OUT_OF_RANGE_VALUE', 'INCORRECT_INTEGER_VALUE'].includes(err.code)) {
-            throw new ProcessorException(`${err.message} at row ${affectedRows}`);
-          }
-          throw err;
-        }
+        return nextValue !== currentValue ? { ...row, [column.getName()]: nextValue } : row;
       }, existingRow);
 
       if (existingRow === updatedRow) {
