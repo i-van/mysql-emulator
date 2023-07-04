@@ -37,6 +37,13 @@ const applyInterval = (d: Date, i: Interval, k: 1 | -1): void => {
 export const functions: Record<string, FunctionHandler> = {
   database: (e) => e.getServer().getDatabase(null).getName(),
   version: () => '8.0.0',
+  values: (e: Evaluator, f: FunctionType, row: object) => {
+    const arg = getArgument(f);
+    if (arg.type !== 'column_ref') {
+      throw new EvaluatorException(`Could not evaluate function '${f.name}'`);
+    }
+    return e.evaluateExpression({ ...arg, table: 'new' }, row);
+  },
   exists: (e: Evaluator, f: FunctionType, row: object) => {
     const arg = getArgument(f);
     if (arg.type !== 'select') {

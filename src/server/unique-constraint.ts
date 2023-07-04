@@ -8,10 +8,12 @@ export class UniqueConstraint {
 
   indexRow(id: number, row: object) {
     const entry = this.buildEntry(row);
-    if (this.index.has(entry)) {
+    const existingId = this.index.get(entry);
+    if (existingId) {
       throw new ServerException({
         message: `Duplicate entry '${entry}' for key '${this.name}'`,
         code: 'DUPLICATE_ENTRY',
+        rowId: existingId,
       });
     }
     this.index.set(entry, id);

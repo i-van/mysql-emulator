@@ -27,7 +27,7 @@ export class Table {
   }
 
   insertRow(row: object) {
-    const id = this.cursor++;
+    const id = ++this.cursor;
     for (const constraint of this.constraints) {
       constraint.indexRow(id, row);
     }
@@ -65,7 +65,7 @@ export class Table {
     }
   }
 
-  private getRow(id: number) {
+  getRow(id: number) {
     const row = this.rows.get(id);
     if (!row) {
       throw new ServerException({

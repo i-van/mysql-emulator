@@ -15,6 +15,7 @@ describe('insert', () => {
         student_id INT UNSIGNED NOT NULL,
         rating TINYINT NOT NULL,
         active TINYINT NOT NULL,
+        updated_at DATETIME DEFAULT current_timestamp ON UPDATE current_timestamp,
         PRIMARY KEY (student_id)
       )
     `);
@@ -118,14 +119,59 @@ describe('insert', () => {
     expect(rows).toEqual([{ id: 1, name: 'John', year: 2 }]);
   });
   it('should cast boolean value to integer', async () => {
-    const res = await query(`INSERT INTO student_profiles VALUES (1, 5, false), (2, 4, true)`);
+    const res = await query(`
+      INSERT INTO student_profiles VALUES
+        (1, 5, false, '2023-01-02 03:04:05'),
+        (2, 4, true, '2023-01-02 03:04:05')
+    `);
     const rows = await query(`SELECT * from student_profiles`);
 
     expect(res.insertId).toEqual(0);
     expect(res.affectedRows).toEqual(2);
     expect(rows).toEqual([
-      { student_id: 1, rating: 5, active: 0 },
-      { student_id: 2, rating: 4, active: 1 },
+      { student_id: 1, rating: 5, active: 0, updated_at: new Date('2023-01-02 03:04:05') },
+      { student_id: 2, rating: 4, active: 1, updated_at: new Date('2023-01-02 03:04:05') },
     ]);
+  });
+
+  describe('update on duplication', () => {
+    it('should update existing row', async () => {
+      await query(`INSERT INTO students VALUES (1, 'Jane', 2)`);
+      const res = await query(`
+        INSERT INTO students VALUES (1, 'John', DEFAULT)
+        ON DUPLICATE KEY UPDATE name = VALUES(name), year = year + 1
+      `);
+      const rows = await query(`SELECT * FROM students`);
+
+      expect(res.insertId).toEqual(1);
+      expect(res.affectedRows).toEqual(2);
+      expect(rows).toEqual([{ id: 1, name: 'John', year: 3 }]);
+    });
+    it('should not increment affectedRows twice if existing row has not changed', async () => {
+      await query(`INSERT INTO students VALUES (1, 'Jane', DEFAULT)`);
+      const res = await query(`
+        INSERT INTO students VALUES (1, 'John', DEFAULT)
+        ON DUPLICATE KEY UPDATE year = 1
+      `);
+      const rows = await query(`SELECT * FROM students`);
+
+      expect(res.insertId).toEqual(0);
+      expect(res.affectedRows).toEqual(1);
+      expect(rows).toEqual([{ id: 1, name: 'Jane', year: 1 }]);
+    });
+    it('should auto update datetime field', async () => {
+      await query(`INSERT INTO student_profiles VALUES (10, 5, false, '2023-01-02 03:04:05')`);
+      const res = await query(`
+        INSERT INTO student_profiles VALUES (10, 2, false, DEFAULT)
+        ON DUPLICATE KEY UPDATE rating = rating + VALUES(rating)
+      `);
+      const rows = await query(`SELECT * FROM student_profiles`);
+
+      expect(res.insertId).toEqual(0);
+      expect(res.affectedRows).toEqual(2);
+      expect(rows).toEqual([{ student_id: 10, rating: 7, active: 0, updated_at: expect.any(Date) }]);
+      // less than 1 second
+      expect(Date.now() - rows[0].updated_at).toBeLessThan(1000);
+    });
   });
 });

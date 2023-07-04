@@ -1,7 +1,8 @@
-import { Column, IntegerColumn, Server } from '../server';
+import { Column, DateColumn, IntegerColumn, Server } from '../server';
 import { ColumnRef, InsertQuery } from '../parser';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
+import { extractColumn, mapKeys } from '../utils';
 
 export class InsertProcessor {
   protected evaluator = new Evaluator(this.server);
@@ -9,11 +10,18 @@ export class InsertProcessor {
   constructor(protected server: Server) {}
 
   process(query: InsertQuery) {
-    const db = this.server.getDatabase(query.database);
-    const table = db.getTable(query.table);
+    const table = this.server.getDatabase(query.database).getTable(query.table);
+    const keyMapper = (key: string) => `${query.table}::${key}`;
     const columnDefinitions = table.getColumns();
     const columnDefinitionMap = new Map<string, Column>(columnDefinitions.map((c) => [c.getName(), c]));
     const columns = query.columns || columnDefinitions.map((c) => c.getName());
+    const getColumnDefinition = (column: string): Column => {
+      const c = columnDefinitionMap.get(column);
+      if (!c) {
+        throw new ProcessorException(`Unknown column '${column}' in 'field list'`);
+      }
+      return c;
+    };
     const evaluateDefaultValue = (column: Column, row: object): any | null => {
       if (column instanceof IntegerColumn && column.hasAutoIncrement()) {
         return column.getAutoIncrementCursor() + 1;
@@ -24,13 +32,30 @@ export class InsertProcessor {
       }
       return null;
     };
+    const castValue = (c: Column, value: unknown, index: number) => {
+      try {
+        return c.cast(value);
+      } catch (err: any) {
+        if (['OUT_OF_RANGE_VALUE', 'INCORRECT_INTEGER_VALUE'].includes(err.code)) {
+          throw new ProcessorException(`${err.message} at row ${index}`);
+        }
+        throw err;
+      }
+    };
+    const updatingColumns = new Set<string>(query.onDuplicateUpdate.map((a) => a.column));
+    const applyCurrentTimestamp = (row: object) =>
+      columnDefinitions.reduce((row, c) => {
+        const hasOnUpdate = c instanceof DateColumn && c.hasOnUpdateCurrentTimestamp();
+        const updated = updatingColumns.has(c.getName());
+        return hasOnUpdate && !updated ? { ...row, [c.getName()]: new Date() } : row;
+      }, row);
 
     let insertId = 0;
     let affectedRows = 0;
     const placeholder = columnDefinitions.reduce(
       (res, c) => ({
         ...res,
-        [`${query.table}::${c.getName()}`]: null,
+        [keyMapper(c.getName())]: null,
       }),
       {},
     );
@@ -39,14 +64,10 @@ export class InsertProcessor {
         throw new ProcessorException(`Column count doesn't match value count at row ${rowIndex + 1}`);
       }
       const rawRow = values.reduce((res, expression, valueIndex) => {
-        const columnName = columns[valueIndex];
-        const column = columnDefinitionMap.get(columnName);
-        if (!column) {
-          throw new ProcessorException(`Unknown column '${columnName}' in 'field list'`);
-        }
+        const column = getColumnDefinition(columns[valueIndex]);
         return {
           ...res,
-          [`${query.table}::${columnName}`]:
+          [keyMapper(column.getName())]:
             expression.type === 'default'
               ? evaluateDefaultValue(column, res)
               : this.evaluator.evaluateExpression(expression, res),
@@ -69,20 +90,46 @@ export class InsertProcessor {
           }
           insertId = value;
         }
-        try {
-          return {
-            ...res,
-            [c.getName()]: c.cast(value),
-          };
-        } catch (err: any) {
-          if (['OUT_OF_RANGE_VALUE', 'INCORRECT_INTEGER_VALUE'].includes(err.code)) {
-            throw new ProcessorException(`${err.message} at row ${rowIndex + 1}`);
-          }
+
+        return {
+          ...res,
+          [c.getName()]: castValue(c, value, rowIndex + 1),
+        };
+      }, {});
+
+      try {
+        table.insertRow(row);
+        affectedRows++;
+      } catch (err: any) {
+        const rowId = err.data?.rowId;
+        if (!query.onDuplicateUpdate.length || err.code !== 'DUPLICATE_ENTRY' || !rowId) {
           throw err;
         }
-      }, {});
-      table.insertRow(row);
-      affectedRows++;
+        affectedRows++;
+        const existingRow = table.getRow(rowId);
+        const existingRawRow = mapKeys(existingRow, keyMapper);
+        // change table name to 'new' specifically for VALUES function
+        const newRawRow = mapKeys(rawRow, (key) => `new::${extractColumn(key)}`);
+
+        const updatedRow = query.onDuplicateUpdate.reduce((row, a) => {
+          const column = getColumnDefinition(a.column);
+          const rawValue = this.evaluator.evaluateExpression(a.value, {
+            ...existingRawRow,
+            ...newRawRow,
+          });
+          const nextValue = castValue(column, rawValue, rowIndex + 1);
+          const currentValue = row[column.getName()];
+
+          return nextValue !== currentValue ? { ...row, [column.getName()]: nextValue } : row;
+        }, existingRow);
+
+        if (existingRow === updatedRow) {
+          insertId = 0;
+        } else {
+          affectedRows++;
+          table.updateRow(rowId, applyCurrentTimestamp(updatedRow));
+        }
+      }
     });
 
     return { affectedRows, insertId };
