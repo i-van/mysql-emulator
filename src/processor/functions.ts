@@ -61,16 +61,16 @@ export const functions: Record<string, FunctionHandler> = {
       return group.length;
     }
     const uniqueValues = new Set<unknown>();
-    const values: unknown[] = [];
+    let count = 0;
     group.forEach((row) => {
-      // count only not nullable fields when COUNT(t.id)
+      // count only not nullish fields when COUNT(t.id)
       const value = e.evaluateExpression(arg, row);
       if (value !== null) {
         uniqueValues.add(value);
-        values.push(value);
+        count++;
       }
     });
-    return f.options.distinct ? uniqueValues.size : values.length;
+    return f.options.distinct ? uniqueValues.size : count;
   },
   sum: (e: Evaluator, f: FunctionType, row: object, group: object[]) => {
     if (group.length === 0) {
