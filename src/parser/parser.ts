@@ -9,6 +9,7 @@ import { DeleteQuery } from './delete-query';
 import { UpdateQuery } from './update-query';
 import { SetQuery } from './set-query';
 import { ShowQuery } from './show-query';
+import { ReplaceQuery } from './replace-query';
 
 type Query = TransactionQuery | SelectQuery | InsertQuery | DeleteQuery | CreateTableQuery | DropTableQuery | SetQuery;
 
@@ -34,10 +35,10 @@ export class Parser {
 
     let ast;
     try {
-      // replace DEFAULT to __default__ on INSERT query as
+      // replace DEFAULT to __default__ on INSERT and REPLACE queries as
       // node-sql-parser reserves DEFAULT keyword for CREATE TABLE query
       // and cannot be used anywhere else
-      const sql = /^insert/i.test(sqlWithParams)
+      const sql = /^(insert|replace)/i.test(sqlWithParams)
         ? sqlWithParams.replace(/default/ig, '__default__')
         : sqlWithParams;
       ast = this.sqlParser.astify(sql, { database: 'MySQL' });
@@ -63,6 +64,8 @@ export class Parser {
           return UpdateQuery.fromAst(ast);
         case 'insert':
           return InsertQuery.fromAst(ast);
+        case 'replace':
+          return ReplaceQuery.fromAst(ast);
         case 'delete':
           return DeleteQuery.fromAst(ast);
         case 'create':

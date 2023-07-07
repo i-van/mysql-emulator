@@ -7,6 +7,7 @@ import {
   DropTableQuery,
   InsertQuery,
   Parser,
+  ReplaceQuery,
   SelectQuery,
   SetQuery,
   ShowQuery,
@@ -19,6 +20,7 @@ import { DeleteProcessor } from './delete.processor';
 import { UpdateProcessor } from './update.processor';
 import { ShowProcessor } from './show.processor';
 import { TransactionProcessor } from './transaction.processor';
+import { ReplaceProcessor } from './replace.processor';
 
 export class Processor {
   protected parser = new Parser();
@@ -45,6 +47,10 @@ export class Processor {
     }
     if (query instanceof InsertQuery) {
       const p = new InsertProcessor(this.server);
+      return p.process(query);
+    }
+    if (query instanceof ReplaceQuery) {
+      const p = new ReplaceProcessor(this.server);
       return p.process(query);
     }
     if (query instanceof DeleteQuery) {
