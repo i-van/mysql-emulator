@@ -66,14 +66,13 @@ export class InsertProcessor {
       }, {});
 
       try {
-        table.insertRow(row);
         affectedRows++;
+        table.insertRow(row);
       } catch (err: any) {
         const rowId = err.data?.rowId;
         if (!query.onDuplicateUpdate.length || err.code !== 'DUPLICATE_ENTRY' || !rowId) {
           throw err;
         }
-        affectedRows++;
         const existingRow = table.getRow(rowId);
         const existingRawRow = mapKeys(existingRow, keyMapper);
         // change table name to 'new' specifically for VALUES function
@@ -112,5 +111,5 @@ export class InsertProcessor {
       return this.evaluator.evaluateExpression(defaultValue, row);
     }
     return null;
-  };
+  }
 }

@@ -21,7 +21,7 @@ export const createCurrentTimestampApplier = (columns: Column[], assignments: As
       const updated = set.has(c.getName());
       return hasOnUpdate && !updated ? { ...row, [c.getName()]: new Date() } : row;
     }, row);
-  }
+  };
 };
 
 export const castValue = (c: Column, value: unknown, index: number) => {

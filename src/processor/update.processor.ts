@@ -14,7 +14,7 @@ export class UpdateProcessor {
     const keyMapper = (key: string) => `${query.alias || query.table}::${key}`;
     const columnDefinitions = table.getColumns();
     const getColumnDefinition = createColumnDefinitionGetter(columnDefinitions);
-    const applyCurrentTimestamp = createCurrentTimestampApplier(columnDefinitions, query.assignments)
+    const applyCurrentTimestamp = createCurrentTimestampApplier(columnDefinitions, query.assignments);
 
     let changedRows = 0;
     let affectedRows = 0;

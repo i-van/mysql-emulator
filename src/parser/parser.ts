@@ -39,7 +39,7 @@ export class Parser {
       // node-sql-parser reserves DEFAULT keyword for CREATE TABLE query
       // and cannot be used anywhere else
       const sql = /^(insert|replace)/i.test(sqlWithParams)
-        ? sqlWithParams.replace(/default/ig, '__default__')
+        ? sqlWithParams.replace(/default/gi, '__default__')
         : sqlWithParams;
       ast = this.sqlParser.astify(sql, { database: 'MySQL' });
     } catch (err: any) {
