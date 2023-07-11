@@ -1,6 +1,6 @@
 import { Server } from '../server';
-import { ColumnRef, Expression, SelectQuery, WithAlias } from '../parser';
-import { hashCode, mapKeys, sortBy, SortByKey } from '../utils';
+import { ColumnRef, Expression, SelectQuery, Star, WithAlias } from '../parser';
+import { extractColumn, extractTable, hashCode, mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
 import { EvaluatorException } from './evaluator.exception';
@@ -121,11 +121,37 @@ export class SelectProcessor {
 
       const columnRef = this.query.columns.find((c): c is WithAlias<ColumnRef> => c.type === 'column_ref');
       if (columnRef) {
-        const columnName = columnRef.table ? `${columnRef.table}.${columnRef.column}` : columnRef.column;
+        const columnName = columnRef.table
+          ? `${columnRef.table}::${columnRef.column}`
+          : this.columns.find((key) => extractColumn(key) === columnRef.column);
+        if (!columnName || !this.columns.includes(columnName)) {
+          const name = columnRef.table ? `${columnRef.table}.${columnRef.column}` : columnRef.column;
+          throw new ProcessorException(`Unknown column '${name}' in 'field list'`);
+        }
         const columnRefIndex = this.query.columns.indexOf(columnRef);
+        // todo: prepend database name to column name
         throw new ProcessorException(
           `In aggregated query without GROUP BY, ` +
-            `expression #${columnRefIndex + 1} of SELECT list contains nonaggregated column '${columnName}'`,
+            `expression #${columnRefIndex + 1} of SELECT list contains ` +
+            `nonaggregated column '${columnName.replace('::', '.')}'`,
+        );
+      }
+      const star = this.query.columns.find((c): c is Star => c.type === 'star');
+      if (star) {
+        let columnName = this.columns.find((key) => (star.table ? star.table === extractTable(key) : true));
+        if (!columnName) {
+          columnName = this.columns[0];
+        }
+        // todo: it won't happen, there should be some error
+        if (!columnName) {
+          columnName = star.table ? `${star.table}::*` : '*';
+        }
+        const starIndex = this.query.columns.indexOf(star);
+        // todo: prepend database name to column name
+        throw new ProcessorException(
+          `In aggregated query without GROUP BY, ` +
+            `expression #${starIndex + 1} of SELECT list contains ` +
+            `nonaggregated column '${columnName.replace('::', '.')}'`,
         );
       }
 

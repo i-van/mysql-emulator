@@ -89,6 +89,26 @@ describe('select', () => {
 
       expect(res).toEqual([{ count: 3, sum: '16', min: 1, max: 10, avg: '5.3333' }]);
     });
+    it('should throw an error in aggregated query without GROUP BY', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT name, COUNT(name) count FROM profiles`);
+      } catch (err: any) {
+        expect(err.message).toMatch(
+          /^In aggregated query without GROUP BY, expression #1 of SELECT list contains nonaggregated column '(.*)profiles\.name'/,
+        );
+      }
+    });
+    it('should throw an error in aggregated query selecting * without GROUP BY', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT *, COUNT(name) count FROM profiles p`);
+      } catch (err: any) {
+        expect(err.message).toMatch(
+          /^In aggregated query without GROUP BY, expression #1 of SELECT list contains nonaggregated column '(.*)p\.id'/,
+        );
+      }
+    });
     it('should COUNT DISTINCT user_id', async () => {
       const res = await query(`
         SELECT
