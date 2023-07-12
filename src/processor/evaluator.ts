@@ -8,7 +8,7 @@ import {
   SubQuery,
   UnaryExpression,
 } from '../parser';
-import { extractColumn, extractTable, isString, mapKeys } from '../utils';
+import { extractColumn, extractTable, mapKeys, toNumber } from '../utils';
 import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
 import { SelectProcessor } from './select.processor';
@@ -90,12 +90,8 @@ export class Evaluator {
           return null;
         } else if (value === 0) {
           return 0;
-        }
-        const n = Number(value);
-        if (isNaN(n)) {
-          return isString(value) ? -0 : null;
         } else {
-          return -n;
+          return -toNumber(value);
         }
     }
     throw new EvaluatorException(`Unknown operator '${ue.operator}'`);
