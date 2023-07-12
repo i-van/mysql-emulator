@@ -194,6 +194,14 @@ describe('select', () => {
       ['SELECT 5 % 0 v', [{ v: null }]],
       [`SELECT 5 % 'one' v`, [{ v: null }]],
       [`SELECT 'five' % 1 v`, [{ v: 0 }]],
+      // node-sql-parser does not parse aliases for unary expressions
+      [`SELECT (- 5) v`, [{ v: -5 }]],
+      [`SELECT (-'5') v`, [{ v: -5 }]],
+      [`SELECT (-'five') v`, [{ v: -0 }]],
+      [`SELECT (-'0') v`, [{ v: -0 }]],
+      [`SELECT (- 0) v`, [{ v: 0 }]],
+      [`SELECT (-null) v`, [{ v: null }]],
+      [`SELECT (-true) v`, [{ v: -1 }]],
 
       [`SELECT concat('one', 'two', 'three') v`, [{ v: 'onetwothree' }]],
       [`SELECT concat_ws('-', 'one', 'two', 'three') v`, [{ v: 'one-two-three' }]],

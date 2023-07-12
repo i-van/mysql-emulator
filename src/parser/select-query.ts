@@ -12,6 +12,7 @@ import {
   Star,
   StringType,
   SubQuery,
+  UnaryExpression,
 } from './expression';
 import { ParserException } from './parser.exception';
 
@@ -28,6 +29,7 @@ type WithColumn<T> = T & { column: string };
 export type SelectColumn =
   | WithAlias<ColumnRef>
   | WithAlias<WithColumn<FunctionType>>
+  | WithAlias<WithColumn<UnaryExpression>>
   | WithAlias<WithColumn<BinaryExpression>>
   | WithAlias<WithColumn<StringType>>
   | WithAlias<WithColumn<NumberType>>
@@ -92,11 +94,12 @@ export class SelectQuery {
           ...(buildExpression(c.expr) as ColumnRef),
           alias: c.as,
         };
-      } else if (['case', 'binary_expr', ...functions, ...primitives].includes(c.expr?.type)) {
+      } else if (['case', 'unary_expr', 'binary_expr', ...functions, ...primitives].includes(c.expr?.type)) {
         return {
           ...(buildExpression(c.expr) as
             | CaseType
             | FunctionType
+            | UnaryExpression
             | BinaryExpression
             | StringType
             | NumberType

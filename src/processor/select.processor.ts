@@ -195,7 +195,7 @@ export class SelectProcessor {
   protected applySelectAndHaving() {
     const hasFunctionColumn = this.query.columns.some((c) => c.type === 'function');
     const hasPrimitiveColumn = this.query.columns.some((c) => ['number', 'string', 'boolean', 'null'].includes(c.type));
-    const hasExpressionColumn = this.query.columns.some((c) => c.type === 'binary_expression');
+    const hasExpressionColumn = this.query.columns.some((c) => ['unary_expression', 'binary_expression'].includes(c.type));
     const hasCase = this.query.columns.some((c) => c.type === 'case');
     const hasSubSelect = this.query.columns.some((c) => c.type === 'select');
     if (
