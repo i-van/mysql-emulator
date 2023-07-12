@@ -12,6 +12,22 @@ Try it out at the [playground](https://i-van.github.io/mysql-emulator/).
 ⚠ The library is still under active development.
 It means that some features are not working and may be considered as invalid syntax or ignored.
 
+⚠ Known limitations:
+- No right join
+- Default order might differ (always use `ORDER BY` when the order matters)
+- Column names might differ, f.e. `count(u.id)` => ```COUNT(`u`.`id`)``` (aliases fix it)
+- No timezone support
+
+📃 TODO
+- [ ] `ALTER` statement
+- [ ] Foreign key constraints
+- [ ] Fill `INFORMATION_SCHEMA` tables
+- [ ] `DELETE ORDER BY field LIMIT 1`
+- [ ] `UPDATE ORDER BY field LIMIT 1`
+- [ ] `SELECT GROUP BY position/alias` (column and expression are supported right now)
+- [ ] `SELECT ORDER BY position/alias` (column and expression are supported right now)
+- [ ] Implement the most used functions
+
 ## Usage
 
 Just start from:
