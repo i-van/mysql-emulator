@@ -89,6 +89,14 @@ describe('select', () => {
 
       expect(res).toEqual([{ count: 3, sum: '16', min: 1, max: 10, avg: '5.3333' }]);
     });
+    it('should throw an error selecting unknown table', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT t.* FROM profiles p`);
+      } catch (err: any) {
+        expect(err.message).toBe(`Unknown table 't'`);
+      }
+    });
     it('should throw an error in aggregated query without GROUP BY', async () => {
       expect.assertions(1);
       try {

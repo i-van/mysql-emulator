@@ -52,11 +52,6 @@ export class Evaluator {
     throw new EvaluatorException(`Unknown expression type '${e.type}'`);
   }
 
-  evaluateStar(s: Star, row: object): object {
-    const filter = (key) => (s.table ? s.table === extractTable(key) : true);
-    return mapKeys(row, extractColumn, filter);
-  }
-
   protected evaluateSelectExpression(e: SubQuery & { isArray: boolean }, row: object): any {
     const p = new SelectProcessor(this.server, e.query, row);
     const rows = p.process();

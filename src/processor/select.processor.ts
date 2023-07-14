@@ -194,17 +194,32 @@ export class SelectProcessor {
   }
 
   protected applySelectAndHaving() {
-    this.query.columns.forEach((c) => {
-      if (c.type !== 'star' && c.alias) {
-        this.columns.push(`::${c.alias}`);
-      }
+    const tableColumns = new Map<string | null, WithAlias<ColumnRef>[]>();
+    const allColumns: WithAlias<ColumnRef>[] = [];
+    this.columns.forEach((key) => {
+      const [table, column] = key.split('::');
+      const columnRef: WithAlias<ColumnRef> = {
+        type: 'column_ref',
+        table,
+        column,
+        alias: null,
+      };
+      tableColumns.set(table, [...tableColumns.get(table) || [], columnRef]);
+      allColumns.push(columnRef);
     });
     const mapRow = (rawRow: object, group: object[]): [object, object] => {
       try {
         let rawRowWithAliases = rawRow;
         const mappedRow = this.query.columns.reduce((res, c) => {
           if (c.type === 'star') {
-            return { ...res, ...this.evaluator.evaluateStar(c, rawRow) };
+            const columns = c.table ? tableColumns.get(c.table) : allColumns;
+            if (!columns) {
+              throw new ProcessorException(`Unknown table '${c.table}'`);
+            }
+            return columns.reduce((res, c) => ({
+              ...res,
+              [c.column]: this.evaluator.evaluateExpression(c, rawRow, group),
+            }), res);
           }
           const value = this.evaluator.evaluateExpression(c, rawRow, group);
           if (c.alias) {
