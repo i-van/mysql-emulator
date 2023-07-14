@@ -27,6 +27,7 @@ export class SelectProcessor {
 
   protected applyFrom(): void {
     if (this.query.from.length === 0) {
+      this.rows = [{}];
       return;
     }
 
@@ -193,18 +194,6 @@ export class SelectProcessor {
   }
 
   protected applySelectAndHaving() {
-    const hasFunctionColumn = this.query.columns.some((c) => c.type === 'function');
-    const hasPrimitiveColumn = this.query.columns.some((c) => ['number', 'string', 'boolean', 'null'].includes(c.type));
-    const hasExpressionColumn = this.query.columns.some((c) => ['unary_expression', 'binary_expression'].includes(c.type));
-    const hasCase = this.query.columns.some((c) => c.type === 'case');
-    const hasSubSelect = this.query.columns.some((c) => c.type === 'select');
-    if (
-      this.rows.length === 0 &&
-      (hasFunctionColumn || hasExpressionColumn || hasPrimitiveColumn || hasCase || hasSubSelect)
-    ) {
-      this.rows = [{}];
-    }
-
     this.query.columns.forEach((c) => {
       if (c.type !== 'star' && c.alias) {
         this.columns.push(`::${c.alias}`);
