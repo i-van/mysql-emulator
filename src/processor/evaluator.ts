@@ -1,14 +1,5 @@
-import {
-  BinaryExpression,
-  CaseType,
-  ColumnRef,
-  Expression,
-  FunctionType,
-  Star,
-  SubQuery,
-  UnaryExpression,
-} from '../parser';
-import { extractColumn, extractTable, mapKeys, toNumber } from '../utils';
+import { BinaryExpression, CaseType, ColumnRef, Expression, FunctionType, SubQuery, UnaryExpression } from '../parser';
+import { extractColumn, toNumber } from '../utils';
 import { Server } from '../server';
 import { EvaluatorException } from './evaluator.exception';
 import { SelectProcessor } from './select.processor';
