@@ -356,18 +356,42 @@ describe('select query', () => {
 
   describe('groupBy', () => {
     it('should parse GROUP BY', () => {
-      const sql = `SELECT * FROM users GROUP BY id`;
+      const sql = `SELECT id FROM users GROUP BY id`;
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.groupBy).toEqual([{ type: 'column_ref', table: null, column: 'id' }]);
     });
-    it('should parse aliased GROUP BY', () => {
-      const sql = `SELECT * FROM users u GROUP BY u.id`;
+    it('should parse GROUP BY with aliased table', () => {
+      const sql = `SELECT u.id FROM users u GROUP BY u.id`;
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
       expect(res.groupBy).toEqual([{ type: 'column_ref', table: 'u', column: 'id' }]);
+    });
+    it('should parse GROUP BY with position', () => {
+      const sql = `SELECT name full_name FROM users u GROUP BY 1`;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.groupBy).toEqual([{ type: 'number', value: 1, column: '1' }]);
+    });
+    it('should parse GROUP BY with expression', () => {
+      const sql = `SELECT count(*) FROM users u GROUP BY concat_ws(' ', first_name, last_name)`;
+      const res = parser.parse(sql, []) as SelectQuery;
+
+      expect(res).toBeInstanceOf(SelectQuery);
+      expect(res.groupBy).toEqual([{
+        type: 'function',
+        name: 'concat_ws',
+        args: [
+          { type: 'string', value: ' ' },
+          { column: 'first_name', table: null, type: 'column_ref' },
+          { column: 'last_name', table: null, type: 'column_ref' },
+        ],
+        column: "concat_ws(' ', `first_name`, `last_name`)",
+        options: {},
+      }]);
     });
   });
 

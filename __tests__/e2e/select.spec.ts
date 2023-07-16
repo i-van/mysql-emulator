@@ -556,6 +556,16 @@ describe('select', () => {
         { name: 'Jane', count: '1' },
       ]);
     });
+    it('should GROUP BY alias', async () => {
+      const res = await query(`SELECT p.name first_name FROM profiles p GROUP BY first_name`);
+
+      expect(res).toEqual([{ first_name: 'John' }, { first_name: 'Jane' }]);
+    });
+    it('should GROUP BY position', async () => {
+      const res = await query(`SELECT p.name first_name FROM profiles p GROUP BY 1`);
+
+      expect(res).toEqual([{ first_name: 'John' }, { first_name: 'Jane' }]);
+    });
     it('should run GROUP_CONCAT', async () => {
       const res = await query(`
         SELECT
@@ -579,6 +589,22 @@ describe('select', () => {
         await query(`SELECT * from users u GROUP BY u.user_id`);
       } catch (err: any) {
         expect(err.message).toBe(`Unknown column 'u.user_id' in 'group statement'`);
+      }
+    });
+    it('should not group by aggregate function', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT COUNT(*) FROM users u GROUP BY COUNT(*)`);
+      } catch (err: any) {
+        expect(err.message).toBe(`Can't group on 'COUNT(*)'`);
+      }
+    });
+    it('should not group by position to aggregate function', async () => {
+      expect.assertions(1);
+      try {
+        await query(`SELECT COUNT(*) FROM users u GROUP BY 1`);
+      } catch (err: any) {
+        expect(err.message).toBe(`Can't group on 'COUNT(*)'`);
       }
     });
   });

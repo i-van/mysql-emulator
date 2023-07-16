@@ -38,6 +38,16 @@ export type SelectColumn =
   | WithAlias<WithColumn<CaseType>>
   | WithAlias<WithColumn<SubQuery & { isArray: false }>>
   | Star;
+export type GroupBy =
+  | ColumnRef
+  | WithColumn<FunctionType>
+  | WithColumn<UnaryExpression>
+  | WithColumn<BinaryExpression>
+  | WithColumn<StringType>
+  | WithColumn<NumberType>
+  | WithColumn<BooleanType>
+  | WithColumn<NullType>
+  | WithColumn<CaseType>;
 export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
 
 const sqlParser = new SqlParser();
@@ -54,7 +64,7 @@ export class SelectQuery {
     public distinct: boolean,
     public columns: SelectColumn[],
     public where: Expression | null,
-    public groupBy: ColumnRef[],
+    public groupBy: GroupBy[],
     public having: Expression | null,
     public orderBy: OrderBy[],
     public limit: number,
@@ -117,7 +127,25 @@ export class SelectQuery {
       }
       throw new ParserException('Could not map columns');
     });
-    const groupBy: ColumnRef[] = (ast.groupby || []).map((g) => buildExpression(g) as ColumnRef);
+    const groupBy: GroupBy[] = (ast.groupby || []).map((g) => {
+      if (g.type === 'column_ref') {
+        return buildExpression(g) as ColumnRef;
+      } else if (['case', 'unary_expr', 'binary_expr', ...functions, ...primitives].includes(g.type)) {
+        return {
+          ...(buildExpression(g) as
+            | CaseType
+            | FunctionType
+            | UnaryExpression
+            | BinaryExpression
+            | StringType
+            | NumberType
+            | BooleanType
+            | NullType),
+          column: toSql(g),
+        };
+      }
+      throw new ParserException('Could not map groupBy');
+    });
     const orderBy: OrderBy[] = (ast.orderby || []).map((o) => ({
       ...(buildExpression(o.expr) as ColumnRef),
       order: o.type,

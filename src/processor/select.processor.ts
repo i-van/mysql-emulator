@@ -1,10 +1,14 @@
 import { Server } from '../server';
-import { ColumnRef, Expression, SelectQuery, Star, WithAlias } from '../parser';
+import { ColumnRef, Expression, GroupBy, SelectQuery, Star, WithAlias } from '../parser';
 import { extractColumn, extractTable, hashCode, mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
 import { EvaluatorException } from './evaluator.exception';
 import { SubQueryException } from './sub-query.exception';
+
+const isAggregateFunction = (e: Expression): boolean => {
+  return e.type === 'function' && ['count', 'sum', 'min', 'max', 'avg'].includes(e.name);
+};
 
 export class SelectProcessor {
   protected rows: object[] = [];
@@ -95,6 +99,37 @@ export class SelectProcessor {
     }, []);
   }
 
+  protected preSelectAliases(): void {
+    const assignAliases = (rawRow: object, group: object[]): object => {
+      try {
+        return this.query.columns.reduce((res, c) => {
+          if (c.type === 'star') {
+            return res;
+          }
+          if (c.alias) {
+            const value = this.evaluator.evaluateExpression(c, rawRow, group);
+            return { ...res, [`::${c.alias}`]: value };
+          }
+          return res;
+        }, rawRow);
+      } catch (err: any) {
+        if (err instanceof EvaluatorException) {
+          throw new ProcessorException(`${err.message} in 'field list'`);
+        }
+        throw err;
+      }
+    };
+    if (this.groupedRows.size === 0) {
+      this.rows = this.rows.map((row) => assignAliases(row, []));
+    } else {
+      this.groupedRows.forEach((group, hash) => {
+        const [firstRawRow, ...rest] = group;
+        const updatedFirstRawRow = assignAliases(firstRawRow, group);
+        this.groupedRows.set(hash, [updatedFirstRawRow, ...rest]);
+      });
+    }
+  }
+
   protected applyWhere(): void {
     const { where } = this.query;
     if (!where) {
@@ -113,13 +148,13 @@ export class SelectProcessor {
 
   protected applyGroupBy(): void {
     if (this.query.groupBy.length === 0) {
-      const hasAggregateFunction = this.query.columns.some((c) => {
-        return c.type === 'function' && ['count', 'sum', 'min', 'max', 'avg'].includes(c.name);
-      });
+      // todo: deep search
+      const hasAggregateFunction = this.query.columns.some(isAggregateFunction);
       if (!hasAggregateFunction) {
         return;
       }
 
+      // todo: deep search
       const columnRef = this.query.columns.find((c): c is WithAlias<ColumnRef> => c.type === 'column_ref');
       if (columnRef) {
         const columnName = columnRef.table
@@ -160,10 +195,33 @@ export class SelectProcessor {
       return;
     }
 
+    this.preSelectAliases();
+
     try {
+      // todo: deep search
+      const groupBy = this.query.groupBy.map((g: GroupBy) => {
+        if (g.type === 'number') {
+          const column = this.query.columns[g.value - 1];
+          if (!column) {
+            throw new ProcessorException(`Unknown column '${g.value}' in 'group statement'`);
+          } else if (column.type === 'star') {
+            const star = column.table ? `${column.table}.*` : '*';
+            throw new ProcessorException(`Not implemented: group on '${star}'`);
+          } else if (column.type === 'select') {
+            throw new ProcessorException(`Not implemented: group on '${column.column}'`);
+          } else if (isAggregateFunction(column)) {
+            throw new ProcessorException(`Can't group on '${column.column}'`);
+          }
+          return column;
+        }
+        if (isAggregateFunction(g)) {
+          throw new ProcessorException(`Can't group on '${g.column}'`);
+        }
+        return g;
+      });
       this.rows.forEach((row) => {
-        const mapper = (c: ColumnRef) => this.evaluator.evaluateExpression(c, row);
-        const hash = hashCode(this.query.groupBy.map(mapper).join('::'));
+        const mapper = (g: GroupBy) => this.evaluator.evaluateExpression(g, row);
+        const hash = hashCode(groupBy.map(mapper).join('::'));
         this.groupedRows.set(hash, [...(this.groupedRows.get(hash) || []), row]);
       });
     } catch (err: any) {
