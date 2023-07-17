@@ -48,7 +48,17 @@ export type GroupBy =
   | WithColumn<BooleanType>
   | WithColumn<NullType>
   | WithColumn<CaseType>;
-export type OrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
+type WithOrder<T> = T & { order: 'ASC' | 'DESC' };
+export type OrderBy =
+  | WithOrder<ColumnRef>
+  | WithOrder<FunctionType>
+  | WithOrder<UnaryExpression>
+  | WithOrder<BinaryExpression>
+  | WithOrder<StringType>
+  | WithOrder<NumberType>
+  | WithOrder<BooleanType>
+  | WithOrder<NullType>
+  | WithOrder<CaseType>;
 
 const sqlParser = new SqlParser();
 const toSql = (expr: any): string => {
@@ -147,7 +157,16 @@ export class SelectQuery {
       throw new ParserException('Could not map groupBy');
     });
     const orderBy: OrderBy[] = (ast.orderby || []).map((o) => ({
-      ...(buildExpression(o.expr) as ColumnRef),
+      ...(buildExpression(o.expr) as
+        | ColumnRef
+        | CaseType
+        | FunctionType
+        | UnaryExpression
+        | BinaryExpression
+        | StringType
+        | NumberType
+        | BooleanType
+        | NullType),
       order: o.type,
     }));
     let limit = 0;

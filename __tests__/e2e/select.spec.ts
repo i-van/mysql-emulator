@@ -529,6 +529,40 @@ describe('select', () => {
         { id: 3, name: 'Jane', post_count: 1 },
       ]);
     });
+    it('should ORDER BY alias', async () => {
+      const res = await query(`SELECT p.name first_name FROM profiles p ORDER BY first_name`);
+
+      expect(res).toEqual([
+        { first_name: 'Jane' },
+        { first_name: 'John' },
+        { first_name: 'John' },
+      ]);
+    });
+    it('should ORDER BY position', async () => {
+      const res = await query(`SELECT p.name first_name FROM profiles p ORDER BY 1`);
+
+      expect(res).toEqual([
+        { first_name: 'Jane' },
+        { first_name: 'John' },
+        { first_name: 'John' },
+      ]);
+    });
+    it('should ORDER BY alias to aggregate function', async () => {
+      const res = await query(`SELECT p.name, COUNT(*) count FROM profiles p GROUP BY p.name ORDER BY count`);
+
+      expect(res).toEqual([
+        { name: 'Jane', count: 1 },
+        { name: 'John', count: 2 },
+      ]);
+    });
+    it('should ORDER BY aggregate function', async () => {
+      const res = await query(`SELECT p.name, COUNT(*) count FROM profiles p GROUP BY p.name ORDER BY COUNT(*)`);
+
+      expect(res).toEqual([
+        { name: 'Jane', count: 1 },
+        { name: 'John', count: 2 },
+      ]);
+    });
     it('should throw an error if column is unknown', async () => {
       expect.assertions(1);
       try {

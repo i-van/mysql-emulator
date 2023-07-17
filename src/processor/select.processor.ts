@@ -1,5 +1,5 @@
 import { Server } from '../server';
-import { ColumnRef, Expression, GroupBy, SelectQuery, Star, WithAlias } from '../parser';
+import { ColumnRef, Expression, GroupBy, OrderBy, SelectQuery, Star, WithAlias } from '../parser';
 import { extractColumn, extractTable, hashCode, mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
@@ -12,7 +12,7 @@ const isAggregateFunction = (e: Expression): boolean => {
 
 export class SelectProcessor {
   protected rows: object[] = [];
-  protected groupedRows = new Map<number, object[]>();
+  protected groupedRows: object[][] = [];
   protected columns: string[] = [];
   protected evaluator = new Evaluator(this.server, this.context);
 
@@ -119,13 +119,11 @@ export class SelectProcessor {
         throw err;
       }
     };
-    if (this.groupedRows.size === 0) {
+    if (this.groupedRows.length === 0) {
       this.rows = this.rows.map((row) => assignAliases(row, []));
     } else {
-      this.groupedRows.forEach((group, hash) => {
-        const [firstRawRow, ...rest] = group;
-        const updatedFirstRawRow = assignAliases(firstRawRow, group);
-        this.groupedRows.set(hash, [updatedFirstRawRow, ...rest]);
+      this.groupedRows.forEach((group) => {
+        group[0] = assignAliases(group[0], group);
       });
     }
   }
@@ -191,7 +189,7 @@ export class SelectProcessor {
         );
       }
 
-      this.groupedRows.set(1, this.rows);
+      this.groupedRows = [this.rows];
       return;
     }
 
@@ -219,11 +217,13 @@ export class SelectProcessor {
         }
         return g;
       });
+      const groups = new Map<number, object[]>();
       this.rows.forEach((row) => {
         const mapper = (g: GroupBy) => this.evaluator.evaluateExpression(g, row);
         const hash = hashCode(groupBy.map(mapper).join('::'));
-        this.groupedRows.set(hash, [...(this.groupedRows.get(hash) || []), row]);
+        groups.set(hash, [...(groups.get(hash) || []), row]);
       });
+      this.groupedRows = [...groups.values()];
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
         throw new ProcessorException(`${err.message} in 'group statement'`);
@@ -237,12 +237,37 @@ export class SelectProcessor {
       return;
     }
 
+    this.preSelectAliases();
+
     try {
-      const sortKeys: SortByKey[] = this.query.orderBy.map((o) => ({
-        mapper: (row) => this.evaluator.evaluateExpression(o, row),
-        order: o.order === 'ASC' ? 1 : -1,
-      }));
-      this.rows = this.rows.sort(sortBy(sortKeys));
+      const orderBy = this.query.orderBy.map((g: OrderBy): OrderBy => {
+        if (g.type === 'number') {
+          const column = this.query.columns[g.value - 1];
+          if (!column) {
+            throw new ProcessorException(`Unknown column '${g.value}' in 'group statement'`);
+          } else if (column.type === 'star') {
+            const star = column.table ? `${column.table}.*` : '*';
+            throw new ProcessorException(`Not implemented: group on '${star}'`);
+          } else if (column.type === 'select') {
+            throw new ProcessorException(`Not implemented: group on '${column.column}'`);
+          }
+          return { ...column, order: g.order };
+        }
+        return g;
+      });
+      if (this.groupedRows.length === 0) {
+        const sortKeys: SortByKey[] = orderBy.map((o) => ({
+          mapper: (row) => this.evaluator.evaluateExpression(o, row),
+          order: o.order === 'ASC' ? 1 : -1,
+        }));
+        this.rows = this.rows.sort(sortBy(sortKeys));
+      } else {
+        const sortKeys: SortByKey[] = orderBy.map((o) => ({
+          mapper: (group) => this.evaluator.evaluateExpression(o, group[0], group),
+          order: o.order === 'ASC' ? 1 : -1,
+        }));
+        this.groupedRows = this.groupedRows.sort(sortBy(sortKeys));
+      }
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
         throw new ProcessorException(`${err.message} in 'order clause'`);
@@ -307,7 +332,7 @@ export class SelectProcessor {
         throw err;
       }
     };
-    if (this.groupedRows.size === 0) {
+    if (this.groupedRows.length === 0) {
       const existingRows = this.rows;
       this.rows = [];
       existingRows.forEach((rawRow) => {
@@ -319,8 +344,7 @@ export class SelectProcessor {
     } else {
       this.rows = [];
       this.groupedRows.forEach((group) => {
-        const [firstRawRow] = group;
-        const [mappedRow, rawRowWithAliases] = mapRow(firstRawRow, group);
+        const [mappedRow, rawRowWithAliases] = mapRow(group[0], group);
         if (checkIfKeep(rawRowWithAliases, group)) {
           this.rows.push(mappedRow);
         }
