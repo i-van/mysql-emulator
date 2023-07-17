@@ -381,17 +381,19 @@ describe('select query', () => {
       const res = parser.parse(sql, []) as SelectQuery;
 
       expect(res).toBeInstanceOf(SelectQuery);
-      expect(res.groupBy).toEqual([{
-        type: 'function',
-        name: 'concat_ws',
-        args: [
-          { type: 'string', value: ' ' },
-          { column: 'first_name', table: null, type: 'column_ref' },
-          { column: 'last_name', table: null, type: 'column_ref' },
-        ],
-        column: "concat_ws(' ', `first_name`, `last_name`)",
-        options: {},
-      }]);
+      expect(res.groupBy).toEqual([
+        {
+          type: 'function',
+          name: 'concat_ws',
+          args: [
+            { type: 'string', value: ' ' },
+            { column: 'first_name', table: null, type: 'column_ref' },
+            { column: 'last_name', table: null, type: 'column_ref' },
+          ],
+          column: "concat_ws(' ', `first_name`, `last_name`)",
+          options: {},
+        },
+      ]);
     });
   });
 

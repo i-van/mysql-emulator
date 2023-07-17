@@ -287,7 +287,7 @@ export class SelectProcessor {
         column,
         alias: null,
       };
-      tableColumns.set(table, [...tableColumns.get(table) || [], columnRef]);
+      tableColumns.set(table, [...(tableColumns.get(table) || []), columnRef]);
       allColumns.push(columnRef);
     });
     const mapRow = (rawRow: object, group: object[]): [object, object] => {
@@ -299,10 +299,13 @@ export class SelectProcessor {
             if (!columns) {
               throw new ProcessorException(`Unknown table '${c.table}'`);
             }
-            return columns.reduce((res, c) => ({
-              ...res,
-              [c.column]: this.evaluator.evaluateExpression(c, rawRow, group),
-            }), res);
+            return columns.reduce(
+              (res, c) => ({
+                ...res,
+                [c.column]: this.evaluator.evaluateExpression(c, rawRow, group),
+              }),
+              res,
+            );
           }
           const value = this.evaluator.evaluateExpression(c, rawRow, group);
           if (c.alias) {

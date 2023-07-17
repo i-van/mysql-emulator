@@ -532,20 +532,12 @@ describe('select', () => {
     it('should ORDER BY alias', async () => {
       const res = await query(`SELECT p.name first_name FROM profiles p ORDER BY first_name`);
 
-      expect(res).toEqual([
-        { first_name: 'Jane' },
-        { first_name: 'John' },
-        { first_name: 'John' },
-      ]);
+      expect(res).toEqual([{ first_name: 'Jane' }, { first_name: 'John' }, { first_name: 'John' }]);
     });
     it('should ORDER BY position', async () => {
       const res = await query(`SELECT p.name first_name FROM profiles p ORDER BY 1`);
 
-      expect(res).toEqual([
-        { first_name: 'Jane' },
-        { first_name: 'John' },
-        { first_name: 'John' },
-      ]);
+      expect(res).toEqual([{ first_name: 'Jane' }, { first_name: 'John' }, { first_name: 'John' }]);
     });
     it('should ORDER BY alias to aggregate function', async () => {
       const res = await query(`SELECT p.name, COUNT(*) count FROM profiles p GROUP BY p.name ORDER BY count`);
