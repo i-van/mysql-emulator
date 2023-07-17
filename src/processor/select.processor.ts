@@ -21,7 +21,9 @@ export class SelectProcessor {
   process() {
     this.applyFrom();
     this.applyWhere();
+    this.preSelectAliases();
     this.applyGroupBy();
+    this.preSelectAliases();
     this.applyOrderBy();
     this.applySelectAndHaving();
     this.applyLimit();
@@ -127,6 +129,9 @@ export class SelectProcessor {
       this.rows = this.rows.map((row) => assignAliases(row, []));
     } else {
       this.groupedRows.forEach((group) => {
+        if (group.length === 0) {
+          return;
+        }
         group[0] = assignAliases(group[0], group);
       });
     }
@@ -197,8 +202,6 @@ export class SelectProcessor {
       return;
     }
 
-    this.preSelectAliases();
-
     try {
       // todo: deep search
       const groupBy = this.query.groupBy.map((g: GroupBy) => {
@@ -240,8 +243,6 @@ export class SelectProcessor {
     if (this.query.orderBy.length === 0) {
       return;
     }
-
-    this.preSelectAliases();
 
     try {
       const orderBy = this.query.orderBy.map((g: OrderBy): OrderBy => {
@@ -294,10 +295,9 @@ export class SelectProcessor {
       tableColumns.set(table, [...(tableColumns.get(table) || []), columnRef]);
       allColumns.push(columnRef);
     });
-    const mapRow = (rawRow: object, group: object[]): [object, object] => {
+    const mapRow = (rawRow: object, group: object[]): object => {
       try {
-        let rawRowWithAliases = rawRow;
-        const mappedRow = this.query.columns.reduce((res, c) => {
+        return this.query.columns.reduce((res, c) => {
           if (c.type === 'star') {
             const columns = c.table ? tableColumns.get(c.table) : allColumns;
             if (!columns) {
@@ -312,13 +312,8 @@ export class SelectProcessor {
             );
           }
           const value = this.evaluator.evaluateExpression(c, rawRow, group);
-          if (c.alias) {
-            rawRowWithAliases = { ...rawRowWithAliases, [`::${c.alias}`]: value };
-          }
           return { ...res, [c.alias || c.column]: value };
         }, {});
-
-        return [mappedRow, rawRowWithAliases];
       } catch (err: any) {
         if (err instanceof EvaluatorException) {
           throw new ProcessorException(`${err.message} in 'field list'`);
@@ -343,16 +338,16 @@ export class SelectProcessor {
       const existingRows = this.rows;
       this.rows = [];
       existingRows.forEach((rawRow) => {
-        const [mappedRow, rawRowWithAliases] = mapRow(rawRow, []);
-        if (checkIfKeep(rawRowWithAliases, [])) {
+        if (checkIfKeep(rawRow, [])) {
+          const mappedRow = mapRow(rawRow, []);
           this.rows.push(mappedRow);
         }
       });
     } else {
       this.rows = [];
       this.groupedRows.forEach((group) => {
-        const [mappedRow, rawRowWithAliases] = mapRow(group[0], group);
-        if (checkIfKeep(rawRowWithAliases, group)) {
+        if (checkIfKeep(group[0], group)) {
+          const mappedRow = mapRow(group[0], group);
           this.rows.push(mappedRow);
         }
       });
