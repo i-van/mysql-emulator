@@ -1,5 +1,5 @@
 import { Server } from '../server';
-import { ColumnRef, Expression, GroupBy, OrderBy, SelectQuery, Star, WithAlias } from '../parser';
+import { ColumnRef, Expression, GroupBy, OrderBy, SelectColumn, SelectQuery, Star, WithAlias } from '../parser';
 import { extractColumn, extractTable, hashCode, mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
@@ -100,17 +100,21 @@ export class SelectProcessor {
   }
 
   protected preSelectAliases(): void {
+    const columnsWithAliases = this.query.columns.filter((c: SelectColumn): c is Exclude<SelectColumn, Star> => {
+      if (c.type === 'star') {
+        return false;
+      }
+      return Boolean(c.alias);
+    });
+    if (columnsWithAliases.length === 0) {
+      return;
+    }
+
     const assignAliases = (rawRow: object, group: object[]): object => {
       try {
-        return this.query.columns.reduce((res, c) => {
-          if (c.type === 'star') {
-            return res;
-          }
-          if (c.alias) {
-            const value = this.evaluator.evaluateExpression(c, rawRow, group);
-            return { ...res, [`::${c.alias}`]: value };
-          }
-          return res;
+        return columnsWithAliases.reduce((res, c) => {
+          const value = this.evaluator.evaluateExpression(c, rawRow, group);
+          return { ...res, [`::${c.alias}`]: value };
         }, rawRow);
       } catch (err: any) {
         if (err instanceof EvaluatorException) {
