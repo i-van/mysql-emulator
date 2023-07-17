@@ -24,8 +24,9 @@ export class SelectProcessor {
     this.preSelectAliases();
     this.applyGroupBy();
     this.preSelectAliases();
+    this.applyHaving();
     this.applyOrderBy();
-    this.applySelectAndHaving();
+    this.applySelect();
     this.applyLimit();
 
     return this.rows;
@@ -239,6 +240,30 @@ export class SelectProcessor {
     }
   }
 
+  protected applyHaving(): void {
+    const { having } = this.query;
+    if (!having) {
+      return;
+    }
+
+    try {
+      if (this.groupedRows.length === 0) {
+        this.rows = this.rows.filter((row) => {
+          return this.evaluator.evaluateExpression(having, row, []);
+        });
+      } else {
+        this.groupedRows = this.groupedRows.filter((group) => {
+          return this.evaluator.evaluateExpression(having, group[0], group);
+        });
+      }
+    } catch (err: any) {
+      if (err instanceof EvaluatorException) {
+        throw new ProcessorException(`${err.message} in 'having clause'`);
+      }
+      throw err;
+    }
+  }
+
   protected applyOrderBy(): void {
     if (this.query.orderBy.length === 0) {
       return;
@@ -281,7 +306,7 @@ export class SelectProcessor {
     }
   }
 
-  protected applySelectAndHaving() {
+  protected applySelect() {
     const tableColumns = new Map<string | null, WithAlias<ColumnRef>[]>();
     const allColumns: WithAlias<ColumnRef>[] = [];
     this.columns.forEach((key) => {
@@ -321,36 +346,10 @@ export class SelectProcessor {
         throw err;
       }
     };
-    const checkIfKeep = (row: object, group: object[]): boolean => {
-      if (this.query.having === null) {
-        return true;
-      }
-      try {
-        return this.evaluator.evaluateExpression(this.query.having, row, group);
-      } catch (err: any) {
-        if (err instanceof EvaluatorException) {
-          throw new ProcessorException(`${err.message} in 'having clause'`);
-        }
-        throw err;
-      }
-    };
     if (this.groupedRows.length === 0) {
-      const existingRows = this.rows;
-      this.rows = [];
-      existingRows.forEach((rawRow) => {
-        if (checkIfKeep(rawRow, [])) {
-          const mappedRow = mapRow(rawRow, []);
-          this.rows.push(mappedRow);
-        }
-      });
+      this.rows = this.rows.map((row) => mapRow(row, []));
     } else {
-      this.rows = [];
-      this.groupedRows.forEach((group) => {
-        if (checkIfKeep(group[0], group)) {
-          const mappedRow = mapRow(group[0], group);
-          this.rows.push(mappedRow);
-        }
-      });
+      this.rows = this.groupedRows.map((group) => mapRow(group[0], group));
     }
     if (this.query.distinct && this.rows.length > 0) {
       const index = new Set<string>();
