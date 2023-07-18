@@ -10,9 +10,16 @@ const isAggregateFunction = (e: Expression): boolean => {
   return e.type === 'function' && ['count', 'sum', 'min', 'max', 'avg'].includes(e.name);
 };
 
+class Item {
+  constructor(
+    public row: object,
+    public group: object[] = [],
+    public result: object = {},
+  ) {}
+}
+
 export class SelectProcessor {
-  protected rows: object[] = [];
-  protected groupedRows: object[][] = [];
+  protected items: Item[] = [];
   protected columns: string[] = [];
   protected evaluator = new Evaluator(this.server, this.context);
 
@@ -25,19 +32,20 @@ export class SelectProcessor {
     this.applyGroupBy();
     this.preSelectAliases();
     this.applyHaving();
-    this.applyOrderBy();
     this.applySelect();
+    this.applyOrderBy();
     this.applyLimit();
 
-    return this.rows;
+    return this.items.map((i) => i.result);
   }
 
   protected applyFrom(): void {
     if (this.query.from.length === 0) {
-      this.rows = [{}];
+      this.items = [new Item({})];
       return;
     }
 
+    let joinedRows: object[] = [];
     this.query.from.forEach((from, i) => {
       let rows: object[];
       let columns: string[];
@@ -57,21 +65,22 @@ export class SelectProcessor {
 
       this.columns.push(...columns);
       if (i === 0) {
-        this.rows = rows;
+        joinedRows = rows;
       } else if (from.join === null) {
         // f.e. FROM table1, table2
-        this.rows = this.joinRows(this.rows, rows, null);
+        joinedRows = this.joinRows(joinedRows, rows, null);
       } else if (from.join === 'CROSS JOIN') {
-        this.rows = this.joinRows(this.rows, rows, from.on);
+        joinedRows = this.joinRows(joinedRows, rows, from.on);
       } else if (from.join === 'INNER JOIN') {
-        this.rows = this.joinRows(this.rows, rows, from.on);
+        joinedRows = this.joinRows(joinedRows, rows, from.on);
       } else if (from.join === 'LEFT JOIN') {
         const placeholder = columns.reduce((res, key) => ({ ...res, [key]: null }), {});
-        this.rows = this.joinRows(this.rows, rows, from.on, placeholder);
+        joinedRows = this.joinRows(joinedRows, rows, from.on, placeholder);
       } else {
         throw new ProcessorException(`Unknown "${from.join}" join type`);
       }
     });
+    this.items = joinedRows.map((row) => new Item(row));
   }
 
   private joinRows(
@@ -126,16 +135,9 @@ export class SelectProcessor {
         throw err;
       }
     };
-    if (this.groupedRows.length === 0) {
-      this.rows = this.rows.map((row) => assignAliases(row, []));
-    } else {
-      this.groupedRows.forEach((group) => {
-        if (group.length === 0) {
-          return;
-        }
-        group[0] = assignAliases(group[0], group);
-      });
-    }
+    this.items.forEach((i) => {
+      i.row = assignAliases(i.row, i.group);
+    });
   }
 
   protected applyWhere(): void {
@@ -145,7 +147,7 @@ export class SelectProcessor {
     }
 
     try {
-      this.rows = this.rows.filter((row) => this.evaluator.evaluateExpression(where, row));
+      this.items = this.items.filter((i) => this.evaluator.evaluateExpression(where, i.row));
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
         throw new ProcessorException(`${err.message} in 'where clause'`);
@@ -199,7 +201,8 @@ export class SelectProcessor {
         );
       }
 
-      this.groupedRows = [this.rows];
+      const rows = this.items.map((i) => i.row);
+      this.items = [new Item(rows[0] ?? {}, rows)];
       return;
     }
 
@@ -226,12 +229,15 @@ export class SelectProcessor {
         return g;
       });
       const groups = new Map<number, object[]>();
-      this.rows.forEach((row) => {
-        const mapper = (g: GroupBy) => this.evaluator.evaluateExpression(g, row);
+      this.items.forEach((i) => {
+        const mapper = (g: GroupBy) => this.evaluator.evaluateExpression(g, i.row);
         const hash = hashCode(groupBy.map(mapper).join('::'));
-        groups.set(hash, [...(groups.get(hash) || []), row]);
+        groups.set(hash, [...(groups.get(hash) || []), i.row]);
       });
-      this.groupedRows = [...groups.values()];
+      this.items = [];
+      groups.forEach((group) => {
+        this.items.push(new Item(group[0], group));
+      });
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
         throw new ProcessorException(`${err.message} in 'group statement'`);
@@ -247,15 +253,7 @@ export class SelectProcessor {
     }
 
     try {
-      if (this.groupedRows.length === 0) {
-        this.rows = this.rows.filter((row) => {
-          return this.evaluator.evaluateExpression(having, row, []);
-        });
-      } else {
-        this.groupedRows = this.groupedRows.filter((group) => {
-          return this.evaluator.evaluateExpression(having, group[0], group);
-        });
-      }
+      this.items = this.items.filter((i) => this.evaluator.evaluateExpression(having, i.row, i.group));
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
         throw new ProcessorException(`${err.message} in 'having clause'`);
@@ -285,19 +283,11 @@ export class SelectProcessor {
         }
         return g;
       });
-      if (this.groupedRows.length === 0) {
-        const sortKeys: SortByKey[] = orderBy.map((o) => ({
-          mapper: (row) => this.evaluator.evaluateExpression(o, row),
-          order: o.order === 'ASC' ? 1 : -1,
-        }));
-        this.rows = this.rows.sort(sortBy(sortKeys));
-      } else {
-        const sortKeys: SortByKey[] = orderBy.map((o) => ({
-          mapper: (group) => this.evaluator.evaluateExpression(o, group[0], group),
-          order: o.order === 'ASC' ? 1 : -1,
-        }));
-        this.groupedRows = this.groupedRows.sort(sortBy(sortKeys));
-      }
+      const sortKeys: SortByKey[] = orderBy.map((o) => ({
+        mapper: (i: Item) => this.evaluator.evaluateExpression(o, i.row, i.group),
+        order: o.order === 'ASC' ? 1 : -1,
+      }));
+      this.items.sort(sortBy(sortKeys));
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
         throw new ProcessorException(`${err.message} in 'order clause'`);
@@ -346,16 +336,14 @@ export class SelectProcessor {
         throw err;
       }
     };
-    if (this.groupedRows.length === 0) {
-      this.rows = this.rows.map((row) => mapRow(row, []));
-    } else {
-      this.rows = this.groupedRows.map((group) => mapRow(group[0], group));
-    }
-    if (this.query.distinct && this.rows.length > 0) {
+    this.items.forEach((i) => {
+      i.result = mapRow(i.row, i.group);
+    });
+    if (this.query.distinct && this.items.length > 0) {
       const index = new Set<string>();
-      const keys = Object.keys(this.rows[0]);
-      this.rows = this.rows.filter((row) => {
-        const value = keys.map((key) => row[key]).join('-');
+      const keys = Object.keys(this.items[0].result);
+      this.items = this.items.filter((i) => {
+        const value = keys.map((key) => i.result[key]).join('-');
         if (index.has(value)) {
           return false;
         }
@@ -367,10 +355,10 @@ export class SelectProcessor {
 
   protected applyLimit() {
     if (this.query.offset) {
-      this.rows = this.rows.filter((_, i) => i >= this.query.offset);
+      this.items = this.items.filter((_, i) => i >= this.query.offset);
     }
-    if (this.query.limit && this.rows.length > this.query.limit) {
-      this.rows.length = this.query.limit;
+    if (this.query.limit && this.items.length > this.query.limit) {
+      this.items.length = this.query.limit;
     }
   }
 }
