@@ -4,7 +4,10 @@ import { ServerException } from './server.exception';
 export class UniqueConstraint {
   protected index = new Map<string, number>();
 
-  constructor(protected name: string, protected columns: ColumnRef[]) {}
+  constructor(
+    protected name: string,
+    protected columns: ColumnRef[],
+  ) {}
 
   indexRow(id: number, row: object) {
     const entry = this.buildEntry(row);

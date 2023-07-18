@@ -82,19 +82,25 @@ export const functions: Record<string, FunctionHandler> = {
     if (group.length === 0) {
       return null;
     }
-    return group.reduce((res, row) => {
-      const value = e.evaluateExpression(getArgument(f), row);
-      return res > value ? res : value;
-    }, e.evaluateExpression(getArgument(f), group[0]));
+    return group.reduce(
+      (res, row) => {
+        const value = e.evaluateExpression(getArgument(f), row);
+        return res > value ? res : value;
+      },
+      e.evaluateExpression(getArgument(f), group[0]),
+    );
   },
   min: (e: Evaluator, f: FunctionType, row: object, group: object[]) => {
     if (group.length === 0) {
       return null;
     }
-    return group.reduce((res, row) => {
-      const value = e.evaluateExpression(getArgument(f), row);
-      return res < value ? res : value;
-    }, e.evaluateExpression(getArgument(f), group[0]));
+    return group.reduce(
+      (res, row) => {
+        const value = e.evaluateExpression(getArgument(f), row);
+        return res < value ? res : value;
+      },
+      e.evaluateExpression(getArgument(f), group[0]),
+    );
   },
   avg: (e: Evaluator, f: FunctionType, row: object, group: object[]) => {
     if (group.length === 0) {

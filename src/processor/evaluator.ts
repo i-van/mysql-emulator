@@ -8,7 +8,10 @@ import { SubQueryException } from './sub-query.exception';
 import { functions } from './functions';
 
 export class Evaluator {
-  constructor(protected server: Server, protected context: object = {}) {}
+  constructor(
+    protected server: Server,
+    protected context: object = {},
+  ) {}
 
   getServer() {
     return this.server;

@@ -23,7 +23,11 @@ export class SelectProcessor {
   protected columns: string[] = [];
   protected evaluator = new Evaluator(this.server, this.context);
 
-  constructor(protected server: Server, protected query: SelectQuery, protected context: object = {}) {}
+  constructor(
+    protected server: Server,
+    protected query: SelectQuery,
+    protected context: object = {},
+  ) {}
 
   process() {
     this.applyFrom();
