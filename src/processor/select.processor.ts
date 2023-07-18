@@ -298,7 +298,6 @@ export class SelectProcessor {
 
   protected applySelect() {
     const tableColumns = new Map<string | null, WithAlias<ColumnRef>[]>();
-    const allColumns: WithAlias<ColumnRef>[] = [];
     this.columns.forEach((key) => {
       const [table, column] = key.split('::');
       const columnRef: WithAlias<ColumnRef> = {
@@ -308,23 +307,20 @@ export class SelectProcessor {
         alias: null,
       };
       tableColumns.set(table, [...(tableColumns.get(table) || []), columnRef]);
-      allColumns.push(columnRef);
+      tableColumns.set(null, [...(tableColumns.get(null) || []), columnRef]);
+    });
+    const queryColumns: Exclude<SelectColumn, Star>[] = this.query.columns.flatMap((c) => {
+      if (c.type !== 'star') {
+        return c;
+      }
+      const columns = tableColumns.get(c.table);
+      if (!columns) {
+        throw new ProcessorException(`Unknown table '${c.table}'`);
+      }
+      return columns;
     });
     const mapRow = (rawRow: object, group: object[]): object => {
-      return this.query.columns.reduce((res, c) => {
-        if (c.type === 'star') {
-          const columns = c.table ? tableColumns.get(c.table) : allColumns;
-          if (!columns) {
-            throw new ProcessorException(`Unknown table '${c.table}'`);
-          }
-          return columns.reduce(
-            (res, c) => ({
-              ...res,
-              [c.column]: this.evaluator.evaluateExpression(c, rawRow, group),
-            }),
-            res,
-          );
-        }
+      return queryColumns.reduce((res, c) => {
         const value = this.evaluator.evaluateExpression(c, rawRow, group);
         return { ...res, [c.alias || c.column]: value };
       }, {});
@@ -341,9 +337,8 @@ export class SelectProcessor {
     }
     if (this.query.distinct && this.items.length > 0) {
       const index = new Set<string>();
-      const keys = Object.keys(this.items[0].result);
       this.items = this.items.filter((i) => {
-        const value = keys.map((key) => i.result[key]).join('-');
+        const value = queryColumns.map((c) => String(i.result[c.alias || c.column])).join('-');
         if (index.has(value)) {
           return false;
         }
