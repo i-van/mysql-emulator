@@ -89,8 +89,8 @@ export class SelectProcessor {
     expression: Expression | null,
     placeholderIfNoMatch: object | null = null,
   ): object[] {
-    return rowsA.reduce<object[]>((res: object[], rowA: object) => {
-      try {
+    try {
+      return rowsA.reduce<object[]>((res: object[], rowA: object) => {
         const group: object[] = [];
         for (const rowB of rowsB) {
           const mergedRow = { ...rowA, ...rowB };
@@ -102,13 +102,13 @@ export class SelectProcessor {
           group.push({ ...rowA, ...placeholderIfNoMatch });
         }
         return [...res, ...group];
-      } catch (err: any) {
-        if (err instanceof EvaluatorException) {
-          throw new ProcessorException(`${err.message} in 'on clause'`);
-        }
-        throw err;
+      }, []);
+    } catch (err: any) {
+      if (err instanceof EvaluatorException) {
+        throw new ProcessorException(`${err.message} in 'on clause'`);
       }
-    }, []);
+      throw err;
+    }
   }
 
   protected preSelectAliases(): void {
@@ -123,21 +123,21 @@ export class SelectProcessor {
     }
 
     const assignAliases = (rawRow: object, group: object[]): object => {
-      try {
-        return columnsWithAliases.reduce((res, c) => {
-          const value = this.evaluator.evaluateExpression(c, rawRow, group);
-          return { ...res, [`::${c.alias}`]: value };
-        }, rawRow);
-      } catch (err: any) {
-        if (err instanceof EvaluatorException) {
-          throw new ProcessorException(`${err.message} in 'field list'`);
-        }
-        throw err;
-      }
+      return columnsWithAliases.reduce((res, c) => {
+        const value = this.evaluator.evaluateExpression(c, rawRow, group);
+        return { ...res, [`::${c.alias}`]: value };
+      }, rawRow);
     };
-    this.items.forEach((i) => {
-      i.row = assignAliases(i.row, i.group);
-    });
+    try {
+      this.items.forEach((i) => {
+        i.row = assignAliases(i.row, i.group);
+      });
+    } catch (err: any) {
+      if (err instanceof EvaluatorException) {
+        throw new ProcessorException(`${err.message} in 'field list'`);
+      }
+      throw err;
+    }
   }
 
   protected applyWhere(): void {
@@ -311,34 +311,34 @@ export class SelectProcessor {
       allColumns.push(columnRef);
     });
     const mapRow = (rawRow: object, group: object[]): object => {
-      try {
-        return this.query.columns.reduce((res, c) => {
-          if (c.type === 'star') {
-            const columns = c.table ? tableColumns.get(c.table) : allColumns;
-            if (!columns) {
-              throw new ProcessorException(`Unknown table '${c.table}'`);
-            }
-            return columns.reduce(
-              (res, c) => ({
-                ...res,
-                [c.column]: this.evaluator.evaluateExpression(c, rawRow, group),
-              }),
-              res,
-            );
+      return this.query.columns.reduce((res, c) => {
+        if (c.type === 'star') {
+          const columns = c.table ? tableColumns.get(c.table) : allColumns;
+          if (!columns) {
+            throw new ProcessorException(`Unknown table '${c.table}'`);
           }
-          const value = this.evaluator.evaluateExpression(c, rawRow, group);
-          return { ...res, [c.alias || c.column]: value };
-        }, {});
-      } catch (err: any) {
-        if (err instanceof EvaluatorException) {
-          throw new ProcessorException(`${err.message} in 'field list'`);
+          return columns.reduce(
+            (res, c) => ({
+              ...res,
+              [c.column]: this.evaluator.evaluateExpression(c, rawRow, group),
+            }),
+            res,
+          );
         }
-        throw err;
-      }
+        const value = this.evaluator.evaluateExpression(c, rawRow, group);
+        return { ...res, [c.alias || c.column]: value };
+      }, {});
     };
-    this.items.forEach((i) => {
-      i.result = mapRow(i.row, i.group);
-    });
+    try {
+      this.items.forEach((i) => {
+        i.result = mapRow(i.row, i.group);
+      });
+    } catch (err: any) {
+      if (err instanceof EvaluatorException) {
+        throw new ProcessorException(`${err.message} in 'field list'`);
+      }
+      throw err;
+    }
     if (this.query.distinct && this.items.length > 0) {
       const index = new Set<string>();
       const keys = Object.keys(this.items[0].result);
