@@ -21,6 +21,7 @@ class Item {
 export class SelectProcessor {
   protected items: Item[] = [];
   protected columns: string[] = [];
+  protected tableColumns = new Map<string | null, WithAlias<ColumnRef>[]>();
   protected evaluator = new Evaluator(this.server, this.context);
 
   constructor(
@@ -52,22 +53,38 @@ export class SelectProcessor {
     let joinedRows: object[] = [];
     this.query.from.forEach((from, i) => {
       let rows: object[];
-      let columns: string[];
+      let columnRefs: WithAlias<ColumnRef>[];
       if (from.type === 'select') {
         if (!from.alias) {
           throw new SubQueryException('Every derived table must have its own alias');
         }
         const p = new SelectProcessor(this.server, from.query);
-        rows = p.process().map((r) => mapKeys(r, (key) => `${from.alias}::${key}`));
-        columns = rows.length ? Object.keys(rows[0]) : [];
+        const queryRows = p.process();
+        const keys = queryRows.length ? Object.keys(queryRows[0]) : [];
+        rows = queryRows.map((r) => mapKeys(r, (key) => `${from.alias}::${key}`));
+        columnRefs = keys.map((key) => ({
+          type: 'column_ref',
+          table: from.alias,
+          column: key,
+          alias: null,
+        }));
       } else {
+        const tableAlias = from.alias || from.table;
         const table = this.server.getDatabase(from.database).getTable(from.table);
-        const keyMapper = (key: string) => `${from.alias || from.table}::${key}`;
-        rows = [...table.getRows()].map(([k, r]) => mapKeys(r, keyMapper));
-        columns = table.getColumns().map((c) => keyMapper(c.getName()));
+        rows = [...table.getRows()].map(([k, r]) => mapKeys(r, (key) => `${tableAlias}::${key}`));
+        columnRefs = table.getColumns().map((c) => ({
+          type: 'column_ref',
+          table: tableAlias,
+          column: c.getName(),
+          alias: null,
+        }));
       }
 
-      this.columns.push(...columns);
+      columnRefs.forEach((columnRef) => {
+        this.columns.push(`${columnRef.table}::${columnRef.column}`);
+        this.tableColumns.set(null, [...(this.tableColumns.get(null) || []), columnRef]);
+        this.tableColumns.set(columnRef.table, [...(this.tableColumns.get(columnRef.table) || []), columnRef]);
+      });
       if (i === 0) {
         joinedRows = rows;
       } else if (from.join === null) {
@@ -78,7 +95,7 @@ export class SelectProcessor {
       } else if (from.join === 'INNER JOIN') {
         joinedRows = this.joinRows(joinedRows, rows, from.on);
       } else if (from.join === 'LEFT JOIN') {
-        const placeholder = columns.reduce((res, key) => ({ ...res, [key]: null }), {});
+        const placeholder = columnRefs.reduce((res, c) => ({ ...res, [`${c.table}::${c.column}`]: null }), {});
         joinedRows = this.joinRows(joinedRows, rows, from.on, placeholder);
       } else {
         throw new ProcessorException(`Unknown "${from.join}" join type`);
@@ -301,23 +318,11 @@ export class SelectProcessor {
   }
 
   protected applySelect() {
-    const tableColumns = new Map<string | null, WithAlias<ColumnRef>[]>();
-    this.columns.forEach((key) => {
-      const [table, column] = key.split('::');
-      const columnRef: WithAlias<ColumnRef> = {
-        type: 'column_ref',
-        table,
-        column,
-        alias: null,
-      };
-      tableColumns.set(table, [...(tableColumns.get(table) || []), columnRef]);
-      tableColumns.set(null, [...(tableColumns.get(null) || []), columnRef]);
-    });
     const queryColumns: Exclude<SelectColumn, Star>[] = this.query.columns.flatMap((c) => {
       if (c.type !== 'star') {
         return c;
       }
-      const columns = tableColumns.get(c.table);
+      const columns = this.tableColumns.get(c.table);
       if (!columns) {
         throw new ProcessorException(`Unknown table '${c.table}'`);
       }
