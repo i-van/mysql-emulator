@@ -1,12 +1,23 @@
 import { Server } from '../server';
-import { ColumnRef, Expression, GroupBy, OrderBy, SelectColumn, SelectQuery, Star, WithAlias } from '../parser';
-import { extractColumn, extractTable, hashCode, mapKeys, sortBy, SortByKey } from '../utils';
+import {
+  ColumnRef,
+  Expression,
+  FunctionType,
+  GroupBy,
+  OrderBy,
+  SelectColumn,
+  SelectQuery,
+  Star,
+  WithAlias,
+} from '../parser';
+import { extractColumn, hashCode, mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
 import { EvaluatorException } from './evaluator.exception';
 import { SubQueryException } from './sub-query.exception';
+import { findExpression } from './expression-finder';
 
-const isAggregateFunction = (e: Expression): boolean => {
+const isAggregateFunction = (e: Expression): e is FunctionType => {
   return e.type === 'function' && ['count', 'sum', 'min', 'max', 'avg'].includes(e.name);
 };
 
@@ -179,47 +190,51 @@ export class SelectProcessor {
 
   protected applyGroupBy(): void {
     if (this.query.groupBy.length === 0) {
-      // todo: deep search
-      const hasAggregateFunction = this.query.columns.some(isAggregateFunction);
-      if (!hasAggregateFunction) {
+      const aggregateColumnIndexes = new Set<string>();
+      for (const index in this.query.columns) {
+        const column = this.query.columns[index];
+        const aggregateFunction = findExpression(column, isAggregateFunction);
+        if (aggregateFunction) {
+          aggregateColumnIndexes.add(index);
+        }
+      }
+      if (aggregateColumnIndexes.size === 0) {
         return;
       }
 
-      // todo: deep search
-      const columnRef = this.query.columns.find((c): c is WithAlias<ColumnRef> => c.type === 'column_ref');
-      if (columnRef) {
-        const columnName = columnRef.table
-          ? `${columnRef.table}::${columnRef.column}`
-          : this.columns.find((key) => extractColumn(key) === columnRef.column);
-        if (!columnName || !this.columns.includes(columnName)) {
-          const name = columnRef.table ? `${columnRef.table}.${columnRef.column}` : columnRef.column;
-          throw new ProcessorException(`Unknown column '${name}' in 'field list'`);
+      for (const index in this.query.columns) {
+        if (aggregateColumnIndexes.has(index)) {
+          continue;
         }
-        const columnRefIndex = this.query.columns.indexOf(columnRef);
-        // todo: prepend database name to column name
-        throw new ProcessorException(
-          `In aggregated query without GROUP BY, ` +
-            `expression #${columnRefIndex + 1} of SELECT list contains ` +
-            `nonaggregated column '${columnName.replace('::', '.')}'`,
-        );
-      }
-      const star = this.query.columns.find((c): c is Star => c.type === 'star');
-      if (star) {
-        let columnName = this.columns.find((key) => (star.table ? star.table === extractTable(key) : true));
-        if (!columnName) {
-          columnName = this.columns[0];
+        const column = this.query.columns[index];
+        if (column.type === 'star') {
+          const columns = this.tableColumns.get(column.table);
+          if (!columns) {
+            throw new ProcessorException(`Unknown table '${column.table}'`);
+          }
+          // todo: prepend database name to column name
+          throw new ProcessorException(
+            `In aggregated query without GROUP BY, ` +
+              `expression #${Number(index) + 1} of SELECT list contains ` +
+              `nonaggregated column '${columns[0].table}.${columns[0].column}'`,
+          );
         }
-        // todo: it won't happen, there should be some error
-        if (!columnName) {
-          columnName = star.table ? `${star.table}::*` : '*';
+        const columnRef = findExpression(column, (e): e is ColumnRef => e.type === 'column_ref');
+        if (columnRef) {
+          const columnName = columnRef.table
+            ? `${columnRef.table}::${columnRef.column}`
+            : this.columns.find((key) => extractColumn(key) === columnRef.column);
+          if (!columnName || (columnRef.table && !this.columns.includes(columnName))) {
+            const name = columnRef.table ? `${columnRef.table}.${columnRef.column}` : columnRef.column;
+            throw new ProcessorException(`Unknown column '${name}' in 'field list'`);
+          }
+          // todo: prepend database name to column name
+          throw new ProcessorException(
+            `In aggregated query without GROUP BY, ` +
+              `expression #${Number(index) + 1} of SELECT list contains ` +
+              `nonaggregated column '${columnName.replace('::', '.')}'`,
+          );
         }
-        const starIndex = this.query.columns.indexOf(star);
-        // todo: prepend database name to column name
-        throw new ProcessorException(
-          `In aggregated query without GROUP BY, ` +
-            `expression #${starIndex + 1} of SELECT list contains ` +
-            `nonaggregated column '${columnName.replace('::', '.')}'`,
-        );
       }
 
       const rows = this.items.map((i) => i.row);
@@ -228,7 +243,6 @@ export class SelectProcessor {
     }
 
     try {
-      // todo: deep search
       const groupBy = this.query.groupBy.map((g: GroupBy) => {
         if (g.type === 'number') {
           const column = this.query.columns[g.value - 1];
@@ -244,7 +258,8 @@ export class SelectProcessor {
           }
           return column;
         }
-        if (isAggregateFunction(g)) {
+        const aggregateFunction = findExpression(g, isAggregateFunction);
+        if (aggregateFunction) {
           throw new ProcessorException(`Can't group on '${g.column}'`);
         }
         return g;
