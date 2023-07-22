@@ -1,8 +1,16 @@
 import { Server } from '../server';
 import { UpdateQuery } from '../parser';
-import { mapKeys } from '../utils';
+import { mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { castValue, createColumnDefinitionGetter, createCurrentTimestampApplier } from './helpers';
+import { ProcessorException } from './processor.exception';
+import { EvaluatorException } from './evaluator.exception';
+
+type Item = {
+  id: number;
+  row: object;
+  rawRow: object;
+};
 
 export class UpdateProcessor {
   protected evaluator = new Evaluator(this.server);
@@ -16,13 +24,23 @@ export class UpdateProcessor {
     const getColumnDefinition = createColumnDefinitionGetter(columnDefinitions);
     const applyCurrentTimestamp = createCurrentTimestampApplier(columnDefinitions, query.assignments);
 
+    const items: Item[] = [];
+    table.getRows().forEach((row, id) => {
+      items.push({
+        id,
+        row,
+        rawRow: mapKeys(row, keyMapper),
+      });
+    });
+    this.applyOrderBy(items, query);
+    this.applyLimit(items, query);
+
     let changedRows = 0;
     let affectedRows = 0;
-    table.getRows().forEach((existingRow, id) => {
-      const rawRow = mapKeys(existingRow, keyMapper);
+    for (const { id, row: existingRow, rawRow } of items) {
       const needsUpdate = query.where === null || this.evaluator.evaluateExpression(query.where, rawRow);
       if (!needsUpdate) {
-        return;
+        continue;
       }
 
       affectedRows++;
@@ -36,13 +54,38 @@ export class UpdateProcessor {
       }, existingRow);
 
       if (existingRow === updatedRow) {
-        return;
+        continue;
       }
 
       changedRows++;
       table.updateRow(id, applyCurrentTimestamp(updatedRow));
-    });
+    }
 
     return { affectedRows, changedRows };
+  }
+
+  protected applyOrderBy(items: Item[], query: UpdateQuery): void {
+    if (query.orderBy.length === 0) {
+      return;
+    }
+
+    try {
+      const sortKeys: SortByKey[] = query.orderBy.map((o) => ({
+        mapper: (i: Item) => this.evaluator.evaluateExpression(o, i.rawRow),
+        order: o.order === 'ASC' ? 1 : -1,
+      }));
+      items.sort(sortBy(sortKeys));
+    } catch (err: any) {
+      if (err instanceof EvaluatorException) {
+        throw new ProcessorException(`${err.message} in 'order clause'`);
+      }
+      throw err;
+    }
+  }
+
+  protected applyLimit(items: Item[], query: UpdateQuery): void {
+    if (query.limit && items.length > query.limit) {
+      items.length = query.limit;
+    }
   }
 }

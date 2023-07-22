@@ -134,4 +134,16 @@ describe('update', () => {
       { id: 3, name: 'booklet3', updated_at: new Date('2023-02-03 04:05:06') },
     ]);
   });
+  it('should apply ORDER BY and LIMIT', async () => {
+    const res = await query(`UPDATE books b SET b.pages = 500 ORDER BY b.id DESC LIMIT 2`);
+    const rows = await query(`SELECT * from books`);
+
+    expect(res.changedRows).toEqual(1);
+    expect(res.affectedRows).toEqual(2);
+    expect(rows).toEqual([
+      { id: 1, name: 'name1', pages: 100 },
+      { id: 2, name: 'name2', pages: 500 },
+      { id: 3, name: 'name3', pages: 500 },
+    ]);
+  });
 });
