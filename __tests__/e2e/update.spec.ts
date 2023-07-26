@@ -146,4 +146,16 @@ describe('update', () => {
       { id: 3, name: 'name3', pages: 500 },
     ]);
   });
+  it('should apply ORDER BY and LIMIT with WHERE', async () => {
+    const res = await query(`UPDATE books b SET b.pages = 600 WHERE b.pages <= 300 ORDER BY b.id DESC LIMIT 1`);
+    const rows = await query(`SELECT * from books`);
+
+    expect(res.changedRows).toEqual(1);
+    expect(res.affectedRows).toEqual(1);
+    expect(rows).toEqual([
+      { id: 1, name: 'name1', pages: 100 },
+      { id: 2, name: 'name2', pages: 600 },
+      { id: 3, name: 'name3', pages: 500 },
+    ]);
+  });
 });
