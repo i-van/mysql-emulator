@@ -22,7 +22,7 @@ It means that some features are not working and may be considered as invalid syn
 - [ ] `ALTER` statement (in most cases `ALTER` even is not needed, `synchronize` will do all the work)
 - [ ] Foreign key constraints
 - [ ] Fill `INFORMATION_SCHEMA` tables
-- [ ] `DELETE ORDER BY field LIMIT number`
+- [x] `DELETE ORDER BY field LIMIT number`
 - [x] `UPDATE ORDER BY field LIMIT number`
 - [x] `SELECT GROUP BY position/alias`
 - [x] `SELECT ORDER BY position/alias`
