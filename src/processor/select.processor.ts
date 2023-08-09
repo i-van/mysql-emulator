@@ -193,8 +193,8 @@ export class SelectProcessor {
 
   protected applyGroupBy(): void {
     if (this.query.groupBy.length === 0) {
-      const aggregateColumnIndexes = new Set<string>();
-      for (const index in this.query.columns) {
+      const aggregateColumnIndexes = new Set<number>();
+      for (let index = 0; index < this.query.columns.length; index++) {
         const column = this.query.columns[index];
         const aggregateFunction = findExpression(column, isAggregateFunction);
         if (aggregateFunction) {
@@ -205,7 +205,7 @@ export class SelectProcessor {
         return;
       }
 
-      for (const index in this.query.columns) {
+      for (let index = 0; index < this.query.columns.length; index++) {
         if (aggregateColumnIndexes.has(index)) {
           continue;
         }
@@ -218,7 +218,7 @@ export class SelectProcessor {
           // todo: prepend database name to column name
           throw new ProcessorException(
             `In aggregated query without GROUP BY, ` +
-              `expression #${Number(index) + 1} of SELECT list contains ` +
+              `expression #${index + 1} of SELECT list contains ` +
               `nonaggregated column '${columns[0].table}.${columns[0].column}'`,
           );
         }
@@ -234,7 +234,7 @@ export class SelectProcessor {
           // todo: prepend database name to column name
           throw new ProcessorException(
             `In aggregated query without GROUP BY, ` +
-              `expression #${Number(index) + 1} of SELECT list contains ` +
+              `expression #${index + 1} of SELECT list contains ` +
               `nonaggregated column '${columnKey.replace('::', '.')}'`,
           );
         }
