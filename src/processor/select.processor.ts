@@ -10,7 +10,7 @@ import {
   Star,
   WithAlias,
 } from '../parser';
-import { extractColumn, hashCode, mapKeys, sortBy, SortByKey } from '../utils';
+import { hashCode, mapKeys, sortBy, SortByKey } from '../utils';
 import { Evaluator } from './evaluator';
 import { ProcessorException } from './processor.exception';
 import { EvaluatorException } from './evaluator.exception';
@@ -31,7 +31,7 @@ class Item {
 
 export class SelectProcessor {
   protected items: Item[] = [];
-  protected columns: string[] = [];
+  protected columns = new Map<string, string>();
   protected tableColumns = new Map<string | null, WithAlias<ColumnRef>[]>();
   protected evaluator = new Evaluator(this.server, this.context);
 
@@ -92,7 +92,10 @@ export class SelectProcessor {
       }
 
       columnRefs.forEach((columnRef) => {
-        this.columns.push(`${columnRef.table}::${columnRef.column}`);
+        const columnKey = `${columnRef.table}::${columnRef.column}`;
+        this.columns.set(columnRef.column, columnKey);
+        this.columns.set(columnKey, columnKey);
+
         this.tableColumns.set(null, [...(this.tableColumns.get(null) || []), columnRef]);
         this.tableColumns.set(columnRef.table, [...(this.tableColumns.get(columnRef.table) || []), columnRef]);
       });
@@ -221,10 +224,10 @@ export class SelectProcessor {
         }
         const columnRef = findExpression(column, (e): e is ColumnRef => e.type === 'column_ref');
         if (columnRef) {
-          const columnName = columnRef.table
+          const columnKey = columnRef.table
             ? `${columnRef.table}::${columnRef.column}`
-            : this.columns.find((key) => extractColumn(key) === columnRef.column);
-          if (!columnName || (columnRef.table && !this.columns.includes(columnName))) {
+            : this.columns.get(columnRef.column);
+          if (!columnKey || !this.columns.has(columnKey)) {
             const name = columnRef.table ? `${columnRef.table}.${columnRef.column}` : columnRef.column;
             throw new ProcessorException(`Unknown column '${name}' in 'field list'`);
           }
@@ -232,7 +235,7 @@ export class SelectProcessor {
           throw new ProcessorException(
             `In aggregated query without GROUP BY, ` +
               `expression #${Number(index) + 1} of SELECT list contains ` +
-              `nonaggregated column '${columnName.replace('::', '.')}'`,
+              `nonaggregated column '${columnKey.replace('::', '.')}'`,
           );
         }
       }
