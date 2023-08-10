@@ -1,4 +1,4 @@
-import { DeleteQuery, Parser, UpdateQuery } from '../../src/parser';
+import { DeleteQuery, Parser } from '../../src/parser';
 
 describe('delete query', () => {
   const parser = new Parser();
