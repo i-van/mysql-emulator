@@ -67,15 +67,14 @@ export class UpdateProcessor {
     }
 
     try {
-      let i = 0;
-      while (i < items.length) {
-        const { rawRow } = items[i];
-        if (this.evaluator.evaluateExpression(where, rawRow)) {
-          i++;
-        } else {
-          items.splice(i, 1);
+      let j = 0;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (this.evaluator.evaluateExpression(where, item.rawRow)) {
+          items[j++] = item;
         }
       }
+      items.length = j;
     } catch (err: any) {
       if (err instanceof EvaluatorException) {
         throw new ProcessorException(`${err.message} in 'where clause'`);
