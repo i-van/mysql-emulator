@@ -196,4 +196,37 @@ describe('create table query', () => {
       },
     ]);
   });
+  it('should parse FOREIGN KEY', () => {
+    const sql = `
+      CREATE TABLE companies (
+        \`user_id\` int UNSIGNED NOT NULL,
+        CONSTRAINT FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`)
+        ON UPDATE CASCADE ON DELETE SET NULL
+      )
+    `;
+    const res = parser.parse(sql, []) as CreateTableQuery;
+
+    expect(res).toBeInstanceOf(CreateTableQuery);
+    expect(res.database).toBe(null);
+    expect(res.table).toBe('companies');
+    expect(res.constraints).toEqual([
+      {
+        name: 'companies_ibfk_1',
+        type: 'foreign_key',
+        columns: [
+          { type: 'column_ref', table: null, column: 'user_id' },
+        ],
+        reference: {
+          table: 'users',
+          columns: [
+            { type: 'column_ref', table: null, column: 'id' },
+          ],
+          actions: [
+            { type: 'on update', value: 'cascade' },
+            { type: 'on delete', value: 'set null' },
+          ],
+        },
+      },
+    ]);
+  });
 });

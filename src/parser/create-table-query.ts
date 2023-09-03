@@ -1,5 +1,6 @@
 import { Create } from 'node-sql-parser';
 import { buildExpression, ColumnRef, Expression } from './expression';
+import { ParserException } from './parser.exception';
 
 export type DataType =
   | 'TINYINT'
@@ -40,11 +41,25 @@ export type CreateColumn = {
   autoIncrement: boolean | null;
   onUpdateCurrentTimestamp: boolean | null;
 };
-export type CreateConstraint = {
+type IndexConstraint = {
   name: string;
   type: 'primary_key' | 'unique_index';
   columns: ColumnRef[];
 };
+type ForeignKeyConstraint = {
+  name: string;
+  type: 'foreign_key';
+  columns: ColumnRef[];
+  reference: {
+    table: string;
+    columns: ColumnRef[];
+    actions: {
+      type: 'on update' | 'on delete';
+      value: 'restrict' | 'cascade' | 'set null' | 'no action' | 'set default';
+    }[];
+  };
+}
+export type CreateConstraint = IndexConstraint | ForeignKeyConstraint;
 type ColumnDefinition = {
   column: ColumnRef;
   definition: {
@@ -70,19 +85,70 @@ type ColumnDefinition = {
     on_action: { type: 'on update'; value: 'current_timestamp' }[];
   };
 };
-type ConstraintDefinition = {
+type IndexDefinition = {
   definition: ColumnRef[];
   constraint_type: 'primary key' | 'unique key' | 'unique index';
   index?: string;
   resource: 'constraint';
 };
-type CreateDefinition = ColumnDefinition | ConstraintDefinition;
-
-const constraintTypeMap: Record<ConstraintDefinition['constraint_type'], CreateConstraint['type']> = {
-  'primary key': 'primary_key',
-  'unique key': 'unique_index',
-  'unique index': 'unique_index',
+type ForeignKeyDefinition = {
+  definition: ColumnRef[];
+  constraint_type: 'foreign key';
+  constraint?: string;
+  resource: 'constraint';
+  reference_definition: {
+    definition: ColumnRef[];
+    table: {
+      db: null;
+      table: string;
+      as: null;
+    }[];
+    on_action: {
+      type: 'on update' | 'on delete';
+      value: { type: 'origin', value: 'restrict' | 'cascade' | 'set null' | 'no action' | 'set default' };
+    }[];
+  };
 };
+type CreateDefinition = ColumnDefinition | IndexDefinition | ForeignKeyDefinition;
+
+const isForeignKeyDefinition = (d: IndexDefinition | ForeignKeyDefinition): d is ForeignKeyDefinition => {
+  return d.constraint_type.toLowerCase() === 'foreign key';
+};
+
+const buildConstraint = (
+  d: IndexDefinition | ForeignKeyDefinition,
+  foreignKeyNameGenerator: () => string,
+): CreateConstraint => {
+  if (d.constraint_type === 'primary key') {
+    return {
+      name: 'PRIMARY',
+      type: 'primary_key',
+      columns: d.definition.map(buildExpression) as ColumnRef[],
+    };
+  } else if (d.constraint_type === 'unique key' || d.constraint_type === 'unique index') {
+    return {
+      name: d.index || d.definition[0].column,
+      type: 'unique_index',
+      columns: d.definition.map(buildExpression) as ColumnRef[],
+    };
+  } else if (isForeignKeyDefinition(d)) {
+    return {
+      name: d.constraint || foreignKeyNameGenerator(),
+      type: 'foreign_key',
+      columns: d.definition.map(buildExpression) as ColumnRef[],
+      reference: {
+        table: d.reference_definition.table[0].table,
+        columns: d.reference_definition.definition.map(buildExpression) as ColumnRef[],
+        actions: (d.reference_definition.on_action || []).map((a) => ({
+          type: a.type,
+          value: a.value.value,
+        })),
+      },
+    };
+  } else {
+    throw new ParserException(`Unknown constraint type ${d.constraint_type}`);
+  }
+}
 
 export class CreateTableQuery {
   constructor(
@@ -95,6 +161,9 @@ export class CreateTableQuery {
 
   static fromAst(ast: Create): CreateTableQuery {
     const [{ db, table }] = ast.table!;
+
+    let id = 0;
+    const createForeignKeyName = () => `${table}_ibfk_${++id}`;
 
     const columns: CreateColumn[] = [];
     const constraints: CreateConstraint[] = [];
@@ -115,22 +184,8 @@ export class CreateTableQuery {
               ? true
               : null,
         });
-      } else if (c.resource === 'constraint' && constraintTypeMap[c.constraint_type] === 'primary_key') {
-        constraints.push({
-          name: 'PRIMARY',
-          type: 'primary_key',
-          columns: c.definition.map((d) => {
-            return buildExpression(d) as ColumnRef;
-          }),
-        });
-      } else if (c.resource === 'constraint' && constraintTypeMap[c.constraint_type] === 'unique_index') {
-        constraints.push({
-          name: c.index || c.definition[0].column,
-          type: 'unique_index',
-          columns: c.definition.map((d) => {
-            return buildExpression(d) as ColumnRef;
-          }),
-        });
+      } else if (c.resource === 'constraint') {
+        constraints.push(buildConstraint(c, createForeignKeyName));
       }
     }
 
