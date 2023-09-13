@@ -27,7 +27,7 @@ export class CreateTableProcessor {
         table.addColumn(this.buildColumn(column));
       }
       for (const constraint of query.constraints) {
-        if (constraint.type === 'primary_key' || constraint.type === 'unique_index') {
+        if (constraint.type === 'primary_key' || constraint.type === 'unique_key') {
           const name = `${query.table}.${constraint.name}`;
           table.addUniqueKey(new UniqueKey(name, constraint.columns));
         } else if (constraint.type === 'foreign_key') {

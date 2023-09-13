@@ -41,9 +41,9 @@ export type CreateColumn = {
   autoIncrement: boolean | null;
   onUpdateCurrentTimestamp: boolean | null;
 };
-type IndexConstraint = {
+type UniqueKeyConstraint = {
   name: string;
-  type: 'primary_key' | 'unique_index';
+  type: 'primary_key' | 'unique_key';
   columns: ColumnRef[];
 };
 type ForeignKeyConstraint = {
@@ -59,7 +59,7 @@ type ForeignKeyConstraint = {
     }[];
   };
 }
-export type CreateConstraint = IndexConstraint | ForeignKeyConstraint;
+export type CreateConstraint = UniqueKeyConstraint | ForeignKeyConstraint;
 type ColumnDefinition = {
   column: ColumnRef;
   definition: {
@@ -85,7 +85,7 @@ type ColumnDefinition = {
     on_action: { type: 'on update'; value: 'current_timestamp' }[];
   };
 };
-type IndexDefinition = {
+type KeyDefinition = {
   definition: ColumnRef[];
   constraint_type: 'primary key' | 'unique key' | 'unique index';
   index?: string;
@@ -109,14 +109,14 @@ type ForeignKeyDefinition = {
     }[];
   };
 };
-type CreateDefinition = ColumnDefinition | IndexDefinition | ForeignKeyDefinition;
+type CreateDefinition = ColumnDefinition | KeyDefinition | ForeignKeyDefinition;
 
-const isForeignKeyDefinition = (d: IndexDefinition | ForeignKeyDefinition): d is ForeignKeyDefinition => {
+const isForeignKeyDefinition = (d: KeyDefinition | ForeignKeyDefinition): d is ForeignKeyDefinition => {
   return d.constraint_type.toLowerCase() === 'foreign key';
 };
 
 const buildConstraint = (
-  d: IndexDefinition | ForeignKeyDefinition,
+  d: KeyDefinition | ForeignKeyDefinition,
   foreignKeyNameGenerator: () => string,
 ): CreateConstraint => {
   if (d.constraint_type === 'primary key') {
@@ -128,7 +128,7 @@ const buildConstraint = (
   } else if (d.constraint_type === 'unique key' || d.constraint_type === 'unique index') {
     return {
       name: d.index || d.definition[0].column,
-      type: 'unique_index',
+      type: 'unique_key',
       columns: d.definition.map(buildExpression) as ColumnRef[],
     };
   } else if (isForeignKeyDefinition(d)) {

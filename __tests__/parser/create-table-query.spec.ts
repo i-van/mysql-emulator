@@ -96,7 +96,7 @@ describe('create table query', () => {
         columns: [{ type: 'column_ref', table: null, column: 'id' }],
       },
       {
-        type: 'unique_index',
+        type: 'unique_key',
         name: 'id_name_idx',
         columns: [
           { type: 'column_ref', table: null, column: 'id' },
