@@ -10,7 +10,7 @@ import {
 } from '../server';
 import { CreateColumn, CreateTableQuery } from '../parser';
 import { Evaluator } from './evaluator';
-import { UniqueConstraint } from '../server/unique-constraint';
+import { UniqueKey } from '../server/unique-key';
 import { ProcessorException } from './processor.exception';
 
 export class CreateTableProcessor {
@@ -27,8 +27,12 @@ export class CreateTableProcessor {
         table.addColumn(this.buildColumn(column));
       }
       for (const constraint of query.constraints) {
-        const name = `${query.table}.${constraint.name}`;
-        table.addConstraint(new UniqueConstraint(name, constraint.columns));
+        if (constraint.type === 'primary_key' || constraint.type === 'unique_index') {
+          const name = `${query.table}.${constraint.name}`;
+          table.addUniqueKey(new UniqueKey(name, constraint.columns));
+        } else if (constraint.type === 'foreign_key') {
+
+        }
       }
     } catch (err: any) {
       if (err.code === 'TABLE_EXISTS' && query.ifNotExists) {

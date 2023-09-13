@@ -1,9 +1,9 @@
 import { Column } from './column';
-import { UniqueConstraint } from './unique-constraint';
+import { UniqueKey } from './unique-key';
 import { ServerException } from './server.exception';
 
 export class Table {
-  protected constraints: UniqueConstraint[] = [];
+  protected uniqueKeys: UniqueKey[] = [];
   protected columns: Column[] = [];
   protected rows = new Map<number, object>();
   protected cursor = 0;
@@ -22,31 +22,31 @@ export class Table {
     return this.columns;
   }
 
-  addConstraint(c: UniqueConstraint) {
-    this.constraints.push(c);
+  addUniqueKey(c: UniqueKey) {
+    this.uniqueKeys.push(c);
   }
 
   insertRow(row: object) {
     const id = ++this.cursor;
-    for (const constraint of this.constraints) {
-      constraint.indexRow(id, row);
+    for (const uniqueKey of this.uniqueKeys) {
+      uniqueKey.indexRow(id, row);
     }
     this.rows.set(id, row);
   }
 
   updateRow(id: number, newRow: object) {
     const existingRow = this.getRow(id);
-    for (const constraint of this.constraints) {
-      constraint.unindexRow(existingRow);
-      constraint.indexRow(id, newRow);
+    for (const uniqueKey of this.uniqueKeys) {
+      uniqueKey.unindexRow(existingRow);
+      uniqueKey.indexRow(id, newRow);
     }
     this.rows.set(id, newRow);
   }
 
   deleteRow(id: number) {
     const row = this.getRow(id);
-    for (const constraint of this.constraints) {
-      constraint.unindexRow(row);
+    for (const uniqueKey of this.uniqueKeys) {
+      uniqueKey.unindexRow(row);
     }
     this.rows.delete(id);
   }
@@ -56,8 +56,8 @@ export class Table {
   }
 
   setRows(rows: object[]) {
-    for (const constraint of this.constraints) {
-      constraint.clearIndex();
+    for (const uniqueKey of this.uniqueKeys) {
+      uniqueKey.clearIndex();
     }
     this.rows.clear();
     for (const row of rows) {

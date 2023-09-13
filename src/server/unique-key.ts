@@ -1,7 +1,7 @@
 import { ColumnRef } from '../parser';
 import { ServerException } from './server.exception';
 
-export class UniqueConstraint {
+export class UniqueKey {
   protected index = new Map<string, number>();
 
   constructor(
