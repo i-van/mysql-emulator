@@ -1,6 +1,6 @@
 import { query } from '../../src';
 
-describe('unique-constraint', () => {
+describe('unique-key', () => {
   beforeEach(async () => {
     await query(`
       CREATE TABLE reviewers (
