@@ -10,4 +10,9 @@ export class FloatColumn extends Column {
   ) {
     super(name, nullable, defaultValue);
   }
+
+  compareTo(c: Column): boolean {
+    return c instanceof FloatColumn
+      && this.unsigned === c.unsigned;
+  }
 }

@@ -22,4 +22,8 @@ export class Column {
   getDefaultValueExpression() {
     return this.defaultValue;
   }
+
+  compareTo(c: Column): boolean {
+    return c instanceof this.constructor;
+  }
 }

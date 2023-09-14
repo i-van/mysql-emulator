@@ -1,8 +1,10 @@
 import { Column } from './column';
 import { UniqueKey } from './unique-key';
 import { ServerException } from './server.exception';
+import { ForeignKey } from './foreign-key';
 
 export class Table {
+  protected foreignKeys: ForeignKey[] = [];
   protected uniqueKeys: UniqueKey[] = [];
   protected columns: Column[] = [];
   protected rows = new Map<number, object>();
@@ -22,8 +24,12 @@ export class Table {
     return this.columns;
   }
 
-  addUniqueKey(c: UniqueKey) {
-    this.uniqueKeys.push(c);
+  addForeignKey(fk: ForeignKey) {
+    this.foreignKeys.push(fk);
+  }
+
+  addUniqueKey(uk: UniqueKey) {
+    this.uniqueKeys.push(uk);
   }
 
   insertRow(row: object) {

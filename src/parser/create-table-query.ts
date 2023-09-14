@@ -46,7 +46,7 @@ type UniqueKeyConstraint = {
   type: 'primary_key' | 'unique_key';
   columns: ColumnRef[];
 };
-type ForeignKeyConstraint = {
+export type ForeignKeyConstraint = {
   name: string;
   type: 'foreign_key';
   columns: ColumnRef[];

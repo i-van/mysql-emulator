@@ -1,5 +1,6 @@
 import {
   Column,
+  Database,
   DateColumn,
   DecimalColumn,
   EnumColumn,
@@ -7,11 +8,13 @@ import {
   IntegerColumn,
   Server,
   StringColumn,
+  Table,
 } from '../server';
-import { CreateColumn, CreateTableQuery } from '../parser';
+import { CreateColumn, CreateTableQuery, ForeignKeyConstraint } from '../parser';
 import { Evaluator } from './evaluator';
 import { UniqueKey } from '../server/unique-key';
 import { ProcessorException } from './processor.exception';
+import { ForeignKey } from '../server/foreign-key';
 
 export class CreateTableProcessor {
   protected evaluator = new Evaluator(this.server);
@@ -31,7 +34,7 @@ export class CreateTableProcessor {
           const name = `${query.table}.${constraint.name}`;
           table.addUniqueKey(new UniqueKey(name, constraint.columns));
         } else if (constraint.type === 'foreign_key') {
-
+          table.addForeignKey(this.buildForeignKey(db, table, constraint));
         }
       }
     } catch (err: any) {
@@ -41,6 +44,49 @@ export class CreateTableProcessor {
       db.dropTable(query.table, true);
       throw err;
     }
+  }
+
+  private buildForeignKey(db: Database, table: Table, fk: ForeignKeyConstraint): ForeignKey {
+    let referencedTable: Table;
+    try {
+      referencedTable = db.getTable(fk.reference.table);
+    } catch (err: any) {
+      if (err.code === 'TABLE_DOES_NOT_EXIST') {
+        throw new ProcessorException(`Failed to open the referenced table '${fk.reference.table}'`);
+      }
+      throw err;
+    }
+
+    if (fk.columns.length !== fk.reference.columns.length) {
+      throw new ProcessorException(`Incorrect foreign key definition for '${fk.name}': Key reference and table reference don't match`);
+    }
+    const referencingTableColumns = new Map<string, Column>(
+      table.getColumns().map((c) => [c.getName(), c]),
+    );
+    const referencedTableColumns = new Map<string, Column>(
+      referencedTable.getColumns().map((c) => [c.getName(), c]),
+    );
+    for (let i = 0; i < fk.columns.length; i++) {
+      const referencingColumn = referencingTableColumns.get(fk.columns[i].column);
+      if (!referencingColumn) {
+        throw new ProcessorException(`Key column '${fk.columns[i].column}' doesn't exist in table`);
+      }
+      const referencedColumn = referencedTableColumns.get(fk.reference.columns[i].column);
+      if (!referencedColumn) {
+        throw new ProcessorException(
+          `Failed to add the foreign key constraint. ` +
+          `Missing column '${fk.reference.columns[i].column}' for constraint '${fk.name}' in the referenced table '${fk.reference.table}'`,
+        );
+      }
+      if (!referencingColumn.compareTo(referencedColumn)) {
+        throw new ProcessorException(
+          `Referencing column '${referencingColumn.getName()}' and referenced column '${referencedColumn.getName()}' ` +
+          `in foreign key constraint '${fk.name}' are incompatible.`,
+        );
+      }
+    }
+
+    return new ForeignKey(fk.name, fk.columns, referencedTable, fk.reference.columns);
   }
 
   private buildColumn(c: CreateColumn): Column {

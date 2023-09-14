@@ -10,4 +10,9 @@ export class DecimalColumn extends Column {
   ) {
     super(name, nullable, defaultValue);
   }
+
+  compareTo(c: Column): boolean {
+    return c instanceof DecimalColumn
+      && this.unsigned === c.unsigned;
+  }
 }

@@ -52,4 +52,10 @@ export class IntegerColumn extends Column {
   setAutoIncrementCursor(n: number) {
     this.autoIncrementCursor = n;
   }
+
+  compareTo(c: Column): boolean {
+    return c instanceof IntegerColumn
+      && this.unsigned === c.unsigned
+      && this.exponent === c.exponent;
+  }
 }
