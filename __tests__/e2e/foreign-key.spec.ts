@@ -3,6 +3,7 @@ import { query } from '../../src';
 describe('foreign key', () => {
   beforeAll(async () => {
     await query(`CREATE TABLE phone_types (id INT, name VARCHAR(255), PRIMARY KEY (id))`);
+    await query(`INSERT INTO phone_types VALUES (1, 'work'), (2, 'cell'), (3, 'fax')`);
   });
   afterEach(async () => {
     await query(`DROP TABLE IF EXISTS phones`);
@@ -63,5 +64,36 @@ describe('foreign key', () => {
       )
     `);
     expect(1).toEqual(1);
+  });
+  it('should throw an error if referenced table has no such record during insertion', async () => {
+    expect.assertions(1);
+    try {
+      await query(`
+        CREATE TABLE phones (
+          id INT,
+          type_id INT,
+          CONSTRAINT FOREIGN KEY (type_id) REFERENCES phone_types (id)
+        )
+      `);
+      await query(`INSERT INTO phones VALUES(1, 4)`);
+    } catch (err: any) {
+      expect(err.message).toMatch(/^Cannot add or update a child row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/);
+    }
+  });
+  it('should throw an error if referenced table has no such record during update', async () => {
+    expect.assertions(1);
+    try {
+      await query(`
+        CREATE TABLE phones (
+          id INT,
+          type_id INT,
+          CONSTRAINT FOREIGN KEY (type_id) REFERENCES phone_types (id)
+        )
+      `);
+      await query(`INSERT INTO phones VALUES(1, 1)`);
+      await query(`UPDATE phones SET type_id = 4`);
+    } catch (err: any) {
+      expect(err.message).toMatch(/^Cannot add or update a child row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/);
+    }
   });
 });

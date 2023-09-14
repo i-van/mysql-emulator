@@ -86,7 +86,7 @@ export class CreateTableProcessor {
       }
     }
 
-    return new ForeignKey(fk.name, fk.columns, referencedTable, fk.reference.columns);
+    return new ForeignKey(fk.name, table, fk.columns, referencedTable, fk.reference.columns);
   }
 
   private buildColumn(c: CreateColumn): Column {

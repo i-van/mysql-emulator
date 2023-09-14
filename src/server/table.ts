@@ -37,6 +37,9 @@ export class Table {
     for (const uniqueKey of this.uniqueKeys) {
       uniqueKey.indexRow(id, row);
     }
+    for (const foreignKey of this.foreignKeys) {
+      foreignKey.checkReference(row);
+    }
     this.rows.set(id, row);
   }
 
@@ -45,6 +48,9 @@ export class Table {
     for (const uniqueKey of this.uniqueKeys) {
       uniqueKey.unindexRow(existingRow);
       uniqueKey.indexRow(id, newRow);
+    }
+    for (const foreignKey of this.foreignKeys) {
+      foreignKey.checkReference(newRow);
     }
     this.rows.set(id, newRow);
   }
