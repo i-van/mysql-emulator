@@ -46,7 +46,7 @@ type UniqueKeyConstraint = {
   type: 'primary_key' | 'unique_key';
   columns: ColumnRef[];
 };
-export type ForeignKeyConstraintAction = 'restrict' | 'cascade' | 'set null' | 'set default' | 'no action';
+export type ForeignKeyConstraintAction = 'restrict' | 'cascade' | 'set null' | 'set default' | 'no action' | null;
 export type ForeignKeyConstraint = {
   name: string;
   type: 'foreign_key';
@@ -138,7 +138,7 @@ const buildConstraint = (
         a.onDelete = i.value.value;
       }
       return a;
-    }, { onUpdate: 'no action', onDelete: 'no action' });
+    }, { onUpdate: null, onDelete: null });
     return {
       name: d.constraint || foreignKeyNameGenerator(),
       type: 'foreign_key',

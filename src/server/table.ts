@@ -34,29 +34,45 @@ export class Table {
 
   insertRow(row: object) {
     const id = ++this.cursor;
+    for (const foreignKey of this.foreignKeys) {
+      const isReferencingTable = foreignKey.getTable() === this;
+      if (isReferencingTable) {
+        foreignKey.checkParentRowExistence(row);
+      }
+    }
     for (const uniqueKey of this.uniqueKeys) {
       uniqueKey.indexRow(id, row);
-    }
-    for (const foreignKey of this.foreignKeys) {
-      foreignKey.checkReference(row);
     }
     this.rows.set(id, row);
   }
 
-  updateRow(id: number, newRow: object) {
+  updateRow(id: number, newRow: object, checkForeignKeys = true) {
     const existingRow = this.getRow(id);
+    if (checkForeignKeys) {
+      for (const foreignKey of this.foreignKeys) {
+        const isReferencingTable = foreignKey.getTable() === this;
+        if (isReferencingTable) {
+          foreignKey.checkParentRowExistence(newRow);
+        } else {
+          foreignKey.updateChildRows(existingRow, newRow);
+        }
+      }
+    }
     for (const uniqueKey of this.uniqueKeys) {
       uniqueKey.unindexRow(existingRow);
       uniqueKey.indexRow(id, newRow);
-    }
-    for (const foreignKey of this.foreignKeys) {
-      foreignKey.checkReference(newRow);
     }
     this.rows.set(id, newRow);
   }
 
   deleteRow(id: number) {
     const row = this.getRow(id);
+    for (const foreignKey of this.foreignKeys) {
+      const isReferencedTable = foreignKey.getTable() !== this;
+      if (isReferencedTable) {
+        foreignKey.deleteChildRows(row);
+      }
+    }
     for (const uniqueKey of this.uniqueKeys) {
       uniqueKey.unindexRow(row);
     }

@@ -34,7 +34,7 @@ export class CreateTableProcessor {
           const name = `${query.table}.${constraint.name}`;
           table.addUniqueKey(new UniqueKey(name, constraint.columns));
         } else if (constraint.type === 'foreign_key') {
-          table.addForeignKey(this.buildForeignKey(db, table, constraint));
+          this.assignForeignKey(db, table, constraint);
         }
       }
     } catch (err: any) {
@@ -46,19 +46,19 @@ export class CreateTableProcessor {
     }
   }
 
-  private buildForeignKey(db: Database, table: Table, fk: ForeignKeyConstraint): ForeignKey {
+  private assignForeignKey(db: Database, table: Table, constraint: ForeignKeyConstraint): void {
     let referencedTable: Table;
     try {
-      referencedTable = db.getTable(fk.reference.table);
+      referencedTable = db.getTable(constraint.reference.table);
     } catch (err: any) {
       if (err.code === 'TABLE_DOES_NOT_EXIST') {
-        throw new ProcessorException(`Failed to open the referenced table '${fk.reference.table}'`);
+        throw new ProcessorException(`Failed to open the referenced table '${constraint.reference.table}'`);
       }
       throw err;
     }
 
-    if (fk.columns.length !== fk.reference.columns.length) {
-      throw new ProcessorException(`Incorrect foreign key definition for '${fk.name}': Key reference and table reference don't match`);
+    if (constraint.columns.length !== constraint.reference.columns.length) {
+      throw new ProcessorException(`Incorrect foreign key definition for '${constraint.name}': Key reference and table reference don't match`);
     }
     const referencingTableColumns = new Map<string, Column>(
       table.getColumns().map((c) => [c.getName(), c]),
@@ -66,27 +66,42 @@ export class CreateTableProcessor {
     const referencedTableColumns = new Map<string, Column>(
       referencedTable.getColumns().map((c) => [c.getName(), c]),
     );
-    for (let i = 0; i < fk.columns.length; i++) {
-      const referencingColumn = referencingTableColumns.get(fk.columns[i].column);
+    for (let i = 0; i < constraint.columns.length; i++) {
+      const referencingColumn = referencingTableColumns.get(constraint.columns[i].column);
       if (!referencingColumn) {
-        throw new ProcessorException(`Key column '${fk.columns[i].column}' doesn't exist in table`);
+        throw new ProcessorException(`Key column '${constraint.columns[i].column}' doesn't exist in table`);
       }
-      const referencedColumn = referencedTableColumns.get(fk.reference.columns[i].column);
+      const referencedColumn = referencedTableColumns.get(constraint.reference.columns[i].column);
       if (!referencedColumn) {
         throw new ProcessorException(
           `Failed to add the foreign key constraint. ` +
-          `Missing column '${fk.reference.columns[i].column}' for constraint '${fk.name}' in the referenced table '${fk.reference.table}'`,
+          `Missing column '${constraint.reference.columns[i].column}' for constraint '${constraint.name}' in the referenced table '${constraint.reference.table}'`,
         );
       }
       if (!referencingColumn.compareTo(referencedColumn)) {
         throw new ProcessorException(
           `Referencing column '${referencingColumn.getName()}' and referenced column '${referencedColumn.getName()}' ` +
-          `in foreign key constraint '${fk.name}' are incompatible.`,
+          `in foreign key constraint '${constraint.name}' are incompatible.`,
         );
+      }
+      if ((constraint.reference.onUpdate === 'set null' || constraint.reference.onDelete === 'set null')
+        && !referencingColumn.isNullable()
+      ) {
+        throw new ProcessorException(`Column '${referencingColumn.getName()}' cannot be NOT NULL: needed in a foreign key constraint '${constraint.name}' SET NULL`);
       }
     }
 
-    return new ForeignKey(fk.name, table, fk.columns, referencedTable, fk.reference.columns);
+    const fk = new ForeignKey(
+      constraint.name,
+      table,
+      constraint.columns,
+      referencedTable,
+      constraint.reference.columns,
+      constraint.reference.onUpdate,
+      constraint.reference.onDelete,
+    );
+    table.addForeignKey(fk);
+    referencedTable.addForeignKey(fk);
   }
 
   private buildColumn(c: CreateColumn): Column {
