@@ -1,5 +1,6 @@
 import { Database } from './database';
 import { ServerException } from './server.exception';
+import { StringColumn } from './columns';
 
 export class Server {
   protected databases = new Map<string, Database>();
@@ -8,8 +9,10 @@ export class Server {
   constructor(databaseName = 'primary') {
     const infoDb = this.createDatabase('INFORMATION_SCHEMA');
     infoDb.createTable('TABLES');
-    infoDb.createTable('COLUMNS');
     infoDb.createTable('KEY_COLUMN_USAGE');
+    const columnsTable = infoDb.createTable('COLUMNS');
+    columnsTable.addColumn(new StringColumn('TABLE_SCHEMA', false, null, 255));
+    columnsTable.addColumn(new StringColumn('TABLE_NAME', false, null, 255));
     this.createDatabase(databaseName);
     this.useDatabase(databaseName);
   }
