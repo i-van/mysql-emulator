@@ -213,14 +213,10 @@ describe('create table query', () => {
       {
         name: 'companies_ibfk_1',
         type: 'foreign_key',
-        columns: [
-          { type: 'column_ref', table: null, column: 'user_id' },
-        ],
+        columns: [{ type: 'column_ref', table: null, column: 'user_id' }],
         reference: {
           table: 'users',
-          columns: [
-            { type: 'column_ref', table: null, column: 'id' },
-          ],
+          columns: [{ type: 'column_ref', table: null, column: 'id' }],
           onUpdate: 'cascade',
           onDelete: 'set null',
         },

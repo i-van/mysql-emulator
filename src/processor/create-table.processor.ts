@@ -58,14 +58,12 @@ export class CreateTableProcessor {
     }
 
     if (constraint.columns.length !== constraint.reference.columns.length) {
-      throw new ProcessorException(`Incorrect foreign key definition for '${constraint.name}': Key reference and table reference don't match`);
+      throw new ProcessorException(
+        `Incorrect foreign key definition for '${constraint.name}': Key reference and table reference don't match`,
+      );
     }
-    const referencingTableColumns = new Map<string, Column>(
-      table.getColumns().map((c) => [c.getName(), c]),
-    );
-    const referencedTableColumns = new Map<string, Column>(
-      referencedTable.getColumns().map((c) => [c.getName(), c]),
-    );
+    const referencingTableColumns = new Map<string, Column>(table.getColumns().map((c) => [c.getName(), c]));
+    const referencedTableColumns = new Map<string, Column>(referencedTable.getColumns().map((c) => [c.getName(), c]));
     for (let i = 0; i < constraint.columns.length; i++) {
       const referencingColumn = referencingTableColumns.get(constraint.columns[i].column);
       if (!referencingColumn) {
@@ -75,19 +73,23 @@ export class CreateTableProcessor {
       if (!referencedColumn) {
         throw new ProcessorException(
           `Failed to add the foreign key constraint. ` +
-          `Missing column '${constraint.reference.columns[i].column}' for constraint '${constraint.name}' in the referenced table '${constraint.reference.table}'`,
+            `Missing column '${constraint.reference.columns[i].column}' for constraint '${constraint.name}' in the referenced table '${constraint.reference.table}'`,
         );
       }
       if (!referencingColumn.compareTo(referencedColumn)) {
         throw new ProcessorException(
           `Referencing column '${referencingColumn.getName()}' and referenced column '${referencedColumn.getName()}' ` +
-          `in foreign key constraint '${constraint.name}' are incompatible.`,
+            `in foreign key constraint '${constraint.name}' are incompatible.`,
         );
       }
-      if ((constraint.reference.onUpdate === 'set null' || constraint.reference.onDelete === 'set null')
-        && !referencingColumn.isNullable()
+      if (
+        (constraint.reference.onUpdate === 'set null' || constraint.reference.onDelete === 'set null') &&
+        !referencingColumn.isNullable()
       ) {
-        throw new ProcessorException(`Column '${referencingColumn.getName()}' cannot be NOT NULL: needed in a foreign key constraint '${constraint.name}' SET NULL`);
+        throw new ProcessorException(
+          `Column '${referencingColumn.getName()}' cannot be NOT NULL: ` +
+            `needed in a foreign key constraint '${constraint.name}' SET NULL`,
+        );
       }
     }
 

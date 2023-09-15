@@ -12,7 +12,6 @@ export class DecimalColumn extends Column {
   }
 
   compareTo(c: Column): boolean {
-    return c instanceof DecimalColumn
-      && this.unsigned === c.unsigned;
+    return c instanceof DecimalColumn && this.unsigned === c.unsigned;
   }
 }

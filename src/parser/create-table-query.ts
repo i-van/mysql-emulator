@@ -57,7 +57,7 @@ export type ForeignKeyConstraint = {
     onUpdate: ForeignKeyConstraintAction;
     onDelete: ForeignKeyConstraintAction;
   };
-}
+};
 export type CreateConstraint = UniqueKeyConstraint | ForeignKeyConstraint;
 type ColumnDefinition = {
   column: ColumnRef;
@@ -104,7 +104,7 @@ type ForeignKeyDefinition = {
     }[];
     on_action: {
       type: 'on update' | 'on delete';
-      value: { type: 'origin', value: 'restrict' | 'cascade' | 'set null' | 'no action' | 'set default' };
+      value: { type: 'origin'; value: 'restrict' | 'cascade' | 'set null' | 'no action' | 'set default' };
     }[];
   };
 };
@@ -131,14 +131,20 @@ const buildConstraint = (
       columns: d.definition.map(buildExpression) as ColumnRef[],
     };
   } else if (isForeignKeyDefinition(d)) {
-    const actions = (d.reference_definition.on_action || []).reduce<{ onUpdate: ForeignKeyConstraintAction; onDelete: ForeignKeyConstraintAction }>((a, i) => {
-      if (i.type === 'on update') {
-        a.onUpdate = i.value.value;
-      } else if (i.type === 'on delete') {
-        a.onDelete = i.value.value;
-      }
-      return a;
-    }, { onUpdate: null, onDelete: null });
+    const actions = (d.reference_definition.on_action || []).reduce<{
+      onUpdate: ForeignKeyConstraintAction;
+      onDelete: ForeignKeyConstraintAction;
+    }>(
+      (a, i) => {
+        if (i.type === 'on update') {
+          a.onUpdate = i.value.value;
+        } else if (i.type === 'on delete') {
+          a.onDelete = i.value.value;
+        }
+        return a;
+      },
+      { onUpdate: null, onDelete: null },
+    );
     return {
       name: d.constraint || foreignKeyNameGenerator(),
       type: 'foreign_key',
@@ -152,7 +158,7 @@ const buildConstraint = (
   } else {
     throw new ParserException(`Unknown constraint type ${d.constraint_type}`);
   }
-}
+};
 
 export class CreateTableQuery {
   constructor(

@@ -49,7 +49,9 @@ describe('foreign key', () => {
         )
       `);
     } catch (err: any) {
-      expect(err.message).toEqual(`Referencing column 'type_id' and referenced column 'id' in foreign key constraint 'phones_ibfk_1' are incompatible.`);
+      expect(err.message).toEqual(
+        `Referencing column 'type_id' and referenced column 'id' in foreign key constraint 'phones_ibfk_1' are incompatible.`,
+      );
     }
   });
   it('should throw an error if referenced table has no such record during insertion', async () => {
@@ -64,7 +66,9 @@ describe('foreign key', () => {
       `);
       await query(`INSERT INTO phones VALUES(1, 4)`);
     } catch (err: any) {
-      expect(err.message).toMatch(/^Cannot add or update a child row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/);
+      expect(err.message).toMatch(
+        /^Cannot add or update a child row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/,
+      );
     }
   });
   it('should throw an error if referenced table has no such record during update', async () => {
@@ -80,7 +84,9 @@ describe('foreign key', () => {
       await query(`INSERT INTO phones VALUES(1, 1)`);
       await query(`UPDATE phones SET type_id = 4`);
     } catch (err: any) {
-      expect(err.message).toMatch(/^Cannot add or update a child row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/);
+      expect(err.message).toMatch(
+        /^Cannot add or update a child row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/,
+      );
     }
   });
   it('should throw an error if referencing column is not nullable and action is set null', async () => {
@@ -95,7 +101,9 @@ describe('foreign key', () => {
         )
       `);
     } catch (err: any) {
-      expect(err.message).toEqual(`Column 'type_id' cannot be NOT NULL: needed in a foreign key constraint 'phones_ibfk_1' SET NULL`);
+      expect(err.message).toEqual(
+        `Column 'type_id' cannot be NOT NULL: needed in a foreign key constraint 'phones_ibfk_1' SET NULL`,
+      );
     }
   });
 
@@ -115,7 +123,9 @@ describe('foreign key', () => {
       try {
         await query(`UPDATE phone_types SET id = 5 WHERE id = 1`);
       } catch (err: any) {
-        expect(err.message).toMatch(/^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/);
+        expect(err.message).toMatch(
+          /^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/,
+        );
       }
     });
     it('should restrict deleting for the parent table', async () => {
@@ -123,7 +133,9 @@ describe('foreign key', () => {
       try {
         await query(`DELETE FROM phone_types WHERE id = 1`);
       } catch (err: any) {
-        expect(err.message).toMatch(/^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/);
+        expect(err.message).toMatch(
+          /^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/,
+        );
       }
     });
     it('should update parent row if it has no connection', async () => {
@@ -164,7 +176,9 @@ describe('foreign key', () => {
       try {
         await query(`UPDATE phone_types SET id = 5 WHERE id = 1`);
       } catch (err: any) {
-        expect(err.message).toMatch(/^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\) ON DELETE RESTRICT ON UPDATE RESTRICT\)$/);
+        expect(err.message).toMatch(
+          /^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\) ON DELETE RESTRICT ON UPDATE RESTRICT\)$/,
+        );
       }
     });
     it('should restrict deleting for the parent table', async () => {
@@ -172,7 +186,9 @@ describe('foreign key', () => {
       try {
         await query(`DELETE FROM phone_types WHERE id = 1`);
       } catch (err: any) {
-        expect(err.message).toMatch(/^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\) ON DELETE RESTRICT ON UPDATE RESTRICT\)$/);
+        expect(err.message).toMatch(
+          /^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\) ON DELETE RESTRICT ON UPDATE RESTRICT\)$/,
+        );
       }
     });
     it('should update parent row if it has no connection', async () => {
@@ -213,7 +229,9 @@ describe('foreign key', () => {
       try {
         await query(`UPDATE phone_types SET id = 5 WHERE id = 1`);
       } catch (err: any) {
-        expect(err.message).toMatch(/^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/);
+        expect(err.message).toMatch(
+          /^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/,
+        );
       }
     });
     it('should restrict deleting for the parent table', async () => {
@@ -221,7 +239,9 @@ describe('foreign key', () => {
       try {
         await query(`DELETE FROM phone_types WHERE id = 1`);
       } catch (err: any) {
-        expect(err.message).toMatch(/^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/);
+        expect(err.message).toMatch(
+          /^Cannot delete or update a parent row: a foreign key constraint fails \((.*)`phones`, CONSTRAINT `phones_ibfk_1` FOREIGN KEY \(`type_id`\) REFERENCES `phone_types` \(`id`\)\)$/,
+        );
       }
     });
     it('should update parent row if it has no connection', async () => {
@@ -261,9 +281,7 @@ describe('foreign key', () => {
       await query(`UPDATE phone_types SET id = 5 WHERE id = 1`);
 
       const rows = await query(`SELECT * FROM phones`);
-      expect(rows).toEqual([
-        { id: 1, type_id: 5 },
-      ]);
+      expect(rows).toEqual([{ id: 1, type_id: 5 }]);
     });
     it('should delete child rows if parent is delete', async () => {
       await query(`DELETE FROM phone_types WHERE id = 1`);
@@ -289,17 +307,13 @@ describe('foreign key', () => {
       await query(`UPDATE phone_types SET id = 5 WHERE id = 1`);
 
       const rows = await query(`SELECT * FROM phones`);
-      expect(rows).toEqual([
-        { id: 1, type_id: null },
-      ]);
+      expect(rows).toEqual([{ id: 1, type_id: null }]);
     });
     it('should update child rows if parent is delete', async () => {
       await query(`DELETE FROM phone_types WHERE id = 1`);
 
       const rows = await query(`SELECT * FROM phones`);
-      expect(rows).toEqual([
-        { id: 1, type_id: null },
-      ]);
+      expect(rows).toEqual([{ id: 1, type_id: null }]);
     });
   });
 });

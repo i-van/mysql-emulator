@@ -12,7 +12,6 @@ export class FloatColumn extends Column {
   }
 
   compareTo(c: Column): boolean {
-    return c instanceof FloatColumn
-      && this.unsigned === c.unsigned;
+    return c instanceof FloatColumn && this.unsigned === c.unsigned;
   }
 }

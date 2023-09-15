@@ -54,8 +54,6 @@ export class IntegerColumn extends Column {
   }
 
   compareTo(c: Column): boolean {
-    return c instanceof IntegerColumn
-      && this.unsigned === c.unsigned
-      && this.exponent === c.exponent;
+    return c instanceof IntegerColumn && this.unsigned === c.unsigned && this.exponent === c.exponent;
   }
 }

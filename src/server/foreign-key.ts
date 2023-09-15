@@ -4,10 +4,7 @@ import { ServerException } from './server.exception';
 
 export class ForeignKey {
   private definition = this.buildDefinition();
-  private placeholder = this.columns.reduce(
-    (p, c) => ({ ...p, [c.column]: null }),
-    {},
-  );
+  private placeholder = this.columns.reduce((p, c) => ({ ...p, [c.column]: null }), {});
 
   constructor(
     protected name: string,
@@ -40,22 +37,31 @@ export class ForeignKey {
       if (!this.isReference(parentRow, childRow)) {
         continue;
       }
-      if (this.onUpdate === 'no action' || this.onUpdate === 'restrict' || this.onUpdate === 'set default' || this.onUpdate === null) {
+      if (
+        this.onUpdate === 'no action' ||
+        this.onUpdate === 'restrict' ||
+        this.onUpdate === 'set default' ||
+        this.onUpdate === null
+      ) {
         throw new ServerException({
           message: `Cannot delete or update a parent row: a foreign key constraint fails ${this.definition}`,
           code: 'REFERENCE_NOT_FOUND',
         });
       } else if (this.onUpdate === 'cascade') {
-        this.table.updateRow(id, {
-          ...childRow,
-          ...this.columns.reduce(
-            (p, c, i) => ({
-              ...p,
-              [c.column]: updatedParentRow[this.referenceColumns[i].column],
-            }),
-            {},
-          ),
-        }, false);
+        this.table.updateRow(
+          id,
+          {
+            ...childRow,
+            ...this.columns.reduce(
+              (p, c, i) => ({
+                ...p,
+                [c.column]: updatedParentRow[this.referenceColumns[i].column],
+              }),
+              {},
+            ),
+          },
+          false,
+        );
       } else if (this.onUpdate === 'set null') {
         this.table.updateRow(id, {
           ...childRow,
@@ -70,7 +76,12 @@ export class ForeignKey {
       if (!this.isReference(parentRow, childRow)) {
         continue;
       }
-      if (this.onDelete === 'no action' || this.onDelete === 'restrict' || this.onDelete === 'set default' || this.onDelete === null) {
+      if (
+        this.onDelete === 'no action' ||
+        this.onDelete === 'restrict' ||
+        this.onDelete === 'set default' ||
+        this.onDelete === null
+      ) {
         throw new ServerException({
           message: `Cannot delete or update a parent row: a foreign key constraint fails ${this.definition}`,
           code: 'REFERENCE_NOT_FOUND',
@@ -96,11 +107,13 @@ export class ForeignKey {
     const escape = (s: string) => '`' + s + '`';
     const escapeColumnNames = (columns: ColumnRef[]) => columns.map((c) => escape(c.column)).join(', ');
 
-    return `(${escape(this.table.getName())}, CONSTRAINT ${escape(this.name)} `
-      + `FOREIGN KEY (${escapeColumnNames(this.columns)}) `
-      + `REFERENCES ${escape(this.referenceTable.getName())} (${escapeColumnNames(this.referenceColumns)})`
-      + (this.onDelete && this.onDelete !== 'set default' ? ' ON DELETE ' + this.onDelete.toUpperCase() : '')
-      + (this.onUpdate && this.onUpdate !== 'set default' ? ' ON UPDATE ' + this.onUpdate.toUpperCase() : '')
-      + `)`;
-  };
+    return (
+      `(${escape(this.table.getName())}, CONSTRAINT ${escape(this.name)} ` +
+      `FOREIGN KEY (${escapeColumnNames(this.columns)}) ` +
+      `REFERENCES ${escape(this.referenceTable.getName())} (${escapeColumnNames(this.referenceColumns)})` +
+      (this.onDelete && this.onDelete !== 'set default' ? ' ON DELETE ' + this.onDelete.toUpperCase() : '') +
+      (this.onUpdate && this.onUpdate !== 'set default' ? ' ON UPDATE ' + this.onUpdate.toUpperCase() : '') +
+      `)`
+    );
+  }
 }
