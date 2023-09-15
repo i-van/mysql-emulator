@@ -46,6 +46,7 @@ type UniqueKeyConstraint = {
   type: 'primary_key' | 'unique_key';
   columns: ColumnRef[];
 };
+export type ForeignKeyConstraintAction = 'restrict' | 'cascade' | 'set null' | 'set default' | 'no action';
 export type ForeignKeyConstraint = {
   name: string;
   type: 'foreign_key';
@@ -53,10 +54,8 @@ export type ForeignKeyConstraint = {
   reference: {
     table: string;
     columns: ColumnRef[];
-    actions: {
-      type: 'on update' | 'on delete';
-      value: 'restrict' | 'cascade' | 'set null' | 'no action' | 'set default';
-    }[];
+    onUpdate: ForeignKeyConstraintAction;
+    onDelete: ForeignKeyConstraintAction;
   };
 }
 export type CreateConstraint = UniqueKeyConstraint | ForeignKeyConstraint;
@@ -132,6 +131,14 @@ const buildConstraint = (
       columns: d.definition.map(buildExpression) as ColumnRef[],
     };
   } else if (isForeignKeyDefinition(d)) {
+    const actions = (d.reference_definition.on_action || []).reduce<{ onUpdate: ForeignKeyConstraintAction; onDelete: ForeignKeyConstraintAction }>((a, i) => {
+      if (i.type === 'on update') {
+        a.onUpdate = i.value.value;
+      } else if (i.type === 'on delete') {
+        a.onDelete = i.value.value;
+      }
+      return a;
+    }, { onUpdate: 'no action', onDelete: 'no action' });
     return {
       name: d.constraint || foreignKeyNameGenerator(),
       type: 'foreign_key',
@@ -139,10 +146,7 @@ const buildConstraint = (
       reference: {
         table: d.reference_definition.table[0].table,
         columns: d.reference_definition.definition.map(buildExpression) as ColumnRef[],
-        actions: (d.reference_definition.on_action || []).map((a) => ({
-          type: a.type,
-          value: a.value.value,
-        })),
+        ...actions,
       },
     };
   } else {

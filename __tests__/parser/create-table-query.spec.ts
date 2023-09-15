@@ -221,10 +221,8 @@ describe('create table query', () => {
           columns: [
             { type: 'column_ref', table: null, column: 'id' },
           ],
-          actions: [
-            { type: 'on update', value: 'cascade' },
-            { type: 'on delete', value: 'set null' },
-          ],
+          onUpdate: 'cascade',
+          onDelete: 'set null',
         },
       },
     ]);
