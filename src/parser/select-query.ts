@@ -167,7 +167,7 @@ export class SelectQuery {
         | NumberType
         | BooleanType
         | NullType),
-      order: o.type,
+      order: o.type || 'ASC',
     }));
     let limit = 0;
     let offset = 0;

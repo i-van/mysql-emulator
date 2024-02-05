@@ -119,7 +119,7 @@ export const buildExpression = (ast: any): Expression => {
   if (ast.type === 'column_ref') {
     return {
       type: 'column_ref',
-      table: ast.table,
+      table: ast.table ?? null,
       column: ast.column,
     };
   }

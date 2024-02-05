@@ -29,7 +29,7 @@ export class UpdateQuery {
     }));
     const orderBy: UpdateOrderBy[] = ((ast as any).orderby || []).map((o) => ({
       ...(buildExpression(o.expr) as ColumnRef),
-      order: o.type,
+      order: o.type || 'ASC',
     }));
     const limit = (ast as any).limit?.value.length ? (ast as any).limit?.value[0].value : 0;
 

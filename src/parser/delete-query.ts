@@ -17,7 +17,7 @@ export class DeleteQuery {
     const [{ db, table, as }] = ast.from as From[];
     const orderBy: DeleteOrderBy[] = ((ast as any).orderby || []).map((o) => ({
       ...(buildExpression(o.expr) as ColumnRef),
-      order: o.type,
+      order: o.type || 'ASC',
     }));
     const limit = (ast as any).limit?.value.length ? (ast as any).limit?.value[0].value : 0;
 
