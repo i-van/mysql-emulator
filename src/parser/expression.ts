@@ -134,9 +134,10 @@ export const buildExpression = (ast: any): Expression => {
         : ast.args?.expr
         ? [buildExpression(ast.args.expr)]
         : [];
+    const name = ast.type === 'function' ? ast.name.name[0].value.toLowerCase() : ast.name.toLowerCase();
     return {
       type: 'function',
-      name: ast.name.toLowerCase(),
+      name,
       args,
       options,
     };

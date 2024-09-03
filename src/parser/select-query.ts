@@ -1,4 +1,4 @@
-import { Parser as SqlParser, Select } from 'node-sql-parser';
+import { BaseFrom, Join, Parser as SqlParser, Select, TableExpr } from 'node-sql-parser';
 import {
   BinaryExpression,
   BooleanType,
@@ -82,7 +82,7 @@ export class SelectQuery {
   ) {}
 
   static fromAst(ast: Select): SelectQuery {
-    const from = (ast.from || []).map((f): From => {
+    const from = ((ast.from || []) as BaseFrom[] | Join[] | TableExpr[]).map((f): From => {
       if (f.expr?.ast) {
         return {
           type: 'select',
@@ -137,7 +137,7 @@ export class SelectQuery {
       }
       throw new ParserException('Could not map columns');
     });
-    const groupBy: GroupBy[] = (ast.groupby || []).map((g) => {
+    const groupBy: GroupBy[] = (ast.groupby?.columns || []).map((g) => {
       if (g.type === 'column_ref') {
         return buildExpression(g) as ColumnRef;
       } else if (['case', 'unary_expr', 'binary_expr', ...functions, ...primitives].includes(g.type)) {

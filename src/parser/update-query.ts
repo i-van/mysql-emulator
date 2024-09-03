@@ -1,4 +1,4 @@
-import { From, Update } from 'node-sql-parser';
+import { BaseFrom, Update } from 'node-sql-parser';
 import { buildExpression, ColumnRef, Expression } from './expression';
 
 export type Assignment = {
@@ -21,7 +21,7 @@ export class UpdateQuery {
   ) {}
 
   static fromAst(ast: Update): UpdateQuery {
-    const [{ db, table, as }] = ast.table as From[];
+    const [{ db, table, as }] = ast.table as BaseFrom[];
     const assignments: Assignment[] = ast.set.map((s) => ({
       table: s.table,
       column: s.column,

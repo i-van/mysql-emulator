@@ -1,4 +1,4 @@
-import { Delete, From } from 'node-sql-parser';
+import { BaseFrom, Delete } from 'node-sql-parser';
 import { buildExpression, ColumnRef, Expression } from './expression';
 
 export type DeleteOrderBy = ColumnRef & { order: 'ASC' | 'DESC' };
@@ -14,7 +14,7 @@ export class DeleteQuery {
   ) {}
 
   static fromAst(ast: Delete): DeleteQuery {
-    const [{ db, table, as }] = ast.from as From[];
+    const [{ db, table, as }] = ast.from as BaseFrom[];
     const orderBy: DeleteOrderBy[] = ((ast as any).orderby || []).map((o) => ({
       ...(buildExpression(o.expr) as ColumnRef),
       order: o.type || 'ASC',
