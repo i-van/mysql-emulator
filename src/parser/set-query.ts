@@ -1,5 +1,5 @@
 export class SetQuery {
-  static fromAst(ast: any): SetQuery {
+  static fromAst(): SetQuery {
     return new SetQuery();
   }
 }

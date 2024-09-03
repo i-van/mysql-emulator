@@ -69,7 +69,7 @@ describe('create-table', () => {
           \`status\` enum ('pending','rejected','approved') NOT NULL DEFAULT 'another_status'
         )
       `);
-    } catch (err: any) {
+    } catch {
       const [{ databaseName }] = await query(`SELECT database() databaseName`);
       const tables = await query('SHOW TABLES');
       const exists = tables.some((row) => row[`Tables_in_${databaseName}`] === 'companies');

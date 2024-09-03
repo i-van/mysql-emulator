@@ -82,7 +82,7 @@ export class SelectProcessor {
       } else {
         const tableAlias = from.alias || from.table;
         const table = this.server.getDatabase(from.database).getTable(from.table);
-        rows = [...table.getRows()].map(([k, r]) => mapKeys(r, (key) => `${tableAlias}::${key}`));
+        rows = [...table.getRows()].map(([, r]) => mapKeys(r, (key) => `${tableAlias}::${key}`));
         columnRefs = table.getColumns().map((c) => ({
           type: 'column_ref',
           table: tableAlias,

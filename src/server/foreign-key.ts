@@ -21,7 +21,7 @@ export class ForeignKey {
   }
 
   checkParentRowExistence(childRow: object): void {
-    for (const [_id, parentRow] of this.referenceTable.getRows()) {
+    for (const [, parentRow] of this.referenceTable.getRows()) {
       if (this.isReference(parentRow, childRow)) {
         return;
       }

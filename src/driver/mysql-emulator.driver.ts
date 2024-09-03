@@ -63,10 +63,14 @@ export class MysqlEmulatorDriver {
     const promise = this.processor
       .process(sql, values || [])
       .then((res) => {
-        callback && setImmediate(callback, null, res);
+        if (callback) {
+          setImmediate(callback, null, res);
+        }
       })
       .catch((err) => {
-        callback && setImmediate(callback, err, null);
+        if (callback) {
+          setImmediate(callback, err, null);
+        }
       });
 
     const wrapPromise = (p) => {

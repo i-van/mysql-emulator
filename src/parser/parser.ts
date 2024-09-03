@@ -73,7 +73,7 @@ export class Parser {
         case 'drop' as unknown:
           return DropTableQuery.fromAst(ast);
         case 'set' as unknown:
-          return SetQuery.fromAst(ast);
+          return SetQuery.fromAst();
       }
     } catch (err: any) {
       throw new ParserException(`${err.message}: ${sqlWithParams}`);

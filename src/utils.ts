@@ -10,12 +10,12 @@ export const mapKeys = (
 };
 
 export const extractColumn = (key: string): string => {
-  const [_table, column] = key.split('::');
+  const [, column] = key.split('::');
   return column;
 };
 
 export const extractTable = (key: string): string => {
-  const [table, _column] = key.split('::');
+  const [table] = key.split('::');
   return table;
 };
 
