@@ -10,6 +10,7 @@ import { UpdateQuery } from './update-query';
 import { SetQuery } from './set-query';
 import { ShowQuery } from './show-query';
 import { ReplaceQuery } from './replace-query';
+import { UnionQuery } from './union-query';
 
 type Query = TransactionQuery | SelectQuery | InsertQuery | DeleteQuery | CreateTableQuery | DropTableQuery | SetQuery;
 
@@ -59,7 +60,7 @@ export class Parser {
     try {
       switch (ast.type) {
         case 'select':
-          return SelectQuery.fromAst(ast);
+          return ast._next ? UnionQuery.fromAst(ast) : SelectQuery.fromAst(ast);
         case 'update':
           return UpdateQuery.fromAst(ast);
         case 'insert':
